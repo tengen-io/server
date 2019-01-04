@@ -6,7 +6,6 @@ package main
 import (
 	"database/sql"
 	// "fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 )
@@ -16,7 +15,7 @@ type Server struct {
 }
 
 func (s *Server) Start() {
-	db, err := connectToDB()
+	db, err := Connect()
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -34,11 +33,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/":
 		w.Write([]byte("Hello"))
 	}
-}
-
-func connectToDB() (*sql.DB, error) {
-	connStr := "user=postgres password=postgres dbname=go_stop_go sslmode=verify-full"
-	return sql.Open("postgres", connStr)
 }
 
 func main() {
