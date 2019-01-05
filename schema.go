@@ -58,8 +58,40 @@ func CreateSchema() (graphql.Schema, error) {
 		},
 	})
 
+	mutationType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "Mutation",
+		Fields: graphql.Fields{
+			"createUser": &graphql.Field{
+				Type: userType,
+				Args: graphql.FieldConfigArgument{
+					"username": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"email": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"password": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"passwordConfirmation": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					db := p.Context.Value("db").(*sql.DB)
+					username := p.Args["username"].(string)
+					email := p.Args["email"].(string)
+					password := p.Args["password"].(string)
+					passwordConfirm := p.Args["passwordConfirmation"].(string)
+					return CreateUser(db, username, email, password, passwordConfirm)
+				},
+			},
+		},
+	})
+
 	schemaConfig := graphql.SchemaConfig{
-		Query: queryType,
+		Query:    queryType,
+		Mutation: mutationType,
 	}
 
 	return graphql.NewSchema(schemaConfig)
