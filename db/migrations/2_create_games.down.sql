@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS games;
+DROP SEQUENCE games_id_seq;
