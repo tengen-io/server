@@ -5,23 +5,26 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-func createToken(username string) (string, error) {
-	type MyCustomClaims struct {
-		Username string `json:"username"`
-		jwt.StandardClaims
-	}
+type MyCustomClaims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
 
+func getKey() []byte {
 	h := sha256.New()
-	signingKey := h.Sum([]byte("TODO: pull secret key from safe place"))
 
+	return h.Sum([]byte("TODO: pull secret key from safe place"))
+}
+
+func GenerateToken(username string) (string, error) {
 	// Create the Claims
 	claims := MyCustomClaims{
 		username,
 		jwt.StandardClaims{
-			ExpiresAt: 15000,
-			Issuer:    "GoStop",
+			Issuer: "GoStop",
 		},
 	}
+	signingKey := getKey()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	ss, err := token.SignedString(signingKey)
 
@@ -29,4 +32,16 @@ func createToken(username string) (string, error) {
 		return "", err
 	}
 	return ss, nil
+}
+
+func ValidateToken(tokenString string) (*MyCustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return getKey(), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token.Claims.(*MyCustomClaims), nil
 }

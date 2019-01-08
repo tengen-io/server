@@ -78,6 +78,27 @@ func CreateSchema() (graphql.Schema, error) {
 					return GetUser(db, p.Args["username"].(string))
 				},
 			},
+
+			"currentUser": &graphql.Field{
+				Type: userType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					db := p.Context.Value("db").(*sql.DB)
+
+					token, ok := p.Context.Value("token").(string)
+
+					if !ok {
+						return nil, missingTokenError{}
+					}
+
+					claims, err := ValidateToken(token)
+
+					if err != nil {
+						return nil, err
+					}
+
+					return GetUser(db, claims.Username)
+				},
+			},
 		},
 	})
 
@@ -127,10 +148,10 @@ func CreateSchema() (graphql.Schema, error) {
 					user, err := CheckPw(db, username, password)
 
 					if err != nil {
-						return user, err
+						return nil, err
 					}
 
-					token, err := createToken(username)
+					token, err := GenerateToken(username)
 
 					if err != nil {
 						return user, err
@@ -150,4 +171,10 @@ func CreateSchema() (graphql.Schema, error) {
 	}
 
 	return graphql.NewSchema(schemaConfig)
+}
+
+type missingTokenError struct{}
+
+func (e missingTokenError) Error() string {
+	return "Missing Authorization header"
 }

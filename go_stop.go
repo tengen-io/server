@@ -6,10 +6,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	_ "fmt"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Server struct {
@@ -42,16 +44,32 @@ func (s *Server) Start() {
 	})
 
 	log.Println("Listening on http://localhost:8000")
-	http.Handle("/graphql", DBMiddleware(db, h))
+	http.Handle("/graphql", applyMiddlewares(db, h))
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
-func DBMiddleware(db *sql.DB, next *handler.Handler) http.Handler {
+func applyMiddlewares(db *sql.DB, next *handler.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), "db", db)
-
+		ctx = authHandler(ctx, r)
 		next.ContextHandler(ctx, w, r)
 	})
+}
+
+func authHandler(ctx context.Context, r *http.Request) context.Context {
+	auth := r.Header.Get("Authorization")
+
+	if auth != "" {
+		s := strings.Split(auth, " ")
+		if len(s) == 2 {
+			if s[0] == "Bearer" {
+				token := s[1]
+
+				ctx = context.WithValue(ctx, "token", token)
+			}
+		}
+	}
+	return ctx
 }
 
 func main() {

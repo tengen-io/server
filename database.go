@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	_ "fmt"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -82,6 +81,10 @@ func parseUserRows(rows *sql.Rows) ([]User, error) {
 }
 
 func handleError(e error) error {
+	if e == nil {
+		return e
+	}
+
 	switch e.Error() {
 	case "pq: duplicate key value violates unique constraint \"users_username_key\"":
 		return usernameTakenError{e}
