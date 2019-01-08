@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "fmt"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -22,7 +23,7 @@ func GetUser(db *sql.DB, username string) (*User, error) {
 	} else if len(users) > 0 {
 		return &users[0], nil
 	} else {
-		return nil, nil
+		return nil, userNotFoundError{}
 	}
 }
 
@@ -45,6 +46,19 @@ func CreateUser(db *sql.DB, username string, email string, password string, pass
 	user, _ := GetUser(db, username)
 
 	return user, nil
+}
+
+func CheckPw(db *sql.DB, username string, password string) (*User, error) {
+	user, err := GetUser(db, username)
+
+	if err != nil {
+		return user, err
+	}
+
+	inputPassword := []byte(password)
+	userPassword := []byte(user.encryptedPassword)
+	err = bcrypt.CompareHashAndPassword(userPassword, inputPassword)
+	return user, handleError(err)
 }
 
 func parseUserRows(rows *sql.Rows) ([]User, error) {
@@ -73,6 +87,8 @@ func handleError(e error) error {
 		return usernameTakenError{e}
 	case "pq: duplicate key value violates unique constraint \"users_email_key\"":
 		return emailTakenError{e}
+	case "crypto/bcrypt: hashedPassword is not the hash of the given password":
+		return invalidLoginError{e}
 	default:
 		return e
 	}
@@ -90,6 +106,10 @@ type emailTakenError struct {
 type invalidEmailError struct {
 	Err error
 }
+type invalidLoginError struct {
+	Err error
+}
+type userNotFoundError struct{}
 
 func (e passwordMismatchError) Error() string {
 	return "Passwords do not match"
@@ -105,4 +125,12 @@ func (e emailTakenError) Error() string {
 
 func (e invalidEmailError) Error() string {
 	return "Email format is invalid"
+}
+
+func (e invalidLoginError) Error() string {
+	return "Invalid login"
+}
+
+func (e userNotFoundError) Error() string {
+	return "User not found"
 }

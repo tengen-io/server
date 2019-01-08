@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"github.com/graphql-go/graphql"
-	// "fmt"
 )
 
 func CreateSchema() (graphql.Schema, error) {
@@ -33,6 +32,30 @@ func CreateSchema() (graphql.Schema, error) {
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if user, ok := p.Source.(*User); ok {
 						return user.Email, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	})
+
+	tokenType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "AuthUser",
+		Fields: graphql.Fields{
+			"user": &graphql.Field{
+				Type: userType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if authUser, ok := p.Source.(*AuthUser); ok {
+						return authUser.User, nil
+					}
+					return nil, nil
+				},
+			},
+			"token": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if authUser, ok := p.Source.(*AuthUser); ok {
+						return authUser.Jwt, nil
 					}
 					return nil, nil
 				},
@@ -84,6 +107,38 @@ func CreateSchema() (graphql.Schema, error) {
 					password := p.Args["password"].(string)
 					passwordConfirm := p.Args["passwordConfirmation"].(string)
 					return CreateUser(db, username, email, password, passwordConfirm)
+				},
+			},
+
+			"logIn": &graphql.Field{
+				Type: tokenType,
+				Args: graphql.FieldConfigArgument{
+					"username": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"password": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					username := p.Args["username"].(string)
+					password := p.Args["password"].(string)
+					db := p.Context.Value("db").(*sql.DB)
+					user, err := CheckPw(db, username, password)
+
+					if err != nil {
+						return user, err
+					}
+
+					token, err := createToken(username)
+
+					if err != nil {
+						return user, err
+					}
+
+					authUser := &AuthUser{token, user}
+
+					return authUser, nil
 				},
 			},
 		},
