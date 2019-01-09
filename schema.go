@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "fmt"
 	"github.com/graphql-go/graphql"
 )
 
@@ -10,7 +11,7 @@ func CreateSchema() (graphql.Schema, error) {
 		Name: "User",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
-				Type: graphql.NewNonNull(graphql.String),
+				Type: graphql.NewNonNull(graphql.Int),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if user, ok := p.Source.(*User); ok {
 						return user.Id, nil
@@ -32,6 +33,72 @@ func CreateSchema() (graphql.Schema, error) {
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if user, ok := p.Source.(*User); ok {
 						return user.Email, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	})
+
+	playerType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "Player",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if player, ok := p.Source.(Player); ok {
+						return player.Id, nil
+					}
+					return nil, nil
+				},
+			},
+			"user": &graphql.Field{
+				Type: userType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if player, ok := p.Source.(Player); ok {
+						return player.User, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	})
+
+	gameType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "Game",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if game, ok := p.Source.(*Game); ok {
+						return game.Id, nil
+					}
+					return nil, nil
+				},
+			},
+			"status": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if game, ok := p.Source.(*Game); ok {
+						return game.Status, nil
+					}
+					return nil, nil
+				},
+			},
+			"playerTurnId": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if game, ok := p.Source.(*Game); ok {
+						return game.PlayerTurnId, nil
+					}
+					return nil, nil
+				},
+			},
+			"players": &graphql.Field{
+				Type: graphql.NewList(playerType),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if game, ok := p.Source.(*Game); ok {
+						return game.players, nil
 					}
 					return nil, nil
 				},
@@ -96,7 +163,7 @@ func CreateSchema() (graphql.Schema, error) {
 						return nil, err
 					}
 
-					return GetUser(db, claims.Username)
+					return GetUser(db, claims.UserId)
 				},
 			},
 		},
@@ -131,6 +198,28 @@ func CreateSchema() (graphql.Schema, error) {
 				},
 			},
 
+			"createGame": &graphql.Field{
+				Type: gameType,
+				Args: graphql.FieldConfigArgument{
+					"opponentId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					db := p.Context.Value("db").(*sql.DB)
+					token := p.Context.Value("token").(string)
+					opponentId := p.Args["opponentId"].(int)
+
+					claims, err := ValidateToken(token)
+
+					if err != nil {
+						return nil, err
+					}
+
+					return CreateGame(db, claims.UserId, opponentId)
+				},
+			},
+
 			"logIn": &graphql.Field{
 				Type: tokenType,
 				Args: graphql.FieldConfigArgument{
@@ -151,7 +240,7 @@ func CreateSchema() (graphql.Schema, error) {
 						return nil, err
 					}
 
-					token, err := GenerateToken(username)
+					token, err := GenerateToken(user.Id)
 
 					if err != nil {
 						return user, err

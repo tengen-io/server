@@ -6,7 +6,7 @@ import (
 )
 
 type MyCustomClaims struct {
-	Username string `json:"username"`
+	UserId int `json:"userId"`
 	jwt.StandardClaims
 }
 
@@ -16,10 +16,10 @@ func getKey() []byte {
 	return h.Sum([]byte("TODO: pull secret key from safe place"))
 }
 
-func GenerateToken(username string) (string, error) {
+func GenerateToken(userId int) (string, error) {
 	// Create the Claims
 	claims := MyCustomClaims{
-		username,
+		userId,
 		jwt.StandardClaims{
 			Issuer: "GoStop",
 		},

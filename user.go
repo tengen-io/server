@@ -5,8 +5,7 @@ type User struct {
 	Username          string `json:username`
 	Email             string `json:email`
 	encryptedPassword string
-	InsertedAt        string `json:insertedAt`
-	UpdatedAt         string `json: updatedAt`
+	Timestamps
 }
 
 type AuthUser struct {

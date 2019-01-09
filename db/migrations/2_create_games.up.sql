@@ -1,7 +1,7 @@
 CREATE TABLE games (
-    id bigint NOT NULL,
+    id bigint PRIMARY KEY,
     status character varying(255) NOT NULL,
-    player_turn_id integer,
+    player_turn_id character varying(255),
     inserted_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "fmt"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -12,8 +13,14 @@ func ConnectDB() (*sql.DB, error) {
 	return sql.Open("postgres", connStr)
 }
 
-func GetUser(db *sql.DB, username string) (*User, error) {
-	rows, _ := db.Query("SELECT * FROM users WHERE username = $1", username)
+func GetUser(db *sql.DB, identifier interface{}) (*User, error) {
+	var rows *sql.Rows
+	switch identifier.(type) {
+	case int:
+		rows, _ = db.Query("SELECT * FROM users WHERE id = $1", identifier)
+	case string:
+		rows, _ = db.Query("SELECT * FROM users WHERE username = $1", identifier)
+	}
 
 	users, err := parseUserRows(rows)
 
@@ -37,14 +44,71 @@ func CreateUser(db *sql.DB, username string, email string, password string, pass
 	}
 	time := pq.FormatTimestamp(time.Now())
 
-	_, err = db.Query("INSERT INTO users VALUES (nextval('users_id_seq'), $1, $2, $3, $4, $5)", username, email, pw, time, time)
+	rows, err := db.Query("INSERT INTO users VALUES (nextval('users_id_seq'), $1, $2, $3, $4, $5) RETURNING *", username, email, pw, time, time)
 	if err != nil {
 		return nil, handleError(err)
 	}
-
-	user, _ := GetUser(db, username)
+	users, _ := parseUserRows(rows)
+	user := &users[0]
 
 	return user, nil
+}
+
+func createPlayer(db *sql.DB, userId, gameId int, status, color string, time []byte) (*Player, error) {
+	rows, err := db.Query("INSERT INTO players VALUES (nextval('players_id_seq'), $1, $2, $3, $4, $5, $6, $7, $8) RETURNING *", userId, gameId, status, color, "{}", false, time, time)
+
+	if err != nil {
+		return nil, err
+	}
+
+	players, _ := parsePlayerRows(rows)
+
+	return &players[0], nil
+}
+
+func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	time := pq.FormatTimestamp(time.Now())
+
+	rows, err := db.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4) RETURNING *", "not-started", nil, time, time)
+
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	games, _ := parseGameRows(rows)
+	game := games[0]
+
+	player1, err := createPlayer(db, userId, game.Id, "active", "black", time)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	user, _ := GetUser(db, userId)
+	player1.User = user
+	player1.Game = &game
+
+	player2, err := createPlayer(db, opponentId, game.Id, "user-pending", "white", time)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	user, _ = GetUser(db, opponentId)
+	player2.User = user
+	player2.Game = &game
+
+	game.players = &[]Player{*player1, *player2}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &game, nil
 }
 
 func CheckPw(db *sql.DB, username string, password string) (*User, error) {
@@ -78,6 +142,48 @@ func parseUserRows(rows *sql.Rows) ([]User, error) {
 	}
 
 	return users, rows.Err()
+}
+
+func parseGameRows(rows *sql.Rows) ([]Game, error) {
+	defer rows.Close()
+
+	games := make([]Game, 0)
+	for rows.Next() {
+		var game Game
+		rows.Scan(
+			&game.Id,
+			&game.Status,
+			&game.PlayerTurnId,
+			&game.InsertedAt,
+			&game.UpdatedAt,
+		)
+		games = append(games, game)
+	}
+
+	return games, rows.Err()
+}
+
+func parsePlayerRows(rows *sql.Rows) ([]Player, error) {
+	defer rows.Close()
+
+	players := make([]Player, 0)
+	for rows.Next() {
+		var player Player
+		rows.Scan(
+			&player.Id,
+			&player.userId,
+			&player.gameId,
+			&player.Status,
+			&player.Color,
+			&player.Stats,
+			&player.HasPassed,
+			&player.InsertedAt,
+			&player.UpdatedAt,
+		)
+		players = append(players, player)
+	}
+
+	return players, rows.Err()
 }
 
 func handleError(e error) error {
