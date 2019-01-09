@@ -98,7 +98,7 @@ func CreateSchema() (graphql.Schema, error) {
 				Type: graphql.NewList(playerType),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if game, ok := p.Source.(*Game); ok {
-						return game.players, nil
+						return game.Players, nil
 					}
 					return nil, nil
 				},
@@ -164,6 +164,19 @@ func CreateSchema() (graphql.Schema, error) {
 					}
 
 					return GetUser(db, claims.UserId)
+				},
+			},
+
+			"game": &graphql.Field{
+				Type: gameType,
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					db := p.Context.Value("db").(*sql.DB)
+					return GetGame(db, p.Args["id"].(int))
 				},
 			},
 		},

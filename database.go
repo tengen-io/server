@@ -66,6 +66,34 @@ func createPlayer(db *sql.DB, userId, gameId int, status, color string, time []b
 	return &players[0], nil
 }
 
+func GetGame(db *sql.DB, gameId int) (*Game, error) {
+	rows, _ := db.Query("SELECT * from games where id = $1", gameId)
+	games, _ := parseGameRows(rows)
+	if len(games) == 0 {
+		return nil, gameNotFoundError{}
+	}
+	game := &games[0]
+
+	rows, _ = db.Query("SELECT * from players where game_id = $1", gameId)
+	players, _ := parsePlayerRows(rows)
+
+	// We save an extra query by getting both users
+	rows, _ = db.Query("SELECT DISTINCT users.* FROM users JOIN players P ON (P.game_id = $1)", gameId)
+	users, _ := parseUserRows(rows)
+
+	for i, player := range players {
+		for _, user := range users {
+			if player.userId == user.Id {
+				players[i].User = &user
+			}
+		}
+	}
+
+	game.Players = &players
+
+	return game, nil
+}
+
 func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 	tx, err := db.Begin()
 	if err != nil {
@@ -103,7 +131,7 @@ func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 	player2.User = user
 	player2.Game = &game
 
-	game.players = &[]Player{*player1, *player2}
+	game.Players = &[]Player{*player1, *player2}
 
 	if err := tx.Commit(); err != nil {
 		return nil, err
