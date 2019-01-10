@@ -2,15 +2,57 @@ package main
 
 import (
 	"database/sql"
-	_ "fmt"
+	"fmt"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
+	"io/ioutil"
+	"os"
 	"time"
 )
 
+func getSecret(fileName string) string {
+	file, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return ""
+	}
+
+	return string(file)
+}
+
 func ConnectDB() (*sql.DB, error) {
-	connStr := "user=postgres password=postgres dbname=go_stop_go"
-	return sql.Open("postgres", connStr)
+	dbName := os.Getenv("POSTGRES_DB")
+	if dbName == "" {
+		dbName = "go_stop_go"
+	}
+
+	user := os.Getenv("POSTGRES_USER")
+	if user == "" {
+		user = "postgres"
+	} else {
+		user = getSecret(user)
+	}
+
+	pw := os.Getenv("POSTGRES_PASSWORD")
+	if pw == "" {
+		pw = "postgres"
+	} else {
+		pw = getSecret(pw)
+	}
+
+	host := os.Getenv("POSTGRES_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+
+	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", user, pw, host, dbName)
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return nil, err
+	}
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 func CheckPw(db *sql.DB, username string, password string) (*User, error) {
