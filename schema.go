@@ -52,6 +52,33 @@ func CreateSchema() (graphql.Schema, error) {
 					return nil, nil
 				},
 			},
+			"status": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if player, ok := p.Source.(Player); ok {
+						return player.Status, nil
+					}
+					return nil, nil
+				},
+			},
+			"color": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if player, ok := p.Source.(Player); ok {
+						return player.Color, nil
+					}
+					return nil, nil
+				},
+			},
+			"hasPassed": &graphql.Field{
+				Type: graphql.Boolean,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if player, ok := p.Source.(Player); ok {
+						return player.HasPassed, nil
+					}
+					return nil, nil
+				},
+			},
 			"user": &graphql.Field{
 				Type: userType,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {

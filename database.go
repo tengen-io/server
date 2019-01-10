@@ -117,7 +117,6 @@ func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 
 	user, _ := GetUser(db, userId)
 	player1.User = user
-	player1.Game = game
 
 	player2, err := createPlayer(db, opponentId, game.Id, "user-pending", "white", time)
 	if err != nil {
@@ -127,7 +126,6 @@ func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 
 	user, _ = GetUser(db, opponentId)
 	player2.User = user
-	player2.Game = game
 
 	game.Players = []Player{*player1, *player2}
 

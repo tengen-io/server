@@ -13,7 +13,6 @@ type Player struct {
 	Stats     Stats  `json:stats`
 	HasPassed bool   `json:hasPassed`
 	User      *User
-	Game      *Game
 	Timestamps
 }
 
