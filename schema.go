@@ -179,6 +179,19 @@ func CreateSchema() (graphql.Schema, error) {
 					return GetGame(db, p.Args["id"].(int))
 				},
 			},
+
+			"games": &graphql.Field{
+				Type: graphql.NewList(gameType),
+				Args: graphql.FieldConfigArgument{
+					"userId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					db := p.Context.Value("db").(*sql.DB)
+					return GetGames(db, p.Args["userId"].(int))
+				},
+			},
 		},
 	})
 
