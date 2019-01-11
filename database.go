@@ -122,7 +122,7 @@ func GetGame(db *sql.DB, gameId int) (*Game, error) {
 }
 
 func GetGames(db *sql.DB, userId int) ([]*Game, error) {
-	rows, _ := db.Query("SELECT games.* FROM games JOIN players P ON P.user_id = $1", userId)
+	rows, _ := db.Query("SELECT DISTINCT games.* FROM games JOIN players P ON P.user_id = $1", userId)
 	games, _ := parseGameRows(rows)
 
 	gameRefs := make([]*Game, 0)
@@ -141,7 +141,7 @@ func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 	}
 	time := pq.FormatTimestamp(time.Now())
 
-	rows, err := db.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4) RETURNING *", "not-started", nil, time, time)
+	rows, err := tx.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4) RETURNING *", "not-started", nil, time, time)
 
 	if err != nil {
 		_ = tx.Rollback()
@@ -151,7 +151,7 @@ func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 	games, _ := parseGameRows(rows)
 	game := &games[0]
 
-	player1, err := createPlayer(db, userId, game.Id, "active", "black", time)
+	player1, err := createPlayer(tx, userId, game.Id, "active", "black", time)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -160,7 +160,7 @@ func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 	user, _ := GetUser(db, userId)
 	player1.User = user
 
-	player2, err := createPlayer(db, opponentId, game.Id, "user-pending", "white", time)
+	player2, err := createPlayer(tx, opponentId, game.Id, "user-pending", "white", time)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -177,8 +177,8 @@ func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 	return game, nil
 }
 
-func createPlayer(db *sql.DB, userId, gameId int, status, color string, time []byte) (*Player, error) {
-	rows, err := db.Query("INSERT INTO players VALUES (nextval('players_id_seq'), $1, $2, $3, $4, $5, $6, $7, $8) RETURNING *", userId, gameId, status, color, "{}", false, time, time)
+func createPlayer(tx *sql.Tx, userId, gameId int, status, color string, time []byte) (*Player, error) {
+	rows, err := tx.Query("INSERT INTO players VALUES (nextval('players_id_seq'), $1, $2, $3, $4, $5, $6, $7, $8) RETURNING *", userId, gameId, status, color, "{}", false, time, time)
 
 	if err != nil {
 		return nil, HandleError(err)

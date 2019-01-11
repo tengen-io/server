@@ -260,7 +260,12 @@ func CreateSchema() (graphql.Schema, error) {
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					db := p.Context.Value("db").(*sql.DB)
-					token := p.Context.Value("token").(string)
+					token, ok := p.Context.Value("token").(string)
+
+					if !ok {
+						return nil, invalidTokenError{}
+					}
+
 					opponentId := p.Args["opponentId"].(int)
 
 					claims, err := ValidateToken(token)
@@ -316,7 +321,12 @@ func CreateSchema() (graphql.Schema, error) {
 }
 
 type missingTokenError struct{}
+type invalidTokenError struct{}
 
 func (e missingTokenError) Error() string {
 	return "Missing Authorization header"
+}
+
+func (e invalidTokenError) Error() string {
+	return "Auth token invalid"
 }
