@@ -141,40 +141,100 @@ func CreateGame(db *sql.DB, userId, opponentId int) (*Game, error) {
 	}
 	time := pq.FormatTimestamp(time.Now())
 
+	// Create Game
 	rows, err := tx.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4) RETURNING *", "not-started", nil, time, time)
-
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
-
 	games, _ := parseGameRows(rows)
 	game := &games[0]
 
+	// Create Player 1 (inviter)
 	player1, err := createPlayer(tx, userId, game.Id, "active", "black", time)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
-
 	user, _ := GetUser(db, userId)
 	player1.User = user
 
+	// Create Player 2 (invitee)
 	player2, err := createPlayer(tx, opponentId, game.Id, "user-pending", "white", time)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
-
 	user, _ = GetUser(db, opponentId)
 	player2.User = user
 
 	game.Players = []Player{*player1, *player2}
 
+	rows, err = tx.Query("UPDATE games SET player_turn_id = $1 where id = $2", player1.Id, game.Id)
+
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 	return game, nil
+}
+
+func Pass(db *sql.DB, userId, gameId int) (*Game, error) {
+	user, _ := GetUser(db, userId)
+	game, err := GetGame(db, gameId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateTurn(game, user.Id); err != nil {
+		return nil, err
+	}
+
+	var otherPlayer Player
+	for _, player := range game.Players {
+		if player.userId != user.Id {
+			otherPlayer = player
+		}
+	}
+
+	time := pq.FormatTimestamp(time.Now())
+
+	rows, err := db.Query("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", otherPlayer.Id, time, game.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	games, _ := parseGameRows(rows)
+	game = &games[0]
+
+	buildGame(db, game)
+
+	return game, nil
+}
+
+func validateTurn(game *Game, userId int) error {
+	var player *Player
+	for _, p := range game.Players {
+		if p.userId == userId {
+			player = &p
+		}
+	}
+
+	if player == nil {
+		return userNotInGameError{}
+	}
+
+	if player.Id != game.PlayerTurnId {
+		return wrongTurnError{}
+	}
+
+	return nil
 }
 
 func createPlayer(tx *sql.Tx, userId, gameId int, status, color string, time []byte) (*Player, error) {

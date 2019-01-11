@@ -278,6 +278,32 @@ func CreateSchema() (graphql.Schema, error) {
 				},
 			},
 
+			"pass": &graphql.Field{
+				Type: gameType,
+				Args: graphql.FieldConfigArgument{
+					"gameId": &graphql.ArgumentConfig{
+						Type: graphql.Int,
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					db := p.Context.Value("db").(*sql.DB)
+					token, ok := p.Context.Value("token").(string)
+
+					if !ok {
+						return nil, invalidTokenError{}
+					}
+					gameId := p.Args["gameId"].(int)
+
+					claims, err := ValidateToken(token)
+
+					if err != nil {
+						return nil, err
+					}
+
+					return Pass(db, claims.UserId, gameId)
+				},
+			},
+
 			"logIn": &graphql.Field{
 				Type: tokenType,
 				Args: graphql.FieldConfigArgument{
