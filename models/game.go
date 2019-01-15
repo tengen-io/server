@@ -117,39 +117,64 @@ func (db *DB) Pass(userId, gameId int) (*Game, error) {
     }
 
     var otherPlayer Player
-    for _, player := range game.Players {
+    var currentPlayer Player
+    for i, player := range game.Players {
         if player.userId != user.Id {
-            otherPlayer = player
+            otherPlayer = game.Players[i]
+        } else {
+            currentPlayer = game.Players[i]
         }
     }
 
     time := pq.FormatTimestamp(time.Now())
 
-    var rows *sql.Rows
     if otherPlayer.HasPassed {
-        rows, err = db.Query("UPDATE games SET (status, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", "complete", time, game.Id)
-    } else {
         tx, _ := db.Begin()
-        rows, err = tx.Query("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", true, time, game.Id)
+        _, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", true, time, currentPlayer.Id)
+        if err != nil {
+            _ = tx.Rollback()
+            return nil, err
+        }
+        rows, err := tx.Query("UPDATE games SET (status, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", "complete", time, game.Id)
+
         if err != nil {
             return nil, err
         }
-        rows, err = tx.Query("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", otherPlayer.Id, time, game.Id)
-        if err != nil {
-            return nil, err
-        }
+
+        games, _ := parseGameRows(rows)
+        game = &games[0]
+
+        buildGame(db, game)
 
         if err := tx.Commit(); err != nil {
             return nil, err
         }
+
+        return game, nil
+    } else {
+        tx, _ := db.Begin()
+        _, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", true, time, currentPlayer.Id)
+        if err != nil {
+            _ = tx.Rollback()
+            return nil, err
+        }
+        rows, err := tx.Query("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", otherPlayer.Id, time, game.Id)
+        if err != nil {
+            _ = tx.Rollback()
+            return nil, err
+        }
+
+        games, _ := parseGameRows(rows)
+        game = &games[0]
+
+        buildGame(db, game)
+
+        if err := tx.Commit(); err != nil {
+            return nil, err
+        }
+
+        return game, nil
     }
-
-    games, _ := parseGameRows(rows)
-    game = &games[0]
-
-    buildGame(db, game)
-
-    return game, nil
 }
 
 func validateGame(game *Game) error {

@@ -85,26 +85,3 @@ func (db *DB) CheckPw(username, password string) (*User, error) {
 	err = bcrypt.CompareHashAndPassword(userPassword, inputPassword)
 	return user, HandleError(err)
 }
-
-func parsePlayerRows(rows *sql.Rows) ([]Player, error) {
-	defer rows.Close()
-
-	players := make([]Player, 0)
-	for rows.Next() {
-		var player Player
-		rows.Scan(
-			&player.Id,
-			&player.userId,
-			&player.gameId,
-			&player.Status,
-			&player.Color,
-			&player.Stats,
-			&player.HasPassed,
-			&player.InsertedAt,
-			&player.UpdatedAt,
-		)
-		players = append(players, player)
-	}
-
-	return players, rows.Err()
-}
