@@ -17,7 +17,7 @@ type Database interface {
 	GetGame(gameId int) (*Game, error)
 	GetGames(userId int) ([]*Game, error)
 	CreateGame(userId, opponentId int) (*Game, error)
-	Pass(userId, gameId int) (*Game, error)
+	Pass(userId int, game *Game) (*Game, error)
 }
 
 func getSecret(fileName string) string {

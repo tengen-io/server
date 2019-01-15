@@ -7,7 +7,6 @@ import (
     "time"
 )
 
-
 type Game struct {
 	Id           int    `json:id`
 	Status       string `json:status`
@@ -100,26 +99,11 @@ func (db *DB) CreateGame(userId, opponentId int) (*Game, error) {
 
 // Pass is a game action where a player decides that they cannot make a
 // move on their turn. If both players pass, the game ends.
-func (db *DB) Pass(userId, gameId int) (*Game, error) {
-    user, _ := db.GetUser(userId)
-    game, err := db.GetGame(gameId)
-
-    if err != nil {
-        return nil, err
-    }
-
-    if err := validateGame(game); err != nil {
-        return nil, err
-    }
-
-    if err := validateTurn(game, user.Id); err != nil {
-        return nil, err
-    }
-
+func (db *DB) Pass(userId int, game *Game) (*Game, error) {
     var otherPlayer Player
     var currentPlayer Player
     for i, player := range game.Players {
-        if player.userId != user.Id {
+        if player.UserId != userId {
             otherPlayer = game.Players[i]
         } else {
             currentPlayer = game.Players[i]
@@ -177,35 +161,6 @@ func (db *DB) Pass(userId, gameId int) (*Game, error) {
     }
 }
 
-func validateGame(game *Game) error {
-    if game.Status == "complete" {
-        return gameCompleteError{}
-    } else if game.Status == "not-started" {
-        return gameNotStartedError{}
-    } else {
-        return nil
-    }
-}
-
-func validateTurn(game *Game, userId int) error {
-    var player *Player
-    for i, p := range game.Players {
-        if p.userId == userId {
-            player = &game.Players[i]
-        }
-    }
-
-    if player == nil {
-        return userNotInGameError{}
-    }
-
-    if player.Id != game.PlayerTurnId {
-        return wrongTurnError{}
-    }
-
-    return nil
-}
-
 func buildGame(db *DB, game *Game) error {
     rows, _ := db.Query("SELECT * from players where game_id = $1", game.Id)
     players, _ := parsePlayerRows(rows)
@@ -216,7 +171,7 @@ func buildGame(db *DB, game *Game) error {
 
     for i, player := range players {
         for j, user := range users {
-            if player.userId == user.Id {
+            if player.UserId == user.Id {
                 players[i].User = &users[j]
             }
         }

@@ -1,4 +1,4 @@
-package main
+package resolvers
 
 import (
 	"crypto/sha256"

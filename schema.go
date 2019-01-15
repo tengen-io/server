@@ -3,6 +3,7 @@ package main
 import (
 	_ "fmt"
 	"github.com/camirmas/go_stop/models"
+	"github.com/camirmas/go_stop/resolvers"
 	"github.com/graphql-go/graphql"
 )
 
@@ -167,31 +168,12 @@ func CreateSchema() (graphql.Schema, error) {
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					db := p.Context.Value("db").(models.Database)
-					return db.GetUser(p.Args["username"].(string))
-				},
+				Resolve: resolvers.GetUser,
 			},
 
 			"currentUser": &graphql.Field{
-				Type: userType,
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					db := p.Context.Value("db").(models.Database)
-
-					token, ok := p.Context.Value("token").(string)
-
-					if !ok {
-						return nil, missingTokenError{}
-					}
-
-					claims, err := ValidateToken(token)
-
-					if err != nil {
-						return nil, err
-					}
-
-					return db.GetUser(claims.UserId)
-				},
+				Type:    userType,
+				Resolve: resolvers.CurrentUser,
 			},
 
 			"game": &graphql.Field{
@@ -201,10 +183,7 @@ func CreateSchema() (graphql.Schema, error) {
 						Type: graphql.NewNonNull(graphql.Int),
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					db := p.Context.Value("db").(models.Database)
-					return db.GetGame(p.Args["id"].(int))
-				},
+				Resolve: resolvers.GetGame,
 			},
 
 			"games": &graphql.Field{
@@ -214,10 +193,7 @@ func CreateSchema() (graphql.Schema, error) {
 						Type: graphql.NewNonNull(graphql.Int),
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					db := p.Context.Value("db").(models.Database)
-					return db.GetGames(p.Args["userId"].(int))
-				},
+				Resolve: resolvers.GetGames,
 			},
 		},
 	})
@@ -241,23 +217,7 @@ func CreateSchema() (graphql.Schema, error) {
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					db := p.Context.Value("db").(models.Database)
-					username := p.Args["username"].(string)
-					email := p.Args["email"].(string)
-					password := p.Args["password"].(string)
-					passwordConfirm := p.Args["passwordConfirmation"].(string)
-
-					user, err := db.CreateUser(username, email, password, passwordConfirm)
-
-					if err != nil {
-						return nil, err
-					}
-
-					token, err := GenerateToken(user.Id)
-
-					return &models.AuthUser{token, user}, nil
-				},
+				Resolve: resolvers.CreateUser,
 			},
 
 			"createGame": &graphql.Field{
@@ -267,24 +227,7 @@ func CreateSchema() (graphql.Schema, error) {
 						Type: graphql.NewNonNull(graphql.Int),
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					db := p.Context.Value("db").(models.Database)
-					token, ok := p.Context.Value("token").(string)
-
-					if !ok {
-						return nil, invalidTokenError{}
-					}
-
-					opponentId := p.Args["opponentId"].(int)
-
-					claims, err := ValidateToken(token)
-
-					if err != nil {
-						return nil, err
-					}
-
-					return db.CreateGame(claims.UserId, opponentId)
-				},
+				Resolve: resolvers.CreateGame,
 			},
 
 			"pass": &graphql.Field{
@@ -294,23 +237,7 @@ func CreateSchema() (graphql.Schema, error) {
 						Type: graphql.Int,
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					db := p.Context.Value("db").(models.Database)
-					token, ok := p.Context.Value("token").(string)
-
-					if !ok {
-						return nil, invalidTokenError{}
-					}
-					gameId := p.Args["gameId"].(int)
-
-					claims, err := ValidateToken(token)
-
-					if err != nil {
-						return nil, err
-					}
-
-					return db.Pass(claims.UserId, gameId)
-				},
+				Resolve: resolvers.Pass,
 			},
 
 			"logIn": &graphql.Field{
@@ -323,26 +250,7 @@ func CreateSchema() (graphql.Schema, error) {
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					username := p.Args["username"].(string)
-					password := p.Args["password"].(string)
-					db := p.Context.Value("db").(models.Database)
-					user, err := db.CheckPw(username, password)
-
-					if err != nil {
-						return nil, err
-					}
-
-					token, err := GenerateToken(user.Id)
-
-					if err != nil {
-						return user, err
-					}
-
-					authUser := &models.AuthUser{token, user}
-
-					return authUser, nil
-				},
+				Resolve: resolvers.LogIn,
 			},
 		},
 	})

@@ -7,8 +7,8 @@ import (
 
 type PlayerParsed struct {
 	Id        int    `json:id`
-	userId    int    `json:userId`
-	gameId    int    `json:gameId`
+	UserId    int    `json:userId`
+	GameId    int    `json:gameId`
 	Status    string `json:status`
 	Color     string `json:color`
 	Stats     string  `json:stats`
@@ -46,8 +46,8 @@ func parsePlayerRows(rows *sql.Rows) ([]Player, error) {
 		var player PlayerParsed
 		rows.Scan(
 			&player.Id,
-			&player.userId,
-			&player.gameId,
+			&player.UserId,
+			&player.GameId,
 			&player.Status,
 			&player.Color,
 			&player.Stats,
