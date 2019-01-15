@@ -5,8 +5,8 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	_ "fmt"
+	"github.com/camirmas/go_stop/models"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 	"log"
@@ -15,12 +15,12 @@ import (
 )
 
 type Server struct {
-	db     *sql.DB
+	db     models.Database
 	schema *graphql.Schema
 }
 
 func (s *Server) Start() {
-	db, err := ConnectDB()
+	db, err := models.ConnectDB()
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -48,7 +48,7 @@ func (s *Server) Start() {
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
-func applyMiddlewares(db *sql.DB, next *handler.Handler) http.Handler {
+func applyMiddlewares(db models.Database, next *handler.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), "db", db)
 		ctx = authHandler(ctx, r)

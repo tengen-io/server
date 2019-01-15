@@ -1,4 +1,4 @@
-package main
+package models
 
 func HandleError(e error) error {
 	if e == nil {
@@ -38,6 +38,8 @@ type userNotFoundError struct{}
 type gameNotFoundError struct{}
 type userNotInGameError struct{}
 type wrongTurnError struct{}
+type gameCompleteError struct{}
+type gameNotStartedError struct{}
 
 func (e passwordMismatchError) Error() string {
 	return "Passwords do not match"
@@ -73,4 +75,12 @@ func (e userNotInGameError) Error() string {
 
 func (e wrongTurnError) Error() string {
 	return "User must wait for turn"
+}
+
+func (e gameCompleteError) Error() string {
+	return "Game has already finished"
+}
+
+func (e gameNotStartedError) Error() string {
+	return "Game has not yet started"
 }

@@ -45,3 +45,14 @@ func ValidateToken(tokenString string) (*MyCustomClaims, error) {
 
 	return token.Claims.(*MyCustomClaims), nil
 }
+
+type missingTokenError struct{}
+type invalidTokenError struct{}
+
+func (e missingTokenError) Error() string {
+	return "Missing Authorization header"
+}
+
+func (e invalidTokenError) Error() string {
+	return "Auth token invalid"
+}
