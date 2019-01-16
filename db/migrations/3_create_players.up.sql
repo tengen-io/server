@@ -4,7 +4,7 @@ CREATE TABLE players (
     game_id bigint REFERENCES games,
     status character varying(255) NOT NULL,
     color character varying(255) NOT NULL,
-    stats jsonb,
+    stats json,
     has_passed boolean DEFAULT false,
     inserted_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL

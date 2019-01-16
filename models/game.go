@@ -5,12 +5,14 @@ import (
     _ "fmt"
     "github.com/lib/pq"
     "time"
+    "encoding/json"
 )
 
 type Game struct {
-	Id           int    `json:id`
-	Status       string `json:status`
-	PlayerTurnId int    `json:playerTurnId`
+	Id           int
+	Status       string
+	PlayerTurnId int
+    Board *Board
 	Players      []Player
 	Timestamps
 }
@@ -52,8 +54,11 @@ func (db *DB) CreateGame(userId, opponentId int) (*Game, error) {
     }
     time := pq.FormatTimestamp(time.Now())
 
+    board := Board{Size: SmallBoardSize, Stones: []Stone{}}
+    encodedBoard, err := json.Marshal(board)
+
     // Create Game
-    rows, err := tx.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4) RETURNING *", "not-started", nil, time, time)
+    rows, err := tx.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4, $5) RETURNING *", "not-started", nil, encodedBoard, time, time)
     if err != nil {
         _ = tx.Rollback()
         return nil, err
@@ -192,6 +197,7 @@ func parseGameRows(rows *sql.Rows) ([]Game, error) {
             &game.Id,
             &game.Status,
             &game.PlayerTurnId,
+            &game.Board,
             &game.InsertedAt,
             &game.UpdatedAt,
         )

@@ -8,17 +8,17 @@ import (
 )
 
 type User struct {
-	Id                int    `json:id`
-	Username          string `json:username`
-	Email             string `json:email`
+	Id                int
+	Username          string
+	Email             string
 	encryptedPassword string
 	Games             []Game
 	Timestamps
 }
 
 type AuthUser struct {
-	Jwt  string `json:token`
-	User *User  `json:user`
+	Jwt  string
+	User *User
 }
 
 func (db *DB) GetUser(identifier interface{}) (*User, error) {

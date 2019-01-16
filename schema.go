@@ -92,6 +92,63 @@ func CreateSchema() (graphql.Schema, error) {
 		},
 	})
 
+	stoneType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "Stone",
+		Fields: graphql.Fields{
+			"x": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if stone, ok := p.Source.(models.Stone); ok {
+						return stone.X, nil
+					}
+					return nil, nil
+				},
+			},
+			"y": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if stone, ok := p.Source.(models.Stone); ok {
+						return stone.Y, nil
+					}
+					return nil, nil
+				},
+			},
+			"color": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if stone, ok := p.Source.(models.Stone); ok {
+						return stone.Color, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	})
+
+	boardType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "Board",
+		Fields: graphql.Fields{
+			"size": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if board, ok := p.Source.(*models.Board); ok {
+						return board.Size, nil
+					}
+					return nil, nil
+				},
+			},
+			"stones": &graphql.Field{
+				Type: graphql.NewList(stoneType),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if board, ok := p.Source.(*models.Board); ok {
+						return board.Stones, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	})
+
 	gameType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Game",
 		Fields: graphql.Fields{
@@ -127,6 +184,15 @@ func CreateSchema() (graphql.Schema, error) {
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if game, ok := p.Source.(*models.Game); ok {
 						return game.Players, nil
+					}
+					return nil, nil
+				},
+			},
+			"board": &graphql.Field{
+				Type: boardType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if game, ok := p.Source.(*models.Game); ok {
+						return game.Board, nil
 					}
 					return nil, nil
 				},

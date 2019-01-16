@@ -3,27 +3,35 @@ package models
 import (
 	"time"
     "database/sql"
+    "encoding/json"
 )
 
-type PlayerParsed struct {
-	Id        int    `json:id`
-	UserId    int    `json:userId`
-	GameId    int    `json:gameId`
-	Status    string `json:status`
-	Color     string `json:color`
-	Stats     string  `json:stats`
-	HasPassed bool   `json:hasPassed`
+type Player struct {
+	Id        int
+	UserId    int
+	GameId    int
+	Status    string
+	Color     string
+	Stats     Stats
+	HasPassed bool
+	User *User
 	Timestamps
 }
 
-type Player struct {
-	User      *User
-	PlayerParsed
+type Stats struct {}
+
+func (stats *Stats) Scan(src interface{}) error {
+    err := json.Unmarshal(src.([]byte), stats)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }
 
 type Timestamps struct {
-	InsertedAt time.Time `json:insertedAt`
-	UpdatedAt  time.Time `json:updatedAt`
+	InsertedAt time.Time
+	UpdatedAt  time.Time
 }
 
 func createPlayer(tx *sql.Tx, userId, gameId int, status, color string, time []byte) (*Player, error) {
@@ -43,7 +51,7 @@ func parsePlayerRows(rows *sql.Rows) ([]Player, error) {
 
 	players := make([]Player, 0)
 	for rows.Next() {
-		var player PlayerParsed
+		var player Player
 		rows.Scan(
 			&player.Id,
 			&player.UserId,
@@ -55,7 +63,7 @@ func parsePlayerRows(rows *sql.Rows) ([]Player, error) {
 			&player.InsertedAt,
 			&player.UpdatedAt,
 		)
-		players = append(players, Player{&User{}, player})
+		players = append(players, player)
 	}
 
 	return players, rows.Err()
