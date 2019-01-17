@@ -2,6 +2,7 @@ package resolvers
 
 import (
     "github.com/camirmas/go_stop/models"
+    "github.com/camirmas/go_stop/rules"
     "github.com/graphql-go/graphql"
 )
 
@@ -64,7 +65,56 @@ func Pass(p graphql.ResolveParams) (interface{}, error) {
         return nil, err
     }
 
-    return db.Pass(claims.UserId, game)
+    return db.Pass(user.Id, game)
+}
+
+func AddStone(p graphql.ResolveParams) (interface{}, error) {
+    db := p.Context.Value("db").(models.Database)
+    token, ok := p.Context.Value("token").(string)
+
+    if !ok {
+        return nil, invalidTokenError{}
+    }
+    gameId := p.Args["gameId"].(int)
+
+    claims, err := ValidateToken(token)
+
+    if err != nil {
+        return nil, err
+    }
+
+    user, _ := db.GetUser(claims.UserId)
+    game, err := db.GetGame(gameId)
+
+    if err != nil {
+        return nil, err
+    }
+
+    if err := validateGame(game); err != nil {
+        return nil, err
+    }
+
+    if err := validateTurn(game, user.Id); err != nil {
+        return nil, err
+    }
+
+    var currentPlayer models.Player
+    for i, player := range game.Players {
+        if player.UserId == user.Id {
+            currentPlayer = game.Players[i]
+        }
+    }
+
+    x := p.Args["x"].(int)
+    y := p.Args["y"].(int)
+
+    stone := models.Stone{x, y, currentPlayer.Color}
+
+    // TODO: update game depending on rules evaluation
+    rules.Run(game.Board, stone)
+    // db.AddStone(user.Id, game)
+
+    return game, nil
 }
 
 func validateGame(game *models.Game) error {

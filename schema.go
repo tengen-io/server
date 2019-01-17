@@ -318,6 +318,22 @@ func CreateSchema() (graphql.Schema, error) {
 				},
 				Resolve: resolvers.LogIn,
 			},
+
+			"addStone": &graphql.Field{
+				Type: gameType,
+				Args: graphql.FieldConfigArgument{
+					"gameId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+					"x": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+					"y": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: resolvers.AddStone,
+			},
 		},
 	})
 
