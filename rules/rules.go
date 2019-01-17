@@ -1,8 +1,10 @@
 package rules
 
 import (
+	_ "fmt"
 	"github.com/camirmas/go_stop/models"
-	// "fmt"
+	"reflect"
+	"sort"
 )
 
 // A String is a chain of Stones on a Go Board. A string is defined as any
@@ -11,6 +13,7 @@ type String []models.Stone
 
 func Run(board *models.Board, stone models.Stone) ([]String, error) {
 	strings := getStrings(board)
+
 	toRemove := make([]String, 0)
 
 	for _, str := range strings {
@@ -46,8 +49,21 @@ func getStrings(board *models.Board) []String {
 	strings := make([]String, 0)
 
 	for _, stone := range board.Stones {
-		str := getString(board, stone)
-		strings = append(strings, str)
+		newString := getString(board, stone)
+
+		sort.Slice(newString, func(i, j int) bool {
+			if newString[i].Y < newString[j].Y {
+				return true
+			}
+			if newString[i].Y > newString[j].Y {
+				return false
+			}
+			return newString[i].X < newString[j].X
+		})
+
+		if !containsString(strings, newString) {
+			strings = append(strings, newString)
+		}
 	}
 
 	return strings
@@ -116,7 +132,16 @@ func find(stones []models.Stone, stone models.Stone) *models.Stone {
 
 func contains(list []models.Stone, item models.Stone) bool {
 	for _, v := range list {
-		if v == item {
+		if reflect.DeepEqual(v, item) {
+			return true
+		}
+	}
+	return false
+}
+
+func containsString(strings []String, str String) bool {
+	for _, s := range strings {
+		if reflect.DeepEqual(s, str) {
 			return true
 		}
 	}

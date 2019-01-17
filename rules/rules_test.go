@@ -3,11 +3,13 @@ package rules
 import (
 	"github.com/camirmas/go_stop/models"
 	"testing"
+	_ "fmt"
 )
 
 func TestRules(t *testing.T) {
 	t.Run("Running the rules", func(t *testing.T) {
 		t.Run("with basic liberties", testBasicLiberties)
+		t.Run("with strings", testStrings)
 	})
 }
 
@@ -45,5 +47,64 @@ func testBasicLiberties(t *testing.T) {
 				t.Errorf("Expected removed String to be %v, found %v", e[j], stone)
 			}
 		}
+	}
+}
+
+func testStrings(t *testing.T) {
+	// Example: String of white stones surrounded by enemy stones
+	b1 := models.Stone{X: 1, Y: 0, Color: "black"}
+	b2 := models.Stone{X: 2, Y: 0, Color: "black"}
+	b3 := models.Stone{X: 3, Y: 0, Color: "black"}
+	b4 := models.Stone{X: 4, Y: 1, Color: "black"}
+	b5 := models.Stone{X: 4, Y: 2, Color: "black"}
+	b6 := models.Stone{X: 3, Y: 3, Color: "black"}
+	b7 := models.Stone{X: 2, Y: 2, Color: "black"}
+	b8 := models.Stone{X: 0, Y: 1, Color: "black"}
+	b9 := models.Stone{X: 0, Y: 2, Color: "black"}
+	b10 := models.Stone{X: 0, Y: 3, Color: "black"}
+	b11 := models.Stone{X: 1, Y: 4, Color: "black"}
+	b12 := models.Stone{X: 2, Y: 4, Color: "black"}
+
+	w1 := models.Stone{X: 1, Y: 1, Color: "white"}
+	w2 := models.Stone{X: 2, Y: 1, Color: "white"}
+	w3 := models.Stone{X: 3, Y: 1, Color: "white"}
+	w4 := models.Stone{X: 3, Y: 2, Color: "white"}
+	w5 := models.Stone{X: 2, Y: 3, Color: "white"}
+	w6 := models.Stone{X: 1, Y: 3, Color: "white"}
+	w7 := models.Stone{X: 1, Y: 2, Color: "white"}
+
+	b := &models.Board{
+		Size: models.SmallBoardSize,
+		Stones: []models.Stone{
+			b1,
+			b2,
+			b3,
+			b4,
+			b5,
+			b6,
+			b7,
+			b8,
+			b9,
+			b10,
+			b11,
+			b12,
+			w1,
+			w2,
+			w3,
+			w4,
+			w5,
+			w6,
+			w7,
+		},
+	}
+
+	strings, _ := Run(b, b7)
+
+	if len(strings) != 1 {
+		t.Errorf("Expected 1 Strings, found %d", len(strings))
+	}
+
+	if len(strings[0]) != 7 {
+		t.Errorf("Expected 7 Stones in String, found %d", len(strings[0]))
 	}
 }
