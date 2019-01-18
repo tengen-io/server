@@ -17,13 +17,24 @@ func Run(board *models.Board, stone models.Stone) ([]String, error) {
 	toRemove := make([]String, 0)
 
 	for _, str := range strings {
-		if !contains(str, stone) {
-			_, numLiberties := findLiberties(board, str)
+		_, numLiberties := findLiberties(board, str)
 
-			if numLiberties == 0 {
-				toRemove = append(toRemove, str)
+		if numLiberties == 0 {
+			toRemove = append(toRemove, str)
+		}
+	}
+
+	if len(toRemove) == 1 && contains(toRemove[0], stone) {
+		return []String{}, selfCaptureError{}
+	}
+	if len(toRemove) > 1 {
+		var updatedRemove []String
+		for _, str := range toRemove {
+			if !contains(str, stone) {
+				updatedRemove = append(updatedRemove, str)
 			}
 		}
+		toRemove = updatedRemove
 	}
 
 	return toRemove, nil
@@ -146,4 +157,10 @@ func containsString(strings []String, str String) bool {
 		}
 	}
 	return false
+}
+
+type selfCaptureError struct{}
+
+func (e selfCaptureError) Error() string {
+	return "Move is suicidal"
 }

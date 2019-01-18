@@ -1,15 +1,17 @@
 package rules
 
 import (
+	_ "fmt"
 	"github.com/camirmas/go_stop/models"
 	"testing"
-	_ "fmt"
 )
 
 func TestRules(t *testing.T) {
 	t.Run("Running the rules", func(t *testing.T) {
 		t.Run("with basic liberties", testBasicLiberties)
 		t.Run("with strings", testStrings)
+		t.Run("self-capture violation", testSelfCaptureViolation)
+		t.Run("valid self-capture", testValidSelfCapture)
 	})
 }
 
@@ -101,10 +103,107 @@ func testStrings(t *testing.T) {
 	strings, _ := Run(b, b7)
 
 	if len(strings) != 1 {
-		t.Errorf("Expected 1 Strings, found %d", len(strings))
+		t.Errorf("Expected 1 String, found %d", len(strings))
 	}
 
 	if len(strings[0]) != 7 {
 		t.Errorf("Expected 7 Stones in String, found %d", len(strings[0]))
+	}
+}
+
+func testSelfCaptureViolation(t *testing.T) {
+	b1 := models.Stone{X: 0, Y: 0, Color: "black"}
+	b2 := models.Stone{X: 1, Y: 0, Color: "black"}
+	b3 := models.Stone{X: 2, Y: 0, Color: "black"}
+	b4 := models.Stone{X: 0, Y: 1, Color: "black"}
+	b5 := models.Stone{X: 0, Y: 2, Color: "black"}
+	b6 := models.Stone{X: 0, Y: 3, Color: "black"}
+	b7 := models.Stone{X: 1, Y: 2, Color: "black"}
+	b8 := models.Stone{X: 2, Y: 1, Color: "black"}
+	b9 := models.Stone{X: 2, Y: 2, Color: "black"}
+
+	w1 := models.Stone{X: 1, Y: 1, Color: "white"}
+
+	b := &models.Board{
+		Size: models.SmallBoardSize,
+		Stones: []models.Stone{
+			b1,
+			b2,
+			b3,
+			b4,
+			b5,
+			b6,
+			b7,
+			b8,
+			b9,
+			w1,
+		},
+	}
+
+	_, err := Run(b, w1)
+
+	expectedErr := selfCaptureError{}
+	if err.Error() != expectedErr.Error() {
+		t.Error("Expected selfCaptureError")
+	}
+}
+
+func testValidSelfCapture(t *testing.T) {
+	b1 := models.Stone{X: 1, Y: 0, Color: "black"}
+	b2 := models.Stone{X: 1, Y: 1, Color: "black"}
+	b3 := models.Stone{X: 1, Y: 2, Color: "black"}
+	b4 := models.Stone{X: 2, Y: 2, Color: "black"}
+	b5 := models.Stone{X: 3, Y: 2, Color: "black"}
+	b6 := models.Stone{X: 3, Y: 1, Color: "black"}
+	b7 := models.Stone{X: 3, Y: 0, Color: "black"}
+
+	w1 := models.Stone{X: 0, Y: 0, Color: "white"}
+	w2 := models.Stone{X: 0, Y: 1, Color: "white"}
+	w3 := models.Stone{X: 0, Y: 2, Color: "white"}
+	w4 := models.Stone{X: 1, Y: 3, Color: "white"}
+	w5 := models.Stone{X: 2, Y: 3, Color: "white"}
+	w6 := models.Stone{X: 3, Y: 3, Color: "white"}
+	w7 := models.Stone{X: 4, Y: 2, Color: "white"}
+	w8 := models.Stone{X: 4, Y: 1, Color: "white"}
+	w9 := models.Stone{X: 4, Y: 0, Color: "white"}
+	w10 := models.Stone{X: 2, Y: 1, Color: "white"}
+	w11 := models.Stone{X: 2, Y: 0, Color: "white"}
+
+	b := &models.Board{
+		Size: models.SmallBoardSize,
+		Stones: []models.Stone{
+			b1,
+			b2,
+			b3,
+			b4,
+			b5,
+			b6,
+			b7,
+			w1,
+			w2,
+			w3,
+			w4,
+			w5,
+			w6,
+			w7,
+			w8,
+			w9,
+			w10,
+			w11,
+		},
+	}
+
+	strings, err := Run(b, w11)
+
+	if err != nil {
+		t.Errorf("Expected 1 String, got error: %s", err.Error())
+	}
+
+	if len(strings) != 1 {
+		t.Errorf("Expected 1 String, got %d", len(strings))
+	}
+
+	if len(strings[0]) != 7 {
+		t.Errorf("Expected String with 7 stones, got %d", len(strings[0]))
 	}
 }
