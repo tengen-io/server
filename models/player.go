@@ -1,9 +1,9 @@
 package models
 
 import (
+	"database/sql"
+	"encoding/json"
 	"time"
-    "database/sql"
-    "encoding/json"
 )
 
 type Player struct {
@@ -14,19 +14,21 @@ type Player struct {
 	Color     string
 	Stats     Stats
 	HasPassed bool
-	User *User
+	User      *User
 	Timestamps
 }
 
-type Stats struct {}
+type Stats struct{}
 
+// Scan implements a Scanner for Player Stats, so that they can be decoded from a json string
+// from the db.
 func (stats *Stats) Scan(src interface{}) error {
-    err := json.Unmarshal(src.([]byte), stats)
-    if err != nil {
-        return err
-    }
+	err := json.Unmarshal(src.([]byte), stats)
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 type Timestamps struct {

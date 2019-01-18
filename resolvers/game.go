@@ -6,16 +6,20 @@ import (
     "github.com/graphql-go/graphql"
 )
 
+// GetGame retrieves a Game by integer id.
 func GetGame(p graphql.ResolveParams) (interface{}, error) {
     db := p.Context.Value("db").(models.Database)
     return db.GetGame(p.Args["id"].(int))
 }
 
+// GetGames retrieves Games for a given User id.
 func GetGames(p graphql.ResolveParams) (interface{}, error) {
     db := p.Context.Value("db").(models.Database)
     return db.GetGames(p.Args["userId"].(int))
 }
 
+// CreateGame starts a new Game, with the current User and a provided opponent
+// as Players.
 func CreateGame(p graphql.ResolveParams) (interface{}, error) {
     db := p.Context.Value("db").(models.Database)
     token, ok := p.Context.Value("token").(string)
@@ -35,6 +39,7 @@ func CreateGame(p graphql.ResolveParams) (interface{}, error) {
     return db.CreateGame(claims.UserId, opponentId)
 }
 
+// Pass executes a pass maneuver for the Game with the current User.
 func Pass(p graphql.ResolveParams) (interface{}, error) {
     db := p.Context.Value("db").(models.Database)
     token, ok := p.Context.Value("token").(string)
@@ -68,6 +73,8 @@ func Pass(p graphql.ResolveParams) (interface{}, error) {
     return db.Pass(user.Id, game)
 }
 
+// AddStone executes a move by the current User to add a Stone
+// to the Board, with given X and Y coordinates.
 func AddStone(p graphql.ResolveParams) (interface{}, error) {
     db := p.Context.Value("db").(models.Database)
     token, ok := p.Context.Value("token").(string)

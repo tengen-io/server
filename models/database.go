@@ -1,3 +1,8 @@
+/*
+Package models is responsible for application data models as well as database
+connections and queries. The current implementation is written to use postgres,
+but uses an interface that could support a different database.
+*/
 package models
 
 import (
@@ -8,7 +13,7 @@ import (
 	"os"
 )
 
-type DB struct {*sql.DB}
+type DB struct{ *sql.DB }
 
 type Database interface {
 	CheckPw(username, password string) (*User, error)

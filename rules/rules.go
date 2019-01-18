@@ -1,3 +1,8 @@
+/*
+Package rules is responsible for evaluating a Go board according to the game rules.
+The rules followed for this implementation come from the British Go Association,
+and can be found at https://www.britgo.org/intro/intro2.html
+*/
 package rules
 
 import (
@@ -11,7 +16,14 @@ import (
 // set of Stones for which each Stone is adjacent to at least one other Stone.
 type String []models.Stone
 
+// Run determines whether any Stones should be removed from the Board, based on
+// game rules. In the future this may also update the Board in addition to
+// returning captured Stones.
 func Run(board *models.Board, stone models.Stone) ([]String, error) {
+	if !contains(board.Stones, stone) {
+		board.Stones = append(board.Stones, stone)
+	}
+
 	strings := getStrings(board)
 
 	toRemove := make([]String, 0)

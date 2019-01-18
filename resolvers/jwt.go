@@ -16,6 +16,7 @@ func getKey() []byte {
 	return h.Sum([]byte("TODO: pull secret key from safe place"))
 }
 
+// GenerateToken generates a new JWT for the given User id.
 func GenerateToken(userId int) (string, error) {
 	// Create the Claims
 	claims := MyCustomClaims{
@@ -34,6 +35,8 @@ func GenerateToken(userId int) (string, error) {
 	return ss, nil
 }
 
+// ValidateToken parses and validates a provided token, retrieving the token's
+// claims if successful.
 func ValidateToken(tokenString string) (*MyCustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return getKey(), nil
