@@ -50,6 +50,7 @@ func (s *Server) Start() {
 
 func applyMiddlewares(db models.Database, next *handler.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
 		ctx := context.WithValue(r.Context(), "db", db)
 		ctx = authHandler(ctx, r)
 		next.ContextHandler(ctx, w, r)
@@ -70,6 +71,11 @@ func authHandler(ctx context.Context, r *http.Request) context.Context {
 		}
 	}
 	return ctx
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
 
 func main() {
