@@ -1,6 +1,7 @@
 package resolvers
 
 import (
+	_ "fmt"
 	"github.com/camirmas/go_stop/models"
 	"github.com/camirmas/go_stop/rules"
 	"github.com/graphql-go/graphql"
@@ -146,7 +147,7 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 
 	game.Board.Stones = newStones
 
-	db.UpdateBoard(game)
+	db.UpdateBoard(user.Id, game)
 
 	return game, nil
 }
@@ -154,8 +155,8 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 func validateGame(game *models.Game) error {
 	if game.Status == "complete" {
 		return gameCompleteError{}
-	} else if game.Status == "not-started" {
-		return gameNotStartedError{}
+		// } else if game.Status == "not-started" {
+		// 	return gameNotStartedError{}
 	} else {
 		return nil
 	}

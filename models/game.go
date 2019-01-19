@@ -66,7 +66,7 @@ func (db *DB) CreateGame(userId, opponentId interface{}) (*Game, error) {
 	encodedBoard, err := json.Marshal(board)
 
 	// Create Game
-	rows, err := tx.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4, $5) RETURNING *", "not-started", nil, encodedBoard, time, time)
+	rows, err := tx.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4, $5) RETURNING *", "active", nil, encodedBoard, time, time)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -110,9 +110,7 @@ func (db *DB) CreateGame(userId, opponentId interface{}) (*Game, error) {
 	return game, nil
 }
 
-// Pass is a game action where a player decides that they cannot make a
-// move on their turn. If both players pass, the game ends.
-func (db *DB) Pass(userId interface{}, game *Game) (*Game, error) {
+func sortPlayers(userId interface{}, game *Game) (Player, Player) {
 	var otherPlayer Player
 	var currentPlayer Player
 	for i, player := range game.Players {
@@ -122,6 +120,13 @@ func (db *DB) Pass(userId interface{}, game *Game) (*Game, error) {
 			currentPlayer = game.Players[i]
 		}
 	}
+	return currentPlayer, otherPlayer
+}
+
+// Pass is a game action where a player decides that they cannot make a
+// move on their turn. If both players pass, the game ends.
+func (db *DB) Pass(userId interface{}, game *Game) (*Game, error) {
+	currentPlayer, otherPlayer := sortPlayers(userId, game)
 
 	time := pq.FormatTimestamp(time.Now())
 
@@ -174,15 +179,22 @@ func (db *DB) Pass(userId interface{}, game *Game) (*Game, error) {
 	}
 }
 
-func (db *DB) UpdateBoard(game *Game) error {
+func (db *DB) UpdateBoard(userId interface{}, game *Game) (*Game, error) {
+	_, otherPlayer := sortPlayers(userId, game)
+	time := pq.FormatTimestamp(time.Now())
 	board, _ := json.Marshal(game.Board)
-	_, err := db.Exec("UPDATE game SET board = $1 where id = $2", board, game.Id)
+	rows, err := db.Query("UPDATE games SET (board, player_turn_id, updated_at) = ($1, $2, $3) where id = $4 RETURNING *", board, otherPlayer.Id, time, game.Id)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	games, _ := parseGameRows(rows)
+
+	game = &games[0]
+	buildGame(db, game)
+
+	return game, nil
 }
 
 func buildGame(db *DB, game *Game) error {

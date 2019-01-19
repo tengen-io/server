@@ -22,7 +22,7 @@ type Database interface {
 	GetGame(gameId interface{}) (*Game, error)
 	GetGames(userId interface{}) ([]*Game, error)
 	CreateGame(userId, opponentId interface{}) (*Game, error)
-	UpdateBoard(game *Game) error
+	UpdateBoard(userId interface{}, game *Game) (*Game, error)
 	Pass(userId interface{}, game *Game) (*Game, error)
 }
 
