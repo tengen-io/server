@@ -261,6 +261,11 @@ func CreateSchema() (graphql.Schema, error) {
 				},
 				Resolve: resolvers.GetGames,
 			},
+
+			"lobby": &graphql.Field{
+				Type:    graphql.NewList(gameType),
+				Resolve: resolvers.GetLobby,
+			},
 		},
 	})
 

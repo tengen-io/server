@@ -35,13 +35,19 @@ func (db *DB) GetGame(gameId interface{}) (*Game, error) {
 
 // GetGames gets a list of Games for a given User id.
 func (db *DB) GetGames(userId interface{}) ([]*Game, error) {
-	rows, _ := db.Query("SELECT DISTINCT games.* FROM games JOIN players P ON P.user_id = $1", userId)
-	games, _ := parseGameRows(rows)
+	var games []Game
+	if userId == nil {
+		rows, _ := db.Query("SELECT * FROM games ORDER BY updated_at limit 20")
+		games, _ = parseGameRows(rows)
+	} else {
+		rows, _ := db.Query("SELECT DISTINCT games.* FROM games JOIN players P ON P.user_id = $1", userId)
+		games, _ = parseGameRows(rows)
+	}
 
 	gameRefs := make([]*Game, 0)
-	for _, game := range games {
-		buildGame(db, &game)
-		gameRefs = append(gameRefs, &game)
+	for i, _ := range games {
+		buildGame(db, &games[i])
+		gameRefs = append(gameRefs, &games[i])
 	}
 
 	return gameRefs, nil

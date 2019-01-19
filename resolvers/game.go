@@ -19,6 +19,11 @@ func GetGames(p graphql.ResolveParams) (interface{}, error) {
 	return db.GetGames(p.Args["userId"].(string))
 }
 
+func GetLobby(p graphql.ResolveParams) (interface{}, error) {
+	db := p.Context.Value("db").(models.Database)
+	return db.GetGames(nil)
+}
+
 // CreateGame starts a new Game, with the current User and a provided opponent
 // as Players.
 func CreateGame(p graphql.ResolveParams) (interface{}, error) {
