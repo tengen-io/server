@@ -12,7 +12,7 @@ func CreateSchema() (graphql.Schema, error) {
 		Name: "User",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
-				Type: graphql.NewNonNull(graphql.Int),
+				Type: graphql.NewNonNull(graphql.ID),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if user, ok := p.Source.(*models.User); ok {
 						return user.Id, nil
@@ -45,7 +45,7 @@ func CreateSchema() (graphql.Schema, error) {
 		Name: "Player",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
-				Type: graphql.Int,
+				Type: graphql.ID,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if player, ok := p.Source.(models.Player); ok {
 						return player.Id, nil
@@ -153,7 +153,7 @@ func CreateSchema() (graphql.Schema, error) {
 		Name: "Game",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
-				Type: graphql.Int,
+				Type: graphql.ID,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if game, ok := p.Source.(*models.Game); ok {
 						return game.Id, nil
@@ -246,7 +246,7 @@ func CreateSchema() (graphql.Schema, error) {
 				Type: gameType,
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.Int),
+						Type: graphql.NewNonNull(graphql.ID),
 					},
 				},
 				Resolve: resolvers.GetGame,
@@ -256,7 +256,7 @@ func CreateSchema() (graphql.Schema, error) {
 				Type: graphql.NewList(gameType),
 				Args: graphql.FieldConfigArgument{
 					"userId": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.Int),
+						Type: graphql.NewNonNull(graphql.ID),
 					},
 				},
 				Resolve: resolvers.GetGames,
@@ -290,7 +290,7 @@ func CreateSchema() (graphql.Schema, error) {
 				Type: gameType,
 				Args: graphql.FieldConfigArgument{
 					"opponentId": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.Int),
+						Type: graphql.NewNonNull(graphql.ID),
 					},
 				},
 				Resolve: resolvers.CreateGame,
@@ -300,7 +300,7 @@ func CreateSchema() (graphql.Schema, error) {
 				Type: gameType,
 				Args: graphql.FieldConfigArgument{
 					"gameId": &graphql.ArgumentConfig{
-						Type: graphql.Int,
+						Type: graphql.ID,
 					},
 				},
 				Resolve: resolvers.Pass,
@@ -323,7 +323,7 @@ func CreateSchema() (graphql.Schema, error) {
 				Type: gameType,
 				Args: graphql.FieldConfigArgument{
 					"gameId": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.Int),
+						Type: graphql.NewNonNull(graphql.ID),
 					},
 					"x": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.Int),
