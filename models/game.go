@@ -168,6 +168,17 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 	}
 }
 
+func (db *DB) UpdateBoard(game *Game) error {
+    board, _ := json.Marshal(game.Board)
+    _, err := db.Exec("UPDATE game SET board = $1 where id = $2", board, game.Id)
+
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
 func buildGame(db *DB, game *Game) error {
 	rows, _ := db.Query("SELECT * from players where game_id = $1", game.Id)
 	players, _ := parsePlayerRows(rows)
