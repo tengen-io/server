@@ -18,7 +18,7 @@ type Game struct {
 }
 
 // GetGame gets a Game by id.
-func (db *DB) GetGame(gameId int) (*Game, error) {
+func (db *DB) GetGame(gameId interface{}) (*Game, error) {
 	rows, _ := db.Query("SELECT * from games where id = $1", gameId)
 	games, _ := parseGameRows(rows)
 	if len(games) == 0 {
@@ -34,7 +34,7 @@ func (db *DB) GetGame(gameId int) (*Game, error) {
 }
 
 // GetGames gets a list of Games for a given User id.
-func (db *DB) GetGames(userId int) ([]*Game, error) {
+func (db *DB) GetGames(userId interface{}) ([]*Game, error) {
 	rows, _ := db.Query("SELECT DISTINCT games.* FROM games JOIN players P ON P.user_id = $1", userId)
 	games, _ := parseGameRows(rows)
 
@@ -49,7 +49,7 @@ func (db *DB) GetGames(userId int) ([]*Game, error) {
 
 // CreateGame builds all the necessary information to start a game, including
 // associated Player entries.
-func (db *DB) CreateGame(userId, opponentId int) (*Game, error) {
+func (db *DB) CreateGame(userId, opponentId interface{}) (*Game, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -97,16 +97,16 @@ func (db *DB) CreateGame(userId, opponentId int) (*Game, error) {
 		return nil, err
 	}
 
-	rows, _ = db.Query("UPDATE games SET player_turn_id = $1 WHERE id = $2 RETURNING *", player1.Id, game.Id)
+	_, err = db.Exec("UPDATE games SET player_turn_id = $1 WHERE id = $2", player1.Id, game.Id)
 
-	games, _ = parseGameRows(rows)
+	game.PlayerTurnId = player1.Id
 
-	return &games[0], nil
+	return game, nil
 }
 
 // Pass is a game action where a player decides that they cannot make a
 // move on their turn. If both players pass, the game ends.
-func (db *DB) Pass(userId int, game *Game) (*Game, error) {
+func (db *DB) Pass(userId interface{}, game *Game) (*Game, error) {
 	var otherPlayer Player
 	var currentPlayer Player
 	for i, player := range game.Players {
@@ -169,14 +169,14 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 }
 
 func (db *DB) UpdateBoard(game *Game) error {
-    board, _ := json.Marshal(game.Board)
-    _, err := db.Exec("UPDATE game SET board = $1 where id = $2", board, game.Id)
+	board, _ := json.Marshal(game.Board)
+	_, err := db.Exec("UPDATE game SET board = $1 where id = $2", board, game.Id)
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func buildGame(db *DB, game *Game) error {

@@ -36,7 +36,7 @@ type Timestamps struct {
 	UpdatedAt  time.Time
 }
 
-func createPlayer(tx *sql.Tx, userId, gameId int, status, color string, time []byte) (*Player, error) {
+func createPlayer(tx *sql.Tx, userId, gameId interface{}, status, color string, time []byte) (*Player, error) {
 	rows, err := tx.Query("INSERT INTO players VALUES (nextval('players_id_seq'), $1, $2, $3, $4, $5, $6, $7, $8) RETURNING *", userId, gameId, status, color, "{}", false, time, time)
 
 	if err != nil {

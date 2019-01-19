@@ -10,13 +10,13 @@ import (
 // GetGame retrieves a Game by integer id.
 func GetGame(p graphql.ResolveParams) (interface{}, error) {
 	db := p.Context.Value("db").(models.Database)
-	return db.GetGame(p.Args["id"].(int))
+	return db.GetGame(p.Args["id"].(string))
 }
 
 // GetGames retrieves Games for a given User id.
 func GetGames(p graphql.ResolveParams) (interface{}, error) {
 	db := p.Context.Value("db").(models.Database)
-	return db.GetGames(p.Args["userId"].(int))
+	return db.GetGames(p.Args["userId"].(string))
 }
 
 // CreateGame starts a new Game, with the current User and a provided opponent
@@ -29,7 +29,7 @@ func CreateGame(p graphql.ResolveParams) (interface{}, error) {
 		return nil, invalidTokenError{}
 	}
 
-	opponentId := p.Args["opponentId"].(int)
+	opponentId := p.Args["opponentId"].(string)
 
 	claims, err := ValidateToken(token)
 
@@ -48,7 +48,7 @@ func Pass(p graphql.ResolveParams) (interface{}, error) {
 	if !ok {
 		return nil, invalidTokenError{}
 	}
-	gameId := p.Args["gameId"].(int)
+	gameId := p.Args["gameId"].(string)
 
 	claims, err := ValidateToken(token)
 
@@ -83,7 +83,7 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 	if !ok {
 		return nil, invalidTokenError{}
 	}
-	gameId := p.Args["gameId"].(int)
+	gameId := p.Args["gameId"].(string)
 
 	claims, err := ValidateToken(token)
 
