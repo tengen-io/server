@@ -7,7 +7,7 @@ services:
       restart_policy:
         condition: on-failure
     ports:
-      - "8000:8000"
+      - "80:8000"
     environment:
       POSTGRES_USER: /run/secrets/postgres_user
       POSTGRES_PASSWORD: /run/secrets/postgres_password
