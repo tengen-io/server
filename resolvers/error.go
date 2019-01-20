@@ -5,6 +5,7 @@ type wrongTurnError struct{}
 type gameCompleteError struct{}
 type gameNotStartedError struct{}
 type koViolationError struct{}
+type stoneExistsError struct{}
 
 func (e userNotInGameError) Error() string {
 	return "User not in game"
@@ -24,4 +25,8 @@ func (e gameNotStartedError) Error() string {
 
 func (e koViolationError) Error() string {
 	return "Invalid Ko move"
+}
+
+func (e stoneExistsError) Error() string {
+	return "Stone already exists at that location"
 }

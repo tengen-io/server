@@ -122,7 +122,7 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 	if !contains(game.Board.Stones, stone) {
 		game.Board.Stones = append(game.Board.Stones, stone)
 	} else {
-		// TODO: Check that a stone is not already placed in the designated location, issue #11
+		return nil, stoneExistsError{}
 	}
 
 	stringsToRemove, err := rules.Run(game.Board, stone)
