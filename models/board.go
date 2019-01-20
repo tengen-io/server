@@ -8,8 +8,9 @@ const SmallBoardSize int = 13
 const RegBoardSize int = 19
 
 type Board struct {
-	Size   int     `json:"size"`
-	Stones []Stone `json:"stones"`
+	Size      int     `json:"size"`
+	LastTaker *Stone  `json:"lastTaker"`
+	Stones    []Stone `json:"stones"`
 }
 
 type Stone struct {

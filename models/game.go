@@ -17,6 +17,19 @@ type Game struct {
 	Timestamps
 }
 
+func (game Game) CurrentPlayer(userId int) (Player, Player) {
+	var otherPlayer Player
+	var currentPlayer Player
+	for i, player := range game.Players {
+		if player.UserId != userId {
+			otherPlayer = game.Players[i]
+		} else {
+			currentPlayer = game.Players[i]
+		}
+	}
+	return currentPlayer, otherPlayer
+}
+
 // GetGame gets a Game by id.
 func (db *DB) GetGame(gameId interface{}) (*Game, error) {
 	rows, _ := db.Query("SELECT * from games where id = $1", gameId)
@@ -110,23 +123,10 @@ func (db *DB) CreateGame(userId, opponentId interface{}) (*Game, error) {
 	return game, nil
 }
 
-func sortPlayers(userId interface{}, game *Game) (Player, Player) {
-	var otherPlayer Player
-	var currentPlayer Player
-	for i, player := range game.Players {
-		if player.UserId != userId {
-			otherPlayer = game.Players[i]
-		} else {
-			currentPlayer = game.Players[i]
-		}
-	}
-	return currentPlayer, otherPlayer
-}
-
 // Pass is a game action where a player decides that they cannot make a
 // move on their turn. If both players pass, the game ends.
-func (db *DB) Pass(userId interface{}, game *Game) (*Game, error) {
-	currentPlayer, otherPlayer := sortPlayers(userId, game)
+func (db *DB) Pass(userId int, game *Game) (*Game, error) {
+	currentPlayer, otherPlayer := game.CurrentPlayer(userId)
 
 	time := pq.FormatTimestamp(time.Now())
 
@@ -179,8 +179,8 @@ func (db *DB) Pass(userId interface{}, game *Game) (*Game, error) {
 	}
 }
 
-func (db *DB) UpdateBoard(userId interface{}, game *Game) (*Game, error) {
-	_, otherPlayer := sortPlayers(userId, game)
+func (db *DB) UpdateBoard(userId int, game *Game) (*Game, error) {
+	_, otherPlayer := game.CurrentPlayer(userId)
 	time := pq.FormatTimestamp(time.Now())
 	board, _ := json.Marshal(game.Board)
 	rows, err := db.Query("UPDATE games SET (board, player_turn_id, updated_at) = ($1, $2, $3) where id = $4 RETURNING *", board, otherPlayer.Id, time, game.Id)

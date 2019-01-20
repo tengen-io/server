@@ -20,10 +20,6 @@ type String []models.Stone
 // game rules. In the future this may also update the Board in addition to
 // returning captured Stones.
 func Run(board *models.Board, stone models.Stone) ([]String, error) {
-	if !contains(board.Stones, stone) {
-		board.Stones = append(board.Stones, stone)
-	}
-
 	strings := getStrings(board)
 
 	toRemove := make([]String, 0)

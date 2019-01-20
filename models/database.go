@@ -17,13 +17,13 @@ type DB struct{ *sql.DB }
 
 type Database interface {
 	CheckPw(username, password string) (*User, error)
-	GetUser(identifier interface{}) (*User, error)
+	GetUser(id interface{}) (*User, error)
 	CreateUser(username, email, password, passwordConfirm string) (*User, error)
 	GetGame(gameId interface{}) (*Game, error)
 	GetGames(userId interface{}) ([]*Game, error)
 	CreateGame(userId, opponentId interface{}) (*Game, error)
-	UpdateBoard(userId interface{}, game *Game) (*Game, error)
-	Pass(userId interface{}, game *Game) (*Game, error)
+	UpdateBoard(userId int, game *Game) (*Game, error)
+	Pass(userId int, game *Game) (*Game, error)
 }
 
 func getSecret(fileName string) string {

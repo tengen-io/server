@@ -112,34 +112,39 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	var currentPlayer models.Player
-	for i, player := range game.Players {
-		if player.UserId == user.Id {
-			currentPlayer = game.Players[i]
-		}
-	}
+	currentPlayer, _ := game.CurrentPlayer(user.Id)
 
 	x := p.Args["x"].(int)
 	y := p.Args["y"].(int)
 
 	stone := models.Stone{x, y, currentPlayer.Color}
 
-	toRemove, err := rules.Run(game.Board, stone)
+	if !contains(game.Board.Stones, stone) {
+		game.Board.Stones = append(game.Board.Stones, stone)
+	} else {
+		// TODO: Check that a stone is not already placed in the designated location, issue #11
+	}
+
+	stringsToRemove, err := rules.Run(game.Board, stone)
+	toRemove := flatten(stringsToRemove)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var flattenedToRemove []models.Stone
-	for _, str := range toRemove {
-		for _, s := range str {
-			flattenedToRemove = append(flattenedToRemove, s)
-		}
+	if err := validateKo(game, toRemove); err != nil {
+		return nil, err
+	}
+
+	if len(toRemove) > 0 {
+		game.Board.LastTaker = &stone
+	} else {
+		game.Board.LastTaker = nil
 	}
 
 	newStones := make([]models.Stone, 0)
 	for _, s := range game.Board.Stones {
-		if !contains(flattenedToRemove, s) {
+		if !contains(toRemove, s) {
 			newStones = append(newStones, s)
 		}
 	}
@@ -188,4 +193,24 @@ func contains(stones []models.Stone, stone models.Stone) bool {
 	}
 
 	return false
+}
+
+func validateKo(game *models.Game, toRemove []models.Stone) error {
+	if len(toRemove) != 1 {
+		return nil
+	}
+	if reflect.DeepEqual(game.Board.LastTaker, toRemove[0]) {
+		return koViolationError{}
+	}
+	return nil
+}
+
+func flatten(strings []rules.String) []models.Stone {
+	var flattened []models.Stone
+	for _, str := range strings {
+		for _, s := range str {
+			flattened = append(flattened, s)
+		}
+	}
+	return flattened
 }

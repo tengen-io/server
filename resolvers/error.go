@@ -4,6 +4,7 @@ type userNotInGameError struct{}
 type wrongTurnError struct{}
 type gameCompleteError struct{}
 type gameNotStartedError struct{}
+type koViolationError struct{}
 
 func (e userNotInGameError) Error() string {
 	return "User not in game"
@@ -19,4 +20,8 @@ func (e gameCompleteError) Error() string {
 
 func (e gameNotStartedError) Error() string {
 	return "Game has not yet started"
+}
+
+func (e koViolationError) Error() string {
+	return "Invalid Ko move"
 }

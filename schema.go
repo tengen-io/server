@@ -137,6 +137,15 @@ func CreateSchema() (graphql.Schema, error) {
 					return nil, nil
 				},
 			},
+			"lastTaker": &graphql.Field{
+				Type: stoneType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if board, ok := p.Source.(*models.Board); ok {
+						return board.LastTaker, nil
+					}
+					return nil, nil
+				},
+			},
 			"stones": &graphql.Field{
 				Type: graphql.NewList(stoneType),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
