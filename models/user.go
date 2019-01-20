@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const MinPasswordLength int = 8
+
 type User struct {
 	Id                int
 	Username          string
@@ -41,6 +43,9 @@ func (db *DB) GetUser(identifier interface{}) (*User, error) {
 
 // CreateUser starts a new User account.
 func (db *DB) CreateUser(username, email, password, passwordConfirm string) (*User, error) {
+	if len(password) < MinPasswordLength {
+		return nil, passwordTooShortError{}
+	}
 	if password != passwordConfirm {
 		return nil, passwordMismatchError{}
 	}

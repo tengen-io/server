@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 func HandleError(e error) error {
 	if e == nil {
 		return e
@@ -36,6 +38,7 @@ type invalidLoginError struct {
 }
 type userNotFoundError struct{}
 type gameNotFoundError struct{}
+type passwordTooShortError struct{}
 
 func (e passwordMismatchError) Error() string {
 	return "Passwords do not match"
@@ -63,4 +66,8 @@ func (e userNotFoundError) Error() string {
 
 func (e gameNotFoundError) Error() string {
 	return "Game not found"
+}
+
+func (e passwordTooShortError) Error() string {
+	return fmt.Sprintf("Password must be at least %d characters", MinPasswordLength)
 }

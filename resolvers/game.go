@@ -124,7 +124,6 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 
 	stone := models.Stone{x, y, currentPlayer.Color}
 
-	// TODO: update game depending on rules evaluation
 	toRemove, err := rules.Run(game.Board, stone)
 
 	if err != nil {
