@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"github.com/badoux/checkmail"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -49,6 +50,10 @@ func (db *DB) CreateUser(username, email, password, passwordConfirm string) (*Us
 	if password != passwordConfirm {
 		return nil, passwordMismatchError{}
 	}
+	if err := checkmail.ValidateFormat(email); err != nil {
+		return nil, invalidEmailError{}
+	}
+
 	pw, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 
 	if err != nil {
