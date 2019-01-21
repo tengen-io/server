@@ -35,7 +35,7 @@ func CreateGame(p graphql.ResolveParams) (interface{}, error) {
 		return nil, invalidTokenError{}
 	}
 
-	opponentId := p.Args["opponentId"].(string)
+	opponentUsername := p.Args["opponentUsername"].(string)
 
 	claims, err := ValidateToken(token)
 
@@ -43,7 +43,7 @@ func CreateGame(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	return db.CreateGame(claims.UserId, opponentId)
+	return db.CreateGame(claims.UserId, opponentUsername)
 }
 
 // Pass executes a pass maneuver for the Game with the current User.

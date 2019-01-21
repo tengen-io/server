@@ -303,8 +303,8 @@ func CreateSchema() (graphql.Schema, error) {
 			"createGame": &graphql.Field{
 				Type: gameType,
 				Args: graphql.FieldConfigArgument{
-					"opponentId": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.ID),
+					"opponentUsername": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
 				Resolve: resolvers.CreateGame,
