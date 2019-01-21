@@ -53,7 +53,7 @@ func (db *DB) GetGames(userId interface{}) ([]*Game, error) {
 		rows, _ := db.Query("SELECT * FROM games ORDER BY updated_at limit 20")
 		games, _ = parseGameRows(rows)
 	} else {
-		rows, _ := db.Query("SELECT DISTINCT games.* FROM games JOIN players P ON P.user_id = $1", userId)
+		rows, _ := db.Query("SELECT DISTINCT ON (games.id) games.* FROM games JOIN players P ON P.user_id = $1", userId)
 		games, _ = parseGameRows(rows)
 	}
 
@@ -93,19 +93,13 @@ func (db *DB) CreateGame(userId, opponentId interface{}) (*Game, error) {
 		_ = tx.Rollback()
 		return nil, err
 	}
-	user, _ := db.GetUser(userId)
-	player1.User = user
 
 	// Create Player 2 (invitee)
-	player2, err := createPlayer(tx, opponentId, game.Id, "user-pending", "white", time)
+	_, err = createPlayer(tx, opponentId, game.Id, "user-pending", "white", time)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
-	user, _ = db.GetUser(opponentId)
-	player2.User = user
-
-	game.Players = []Player{*player1, *player2}
 
 	if err != nil {
 		_ = tx.Rollback()
@@ -118,7 +112,7 @@ func (db *DB) CreateGame(userId, opponentId interface{}) (*Game, error) {
 
 	_, err = db.Exec("UPDATE games SET player_turn_id = $1 WHERE id = $2", player1.Id, game.Id)
 
-	game.PlayerTurnId = player1.Id
+	game, _ = db.GetGame(game.Id)
 
 	return game, nil
 }
@@ -132,27 +126,22 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 
 	if otherPlayer.HasPassed {
 		tx, _ := db.Begin()
+
 		_, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", true, time, currentPlayer.Id)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
-		rows, err := tx.Query("UPDATE games SET (status, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", "complete", time, game.Id)
 
+		_, err = tx.Exec("UPDATE games SET (status, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", "complete", time, game.Id)
 		if err != nil {
+			_ = tx.Rollback()
 			return nil, err
 		}
-
-		games, _ := parseGameRows(rows)
-		game = &games[0]
-
-		buildGame(db, game)
 
 		if err := tx.Commit(); err != nil {
 			return nil, err
 		}
-
-		return game, nil
 	} else {
 		tx, _ := db.Begin()
 		_, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", true, time, currentPlayer.Id)
@@ -160,39 +149,33 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 			_ = tx.Rollback()
 			return nil, err
 		}
-		rows, err := tx.Query("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", otherPlayer.Id, time, game.Id)
+		_, err = tx.Exec("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", otherPlayer.Id, time, game.Id)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
 
-		games, _ := parseGameRows(rows)
-		game = &games[0]
-
-		buildGame(db, game)
-
 		if err := tx.Commit(); err != nil {
 			return nil, err
 		}
-
-		return game, nil
 	}
+
+	game, _ = db.GetGame(game.Id)
+
+	return game, nil
 }
 
 func (db *DB) UpdateBoard(userId int, game *Game) (*Game, error) {
 	_, otherPlayer := game.CurrentPlayer(userId)
 	time := pq.FormatTimestamp(time.Now())
 	board, _ := json.Marshal(game.Board)
-	rows, err := db.Query("UPDATE games SET (board, player_turn_id, updated_at) = ($1, $2, $3) where id = $4 RETURNING *", board, otherPlayer.Id, time, game.Id)
+	_, err := db.Exec("UPDATE games SET (board, player_turn_id, updated_at) = ($1, $2, $3) where id = $4 RETURNING *", board, otherPlayer.Id, time, game.Id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	games, _ := parseGameRows(rows)
-
-	game = &games[0]
-	buildGame(db, game)
+	game, err = db.GetGame(game.Id)
 
 	return game, nil
 }

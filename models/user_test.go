@@ -11,6 +11,8 @@ func TestCreateUser(t *testing.T) {
 	t.Run("with proper arguments", createUserSucceed)
 	t.Run("with existing username", createUserUsernameTaken)
 	t.Run("with existing email", createUserEmailTaken)
+
+	teardown()
 }
 
 func createUserSucceed(t *testing.T) {
@@ -55,6 +57,8 @@ func TestGetUser(t *testing.T) {
 	t.Run("with id", getUserById)
 	t.Run("with username", getUserByUsername)
 	t.Run("not found", getUserNotFound)
+
+	teardown()
 }
 
 func getUserById(t *testing.T) {

@@ -12,7 +12,7 @@ type Player struct {
 	GameId    int
 	Status    string
 	Color     string
-	Stats     Stats
+	Stats     *Stats
 	HasPassed bool
 	User      *User
 	Timestamps
@@ -37,7 +37,8 @@ type Timestamps struct {
 }
 
 func createPlayer(tx *sql.Tx, userId, gameId interface{}, status, color string, time []byte) (*Player, error) {
-	rows, err := tx.Query("INSERT INTO players VALUES (nextval('players_id_seq'), $1, $2, $3, $4, $5, $6, $7, $8) RETURNING *", userId, gameId, status, color, "{}", false, time, time)
+	stats, err := json.Marshal(Stats{})
+	rows, err := tx.Query("INSERT INTO players VALUES (nextval('players_id_seq'), $1, $2, $3, $4, $5, $6, $7, $8) RETURNING *", userId, gameId, status, color, stats, false, time, time)
 
 	if err != nil {
 		return nil, HandleError(err)

@@ -47,8 +47,8 @@ func setup() {
 }
 
 func teardown() {
-	db.Query("DELETE FROM games")
 	db.Query("DELETE FROM players")
+	db.Query("DELETE FROM games")
 	db.Query("DELETE FROM users")
 }
 
