@@ -13,6 +13,10 @@ import (
 	"os"
 )
 
+var testingMode bool
+
+const TestingDB string = "postgres://postgres:postgres@localhost:5432/go_stop_go_test?sslmode=disable"
+
 type DB struct{ *sql.DB }
 
 type Database interface {
@@ -67,7 +71,13 @@ func ConnectDB() (*DB, error) {
 		host = "localhost"
 	}
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", user, pw, host, dbName)
+	var connStr string
+	if testingMode {
+		connStr = TestingDB
+	} else {
+		connStr = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", user, pw, host, dbName)
+	}
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
