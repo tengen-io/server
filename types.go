@@ -1,7 +1,12 @@
 package main
 
+import (
+	"github.com/camirmas/go_stop/models"
+	"github.com/graphql-go/graphql"
+)
+
 var (
-	userType := graphql.NewObject(graphql.ObjectConfig{
+	userType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "User",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
@@ -34,7 +39,7 @@ var (
 		},
 	})
 
-	playerType := graphql.NewObject(graphql.ObjectConfig{
+	playerType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Player",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
@@ -85,7 +90,7 @@ var (
 		},
 	})
 
-	stoneType := graphql.NewObject(graphql.ObjectConfig{
+	stoneType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Stone",
 		Fields: graphql.Fields{
 			"x": &graphql.Field{
@@ -118,7 +123,7 @@ var (
 		},
 	})
 
-	boardType := graphql.NewObject(graphql.ObjectConfig{
+	boardType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Board",
 		Fields: graphql.Fields{
 			"size": &graphql.Field{
@@ -151,7 +156,7 @@ var (
 		},
 	})
 
-	gameType := graphql.NewObject(graphql.ObjectConfig{
+	gameType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Game",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
@@ -202,7 +207,7 @@ var (
 		},
 	})
 
-	tokenType := graphql.NewObject(graphql.ObjectConfig{
+	tokenType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "AuthUser",
 		Fields: graphql.Fields{
 			"user": &graphql.Field{

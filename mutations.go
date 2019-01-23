@@ -1,7 +1,12 @@
 package main
 
+import (
+	"github.com/camirmas/go_stop/resolvers"
+	"github.com/graphql-go/graphql"
+)
+
 var (
-	mutationType := graphql.NewObject(graphql.ObjectConfig{
+	mutationType = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
 			"createUser": &graphql.Field{
