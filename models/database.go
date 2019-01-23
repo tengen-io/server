@@ -25,7 +25,7 @@ type Database interface {
 	CreateUser(username, email, password, passwordConfirm string) (*User, error)
 	GetGame(gameId interface{}) (*Game, error)
 	GetGames(userId interface{}) ([]*Game, error)
-	CreateGame(userId int, opponentUsername string) (*Game, error)
+	CreateGame(userId int, opponent *User) (*Game, error)
 	UpdateBoard(userId int, game *Game) (*Game, error)
 	Pass(userId int, game *Game) (*Game, error)
 }

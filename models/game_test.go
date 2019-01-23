@@ -14,14 +14,14 @@ func TestCreateGame(t *testing.T) {
 }
 
 func createGameInvalidUser(t *testing.T) {
-	_, err := db.CreateGame(1234, "invalid")
+	_, err := db.CreateGame(1234, &User{})
 
 	expectErr(t, userNotFoundError{}, err)
 }
 
 func createGameInvalidOpponent(t *testing.T) {
 	user, _ := db.CreateUser("creategame", "creategame@dude.dude", "dudedude", "dudedude")
-	_, err := db.CreateGame(user.Id, "invalid")
+	_, err := db.CreateGame(user.Id, &User{})
 
 	expectErr(t, userNotFoundError{}, err)
 }
@@ -30,7 +30,7 @@ func createGame(t *testing.T) {
 	user1, _ := db.CreateUser("creategame1", "creategame1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("creategame2", "creategame2@dude.dude", "dudedude", "dudedude")
 
-	game, err := db.CreateGame(user1.Id, user2.Username)
+	game, err := db.CreateGame(user1.Id, user2)
 
 	if err != nil {
 		t.Error(err)
@@ -53,7 +53,7 @@ func TestGetGames(t *testing.T) {
 func getGamesByUser(t *testing.T) {
 	user1, _ := db.CreateUser("getgames1", "getgames1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("getgames2", "getgames2@dude.dude", "dudedude", "dudedude")
-	db.CreateGame(user1.Id, user2.Username)
+	db.CreateGame(user1.Id, user2)
 
 	games, err := db.GetGames(user1.Id)
 
@@ -81,7 +81,7 @@ func getGamesRecent(t *testing.T) {
 func TestPass(t *testing.T) {
 	user1, _ := db.CreateUser("pass1", "pass1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("pass2", "pass2@dude.dude", "dudedude", "dudedude")
-	game, _ := db.CreateGame(user1.Id, user2.Username)
+	game, _ := db.CreateGame(user1.Id, user2)
 
 	turnId := game.PlayerTurnId
 
@@ -111,7 +111,7 @@ func TestPass(t *testing.T) {
 func TestUpdateBoard(t *testing.T) {
 	user1, _ := db.CreateUser("updateboard1", "updateboard1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("updateboard2", "updateboard2@dude.dude", "dudedude", "dudedude")
-	game, _ := db.CreateGame(user1.Id, user2.Username)
+	game, _ := db.CreateGame(user1.Id, user2)
 
 	stone := Stone{0, 0, "black"}
 	game.Board.Stones = []Stone{stone}

@@ -30,20 +30,26 @@ func GetLobby(p graphql.ResolveParams) (interface{}, error) {
 func CreateGame(p graphql.ResolveParams) (interface{}, error) {
 	db := p.Context.Value("db").(models.Database)
 	token, ok := p.Context.Value("token").(string)
-
 	if !ok {
 		return nil, invalidTokenError{}
 	}
 
 	opponentUsername := p.Args["opponentUsername"].(string)
-
-	claims, err := ValidateToken(token)
-
+	opponent, err := db.GetUser(opponentUsername)
 	if err != nil {
 		return nil, err
 	}
 
-	return db.CreateGame(claims.UserId, opponentUsername)
+	claims, err := ValidateToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	if opponent.Id == claims.UserId {
+		return nil, sameUserError{}
+	}
+
+	return db.CreateGame(claims.UserId, opponent)
 }
 
 // Pass executes a pass maneuver for the Game with the current User.

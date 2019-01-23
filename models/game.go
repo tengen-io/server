@@ -68,7 +68,7 @@ func (db *DB) GetGames(userId interface{}) ([]*Game, error) {
 
 // CreateGame builds all the necessary information to start a game, including
 // associated Player entries.
-func (db *DB) CreateGame(userId int, opponentUsername string) (*Game, error) {
+func (db *DB) CreateGame(userId int, opponent *User) (*Game, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -86,11 +86,6 @@ func (db *DB) CreateGame(userId int, opponentUsername string) (*Game, error) {
 	}
 	games, _ := parseGameRows(rows)
 	game := &games[0]
-
-	opponent, err := db.GetUser(opponentUsername)
-	if err != nil {
-		return nil, err
-	}
 
 	// Create Player 1 (inviter)
 	player1, err := createPlayer(tx, userId, game.Id, "active", "black", time)

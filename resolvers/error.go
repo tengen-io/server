@@ -6,6 +6,7 @@ type gameCompleteError struct{}
 type gameNotStartedError struct{}
 type koViolationError struct{}
 type stoneExistsError struct{}
+type sameUserError struct{}
 
 func (e userNotInGameError) Error() string {
 	return "User not in game"
@@ -29,4 +30,8 @@ func (e koViolationError) Error() string {
 
 func (e stoneExistsError) Error() string {
 	return "Stone already exists at that location"
+}
+
+func (e sameUserError) Error() string {
+	return "Cannot choose self as opponent"
 }
