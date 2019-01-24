@@ -3,7 +3,10 @@ package models
 type TestDB struct{}
 
 func (db *TestDB) CheckPw(username, password string) (*User, error) {
-	return nil, nil
+	if username == "dude" && password == "dudedude" {
+		return db.GetUser("dude")
+	}
+	return nil, invalidLoginError{}
 }
 
 func (db *TestDB) CreateUser(username, email, password, passwordConfirm string) (*User, error) {
@@ -24,28 +27,68 @@ func (db *TestDB) GetUser(identifier interface{}) (*User, error) {
 
 	switch identifier.(type) {
 	case int:
-		if identifier.(int) == 1 {
-			return user, userNotFoundError{}
+		if id, ok := identifier.(int); ok {
+			user.Id = id
 		}
 	case string:
-		if identifier.(string) == "dude" {
-			return user, userNotFoundError{}
+		if id, ok := identifier.(string); ok {
+			if user.Username != id {
+				user.Id = len(id)
+			}
+			user.Username = id
 		}
 	}
 
-	return nil, userNotFoundError{}
+	return user, nil
 }
 
 func (db *TestDB) GetGame(gameId interface{}) (*Game, error) {
-	return nil, nil
+	game := &Game{
+		Id:           1,
+		Status:       "active",
+		PlayerTurnId: 1,
+		Board:        &Board{},
+	}
+
+	if gameId.(string) == "2" {
+		game.Status = "complete"
+	}
+
+	if gameId.(string) == "3" {
+		game.PlayerTurnId++
+		game.Players = []Player{
+			Player{Id: 1, UserId: 1},
+			Player{UserId: 2},
+		}
+	}
+
+	if gameId.(string) == "4" {
+		game.Players = []Player{
+			Player{Id: 1, UserId: 1},
+			Player{UserId: 2},
+		}
+	}
+
+	return game, nil
 }
 
 func (db *TestDB) GetGames(userId interface{}) ([]*Game, error) {
-	return nil, nil
+	game := &Game{
+		Id:           1,
+		Status:       "active",
+		PlayerTurnId: 1,
+		Board:        &Board{},
+	}
+	return []*Game{game}, nil
 }
 
 func (db *TestDB) CreateGame(userId int, opponent *User) (*Game, error) {
-	return nil, nil
+	return &Game{
+		Id:           1,
+		Status:       "active",
+		PlayerTurnId: userId,
+		Board:        &Board{},
+	}, nil
 }
 
 func (db *TestDB) UpdateBoard(userId int, game *Game) (*Game, error) {
