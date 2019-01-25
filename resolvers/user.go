@@ -17,6 +17,7 @@ func GetUser(p graphql.ResolveParams) (interface{}, error) {
 // CreateUser creates a new User account.
 func CreateUser(p graphql.ResolveParams) (interface{}, error) {
 	db := p.Context.Value("db").(models.Database)
+	signingKey := p.Context.Value("signingKey").([]byte)
 	username := p.Args["username"].(string)
 	email := p.Args["email"].(string)
 	password := p.Args["password"].(string)
@@ -28,7 +29,7 @@ func CreateUser(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	token, err := GenerateToken(user.Id)
+	token, err := GenerateToken(user.Id, signingKey)
 
 	return &models.AuthUser{token, user}, nil
 }
@@ -38,13 +39,14 @@ func LogIn(p graphql.ResolveParams) (interface{}, error) {
 	username := p.Args["username"].(string)
 	password := p.Args["password"].(string)
 	db := p.Context.Value("db").(models.Database)
+	signingKey := p.Context.Value("signingKey").([]byte)
 	user, err := db.CheckPw(username, password)
 
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := GenerateToken(user.Id)
+	token, err := GenerateToken(user.Id, signingKey)
 
 	if err != nil {
 		return user, err
@@ -59,6 +61,7 @@ func LogIn(p graphql.ResolveParams) (interface{}, error) {
 // Content Headers.
 func CurrentUser(p graphql.ResolveParams) (interface{}, error) {
 	db := p.Context.Value("db").(models.Database)
+	signingKey := p.Context.Value("signingKey").([]byte)
 
 	token, ok := p.Context.Value("token").(string)
 
@@ -66,7 +69,7 @@ func CurrentUser(p graphql.ResolveParams) (interface{}, error) {
 		return nil, missingTokenError{}
 	}
 
-	claims, err := ValidateToken(token)
+	claims, err := ValidateToken(token, signingKey)
 
 	if err != nil {
 		return nil, err

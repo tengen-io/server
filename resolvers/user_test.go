@@ -67,11 +67,13 @@ func TestLogIn(t *testing.T) {
 
 func TestCurrentUser(t *testing.T) {
 	db := &models.TestDB{}
+	signingKey := []byte("secret")
 	params := graphql.ResolveParams{}
 	params.Args = map[string]interface{}{}
 	ctx := context.WithValue(params.Context, "db", db)
-	token, _ := GenerateToken(1)
+	token, _ := GenerateToken(1, signingKey)
 	ctx = context.WithValue(ctx, "token", token)
+	ctx = context.WithValue(ctx, "signingKey", signingKey)
 	params.Context = ctx
 
 	_, err := CurrentUser(params)
@@ -83,22 +85,21 @@ func TestCurrentUser(t *testing.T) {
 
 func setup() graphql.ResolveParams {
 	db := &models.TestDB{}
+	signingKey := []byte("secret")
 	params := graphql.ResolveParams{}
 	params.Args = map[string]interface{}{}
 	ctx := context.WithValue(params.Context, "db", db)
+	ctx = context.WithValue(ctx, "signingKey", signingKey)
 	params.Context = ctx
 
 	return params
 }
 
 func setupAuth() graphql.ResolveParams {
-	db := &models.TestDB{}
-	params := graphql.ResolveParams{}
-	params.Args = map[string]interface{}{}
-	ctx := context.WithValue(params.Context, "db", db)
-	token, _ := GenerateToken(1)
-	ctx = context.WithValue(ctx, "token", token)
-	params.Context = ctx
+	params := setup()
+	signingKey := params.Context.Value("signingKey").([]byte)
+	token, _ := GenerateToken(1, signingKey)
+	params.Context = context.WithValue(params.Context, "token", token)
 
 	return params
 }

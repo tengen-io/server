@@ -29,6 +29,7 @@ func GetLobby(p graphql.ResolveParams) (interface{}, error) {
 // as Players.
 func CreateGame(p graphql.ResolveParams) (interface{}, error) {
 	db := p.Context.Value("db").(models.Database)
+	signingKey := p.Context.Value("signingKey").([]byte)
 	token, ok := p.Context.Value("token").(string)
 	if !ok {
 		return nil, invalidTokenError{}
@@ -40,7 +41,7 @@ func CreateGame(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	claims, err := ValidateToken(token)
+	claims, err := ValidateToken(token, signingKey)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +56,7 @@ func CreateGame(p graphql.ResolveParams) (interface{}, error) {
 // Pass executes a pass maneuver for the Game with the current User.
 func Pass(p graphql.ResolveParams) (interface{}, error) {
 	db := p.Context.Value("db").(models.Database)
+	signingKey := p.Context.Value("signingKey").([]byte)
 	token, ok := p.Context.Value("token").(string)
 
 	if !ok {
@@ -62,7 +64,7 @@ func Pass(p graphql.ResolveParams) (interface{}, error) {
 	}
 	gameId := p.Args["gameId"].(string)
 
-	claims, err := ValidateToken(token)
+	claims, err := ValidateToken(token, signingKey)
 
 	if err != nil {
 		return nil, err
@@ -90,6 +92,7 @@ func Pass(p graphql.ResolveParams) (interface{}, error) {
 // to the Board, with given X and Y coordinates.
 func AddStone(p graphql.ResolveParams) (interface{}, error) {
 	db := p.Context.Value("db").(models.Database)
+	signingKey := p.Context.Value("signingKey").([]byte)
 	token, ok := p.Context.Value("token").(string)
 
 	if !ok {
@@ -97,7 +100,7 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 	}
 	gameId := p.Args["gameId"].(string)
 
-	claims, err := ValidateToken(token)
+	claims, err := ValidateToken(token, signingKey)
 
 	if err != nil {
 		return nil, err

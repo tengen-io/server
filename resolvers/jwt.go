@@ -1,7 +1,6 @@
 package resolvers
 
 import (
-	"crypto/sha256"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -10,14 +9,8 @@ type MyCustomClaims struct {
 	jwt.StandardClaims
 }
 
-func getKey() []byte {
-	h := sha256.New()
-
-	return h.Sum([]byte("TODO: pull secret key from safe place"))
-}
-
 // GenerateToken generates a new JWT for the given User id.
-func GenerateToken(userId int) (string, error) {
+func GenerateToken(userId int, signingKey []byte) (string, error) {
 	// Create the Claims
 	claims := MyCustomClaims{
 		userId,
@@ -25,7 +18,6 @@ func GenerateToken(userId int) (string, error) {
 			Issuer: "GoStop",
 		},
 	}
-	signingKey := getKey()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	ss, err := token.SignedString(signingKey)
 
@@ -37,9 +29,9 @@ func GenerateToken(userId int) (string, error) {
 
 // ValidateToken parses and validates a provided token, retrieving the token's
 // claims if successful.
-func ValidateToken(tokenString string) (*MyCustomClaims, error) {
+func ValidateToken(tokenString string, signingKey []byte) (*MyCustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return getKey(), nil
+		return signingKey, nil
 	})
 
 	if err != nil {
