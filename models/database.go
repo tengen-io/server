@@ -7,17 +7,13 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
 	"golang.org/x/crypto/bcrypt"
-	"io/ioutil"
-	"os"
 )
 
-var testingMode bool
-
-const TestingDB string = "postgres://postgres:postgres@localhost:5432/go_stop_go_test?sslmode=disable"
-
-type DB struct{ *sql.DB }
+type DB struct {
+	Config *DbConfig
+	*sql.DB
+}
 
 type Database interface {
 	CheckPw(username, password string) (*User, error)
@@ -30,15 +26,6 @@ type Database interface {
 	Pass(userId int, game *Game) (*Game, error)
 }
 
-func getSecret(fileName string) string {
-	file, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return ""
-	}
-
-	return string(file)
-}
-
 // ConnectDB creates a connection with the postgres database, using credentials
 // pulled from environment variables:
 //
@@ -47,45 +34,17 @@ func getSecret(fileName string) string {
 //	POSTGRES_PASSWORD - reads a file
 // 	POSTGRES_HOST - reads value
 func ConnectDB() (*DB, error) {
-	dbName := os.Getenv("POSTGRES_DB")
-	if dbName == "" {
-		dbName = "go_stop_go"
-	}
-
-	user := os.Getenv("POSTGRES_USER")
-	if user == "" {
-		user = "postgres"
-	} else {
-		user = getSecret(user)
-	}
-
-	pw := os.Getenv("POSTGRES_PASSWORD")
-	if pw == "" {
-		pw = "postgres"
-	} else {
-		pw = getSecret(pw)
-	}
-
-	host := os.Getenv("POSTGRES_HOST")
-	if host == "" {
-		host = "localhost"
-	}
-
-	var connStr string
-	if testingMode {
-		connStr = TestingDB
-	} else {
-		connStr = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", user, pw, host, dbName)
-	}
-
-	db, err := sql.Open("postgres", connStr)
+	config := setupConfig()
+	conn, err := sql.Open("postgres", config.DbUrl)
 	if err != nil {
 		return nil, err
 	}
-	if err = db.Ping(); err != nil {
+	if err = conn.Ping(); err != nil {
 		return nil, err
 	}
-	return &DB{db}, nil
+	db := &DB{config, conn}
+
+	return db, nil
 }
 
 // CheckPw compares the given password against the encrypted password for the given User.

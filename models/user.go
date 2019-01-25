@@ -54,7 +54,7 @@ func (db *DB) CreateUser(username, email, password, passwordConfirm string) (*Us
 		return nil, invalidEmailError{}
 	}
 
-	pw, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	pw, err := bcrypt.GenerateFromPassword([]byte(password), db.Config.BcryptRounds)
 
 	if err != nil {
 		return nil, err

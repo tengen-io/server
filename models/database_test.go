@@ -51,7 +51,3 @@ func teardown() {
 	db.Query("DELETE FROM games")
 	db.Query("DELETE FROM users")
 }
-
-func init() {
-	testingMode = true
-}
