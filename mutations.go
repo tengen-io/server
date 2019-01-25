@@ -5,12 +5,12 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-var (
-	mutationType = graphql.NewObject(graphql.ObjectConfig{
+func buildMutations(objects *Objects) *graphql.Object {
+	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
 			"createUser": &graphql.Field{
-				Type: tokenType,
+				Type: objects.AuthUser,
 				Args: graphql.FieldConfigArgument{
 					"username": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
@@ -29,7 +29,7 @@ var (
 			},
 
 			"createGame": &graphql.Field{
-				Type: gameType,
+				Type: objects.Game,
 				Args: graphql.FieldConfigArgument{
 					"opponentUsername": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
@@ -39,7 +39,7 @@ var (
 			},
 
 			"pass": &graphql.Field{
-				Type: gameType,
+				Type: objects.Game,
 				Args: graphql.FieldConfigArgument{
 					"gameId": &graphql.ArgumentConfig{
 						Type: graphql.ID,
@@ -49,7 +49,7 @@ var (
 			},
 
 			"logIn": &graphql.Field{
-				Type: tokenType,
+				Type: objects.AuthUser,
 				Args: graphql.FieldConfigArgument{
 					"username": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
@@ -62,7 +62,7 @@ var (
 			},
 
 			"addStone": &graphql.Field{
-				Type: gameType,
+				Type: objects.Game,
 				Args: graphql.FieldConfigArgument{
 					"gameId": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.ID),
@@ -78,4 +78,4 @@ var (
 			},
 		},
 	})
-)
+}
