@@ -42,6 +42,9 @@ func createGame(t *testing.T) {
 	if game.Status != "active" {
 		t.Error("Expected game status to be 'active'")
 	}
+	if game.Board.Size != RegBoardSize {
+		t.Errorf("Expected board size to be %d, got %d", RegBoardSize, game.Board.Size)
+	}
 }
 
 func TestGetGames(t *testing.T) {

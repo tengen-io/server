@@ -75,7 +75,7 @@ func (db *DB) CreateGame(userId int, opponent *User) (*Game, error) {
 	}
 	time := pq.FormatTimestamp(time.Now())
 
-	board := Board{Size: SmallBoardSize, Stones: []Stone{}}
+	board := Board{Size: RegBoardSize, Stones: []Stone{}}
 	encodedBoard, err := json.Marshal(board)
 
 	// Create Game
