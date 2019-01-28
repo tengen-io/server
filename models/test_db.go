@@ -47,7 +47,7 @@ func (db *TestDB) GetGame(gameId interface{}) (*Game, error) {
 		Id:           1,
 		Status:       "active",
 		PlayerTurnId: 1,
-		Board:        &Board{},
+		BoardSize:    SmallBoardSize,
 	}
 
 	if gameId.(string) == "2" {
@@ -77,7 +77,6 @@ func (db *TestDB) GetGames(userId interface{}) ([]*Game, error) {
 		Id:           1,
 		Status:       "active",
 		PlayerTurnId: 1,
-		Board:        &Board{},
 	}
 	return []*Game{game}, nil
 }
@@ -87,12 +86,16 @@ func (db *TestDB) CreateGame(userId int, opponent *User) (*Game, error) {
 		Id:           1,
 		Status:       "active",
 		PlayerTurnId: userId,
-		Board:        &Board{},
 	}, nil
 }
 
-func (db *TestDB) UpdateBoard(userId int, game *Game) (*Game, error) {
-	return nil, nil
+func (db *TestDB) UpdateBoard(userId int, game *Game, stone Stone, toRemove []Stone) (*Game, error) {
+	return &Game{
+		Id:           1,
+		Status:       "active",
+		PlayerTurnId: userId,
+		Stones:       []Stone{stone},
+	}, nil
 }
 
 func (db *TestDB) Pass(userId int, game *Game) (*Game, error) {

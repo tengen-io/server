@@ -1,2 +1,1 @@
 DROP TABLE IF EXISTS users;
-DROP SEQUENCE users_id_seq;

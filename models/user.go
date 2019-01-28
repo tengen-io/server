@@ -61,7 +61,7 @@ func (db *DB) CreateUser(username, email, password, passwordConfirm string) (*Us
 	}
 	time := pq.FormatTimestamp(time.Now())
 
-	rows, err := db.Query("INSERT INTO users VALUES (nextval('users_id_seq'), $1, $2, $3, $4, $5) RETURNING *", username, email, pw, time, time)
+	rows, err := db.Query("INSERT INTO users (username, email, encrypted_password, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *", username, email, pw, time, time)
 	if err != nil {
 		return nil, HandleError(err)
 	}

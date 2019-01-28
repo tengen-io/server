@@ -16,16 +16,15 @@ import (
 // set of Stones for which each Stone is adjacent to at least one other Stone.
 type String []models.Stone
 
-// Run determines whether any Stones should be removed from the Board, based on
-// game rules. In the future this may also update the Board in addition to
-// returning captured Stones.
-func Run(board *models.Board, stone models.Stone) ([]String, error) {
-	strings := getStrings(board)
+// Run determines whether any Stones should be removed from the board, based on
+// game rules.
+func Run(boardSize int, stones []models.Stone, stone models.Stone) ([]String, error) {
+	strings := getStrings(boardSize, stones)
 
 	toRemove := make([]String, 0)
 
 	for _, str := range strings {
-		_, numLiberties := findLiberties(board, str)
+		_, numLiberties := findLiberties(boardSize, stones, str)
 
 		if numLiberties == 0 {
 			toRemove = append(toRemove, str)
@@ -48,11 +47,11 @@ func Run(board *models.Board, stone models.Stone) ([]String, error) {
 	return toRemove, nil
 }
 
-func findLiberties(board *models.Board, str String) ([]models.Stone, int) {
+func findLiberties(boardSize int, stones []models.Stone, str String) ([]models.Stone, int) {
 	liberties := make([]models.Stone, 0)
 
 	for _, s := range str {
-		nearby := getNearby(board, s)
+		nearby := getNearby(boardSize, stones, s)
 
 		for i, ns := range nearby {
 			if ns.Color == "" && !contains(liberties, ns) {
@@ -64,11 +63,11 @@ func findLiberties(board *models.Board, str String) ([]models.Stone, int) {
 	return liberties, len(liberties)
 }
 
-func getStrings(board *models.Board) []String {
+func getStrings(boardSize int, stones []models.Stone) []String {
 	strings := make([]String, 0)
 
-	for _, stone := range board.Stones {
-		newString := getString(board, stone)
+	for _, stone := range stones {
+		newString := getString(boardSize, stones, stone)
 
 		sort.Slice(newString, func(i, j int) bool {
 			if newString[i].Y < newString[j].Y {
@@ -88,7 +87,7 @@ func getStrings(board *models.Board) []String {
 	return strings
 }
 
-func getString(board *models.Board, stone models.Stone) String {
+func getString(boardSize int, stones []models.Stone, stone models.Stone) String {
 	acc := []models.Stone{stone}
 	str := make(String, 0)
 
@@ -98,7 +97,7 @@ func getString(board *models.Board, stone models.Stone) String {
 
 		if !contains(str, s) && s.Color == stone.Color {
 			str = append(str, s)
-			nearby := getNearby(board, s)
+			nearby := getNearby(boardSize, stones, s)
 			acc = append(acc, nearby...)
 		}
 	}
@@ -106,7 +105,7 @@ func getString(board *models.Board, stone models.Stone) String {
 	return str
 }
 
-func getNearby(board *models.Board, stone models.Stone) []models.Stone {
+func getNearby(boardSize int, stones []models.Stone, stone models.Stone) []models.Stone {
 	up := models.Stone{X: stone.X, Y: stone.Y + 1}
 	down := models.Stone{X: stone.X, Y: stone.Y - 1}
 	left := models.Stone{X: stone.X - 1, Y: stone.Y}
@@ -116,8 +115,8 @@ func getNearby(board *models.Board, stone models.Stone) []models.Stone {
 	validStones := make([]models.Stone, 0)
 
 	for _, s := range nearbyStones {
-		if isInbounds(board.Size, s) {
-			existingStone := find(board.Stones, s)
+		if isInbounds(boardSize, s) {
+			existingStone := find(stones, s)
 
 			if existingStone != nil {
 				validStones = append(validStones, *existingStone)

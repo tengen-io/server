@@ -126,15 +126,15 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 	x := p.Args["x"].(int)
 	y := p.Args["y"].(int)
 
-	stone := models.Stone{x, y, currentPlayer.Color}
+	stone := models.Stone{X: x, Y: y, Color: currentPlayer.Color}
 
-	if !contains(game.Board.Stones, stone) {
-		game.Board.Stones = append(game.Board.Stones, stone)
+	if !contains(game.Stones, stone) {
+		game.Stones = append(game.Stones, stone)
 	} else {
 		return nil, stoneExistsError{}
 	}
 
-	stringsToRemove, err := rules.Run(game.Board, stone)
+	stringsToRemove, err := rules.Run(game.BoardSize, game.Stones, stone)
 	toRemove := flatten(stringsToRemove)
 
 	if err != nil {
@@ -146,23 +146,31 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 	}
 
 	if len(toRemove) > 0 {
-		game.Board.LastTaker = &stone
+		game.LastTaker = &stone
 	} else {
-		game.Board.LastTaker = nil
+		game.LastTaker = nil
 	}
 
 	newStones := make([]models.Stone, 0)
-	for _, s := range game.Board.Stones {
+	for _, s := range game.Stones {
 		if !contains(toRemove, s) {
 			newStones = append(newStones, s)
 		}
 	}
 
-	game.Board.Stones = newStones
+	game, err = db.UpdateBoard(user.Id, game, stone, toRemove)
 
-	db.UpdateBoard(user.Id, game)
+	if err != nil {
+		return nil, err
+	}
 
-	return game, nil
+	for _, s := range game.Stones {
+		if s.X == stone.X && s.Y == stone.Y {
+			stone = s
+		}
+	}
+
+	return &stone, nil
 }
 
 func validateGame(game *models.Game) error {
@@ -196,7 +204,7 @@ func validateTurn(game *models.Game, userId int) error {
 
 func contains(stones []models.Stone, stone models.Stone) bool {
 	for _, s := range stones {
-		if reflect.DeepEqual(s, stone) {
+		if s.X == stone.X && s.Y == stone.Y {
 			return true
 		}
 	}
@@ -208,7 +216,7 @@ func validateKo(game *models.Game, toRemove []models.Stone) error {
 	if len(toRemove) != 1 {
 		return nil
 	}
-	if reflect.DeepEqual(game.Board.LastTaker, toRemove[0]) {
+	if reflect.DeepEqual(game.LastTaker, toRemove[0]) {
 		return koViolationError{}
 	}
 	return nil

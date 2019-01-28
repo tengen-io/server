@@ -3,8 +3,9 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
-	_ "fmt"
+	"fmt"
 	"github.com/lib/pq"
+	"strings"
 	"time"
 )
 
@@ -12,10 +13,15 @@ type Game struct {
 	Id           int
 	Status       string
 	PlayerTurnId int
-	Board        *Board
+	BoardSize    int
+	LastTaker    *Stone
 	Players      []Player
+	Stones       []Stone
 	Timestamps
 }
+
+const SmallBoardSize int = 13
+const RegBoardSize int = 19
 
 func (game Game) CurrentPlayer(userId int) (Player, Player) {
 	var otherPlayer Player
@@ -75,11 +81,8 @@ func (db *DB) CreateGame(userId int, opponent *User) (*Game, error) {
 	}
 	time := pq.FormatTimestamp(time.Now())
 
-	board := Board{Size: RegBoardSize, Stones: []Stone{}}
-	encodedBoard, err := json.Marshal(board)
-
 	// Create Game
-	rows, err := tx.Query("INSERT INTO games VALUES (nextval('games_id_seq'), $1, $2, $3, $4, $5) RETURNING *", "active", nil, encodedBoard, time, time)
+	rows, err := tx.Query("INSERT INTO games (status, board_size, inserted_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING *", "active", RegBoardSize, time, time)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -96,11 +99,6 @@ func (db *DB) CreateGame(userId int, opponent *User) (*Game, error) {
 
 	// Create Player 2 (invitee)
 	_, err = createPlayer(tx, opponent.Id, game.Id, "user-pending", "white", time)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
@@ -127,13 +125,13 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 	if otherPlayer.HasPassed {
 		tx, _ := db.Begin()
 
-		_, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", true, time, currentPlayer.Id)
+		_, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3", true, time, currentPlayer.Id)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
 
-		_, err = tx.Exec("UPDATE games SET (status, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", "complete", time, game.Id)
+		_, err = tx.Exec("UPDATE games SET (status, updated_at) = ($1, $2) WHERE id = $3", "complete", time, game.Id)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -144,18 +142,19 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 		}
 	} else {
 		tx, _ := db.Begin()
-		_, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", true, time, currentPlayer.Id)
+		_, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3", true, time, currentPlayer.Id)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
-		_, err = tx.Exec("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) WHERE id = $3 RETURNING *", otherPlayer.Id, time, game.Id)
+		_, err = tx.Exec("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) WHERE id = $3", otherPlayer.Id, time, game.Id)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
 
 		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
 			return nil, err
 		}
 	}
@@ -165,13 +164,49 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 	return game, nil
 }
 
-func (db *DB) UpdateBoard(userId int, game *Game) (*Game, error) {
+func (db *DB) UpdateBoard(userId int, game *Game, toAdd Stone, toRemove []Stone) (*Game, error) {
 	_, otherPlayer := game.CurrentPlayer(userId)
 	time := pq.FormatTimestamp(time.Now())
-	board, _ := json.Marshal(game.Board)
-	_, err := db.Exec("UPDATE games SET (board, player_turn_id, updated_at) = ($1, $2, $3) where id = $4 RETURNING *", board, otherPlayer.Id, time, game.Id)
+	tx, _ := db.Begin()
+	_, err := tx.Exec("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) where id = $3", otherPlayer.Id, time, game.Id)
 
 	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	ids := make([]string, 0)
+	for _, stone := range toRemove {
+		ids = append(ids, fmt.Sprintf("%d", stone.Id))
+	}
+	allIds := strings.Join(ids, ", ")
+
+	_, err = tx.Exec("DELETE FROM stones WHERE id IN ($1)", allIds)
+
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	_, err = tx.Exec("INSERT INTO stones (game_id, x, y, color, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", game.Id, toAdd.X, toAdd.Y, toAdd.Color, time, time)
+
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, err
+	}
+
+	if game.LastTaker != nil {
+		encoded, _ := json.Marshal(game.LastTaker)
+		_, err := tx.Exec("UPDATE games SET last_taker = $1", encoded)
+
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		_ = tx.Rollback()
 		return nil, err
 	}
 
@@ -198,6 +233,11 @@ func buildGame(db *DB, game *Game) error {
 
 	game.Players = players
 
+	rows, _ = db.Query("SELECT * FROM stones where game_id = $1", game.Id)
+	stones, _ := parseStoneRows(rows)
+
+	game.Stones = stones
+
 	return nil
 }
 
@@ -211,7 +251,8 @@ func parseGameRows(rows *sql.Rows) ([]Game, error) {
 			&game.Id,
 			&game.Status,
 			&game.PlayerTurnId,
-			&game.Board,
+			&game.BoardSize,
+			&game.LastTaker,
 			&game.InsertedAt,
 			&game.UpdatedAt,
 		)
