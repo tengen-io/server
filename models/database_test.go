@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -19,8 +20,12 @@ func TestMain(m *testing.M) {
 }
 
 func TestCheckPw(t *testing.T) {
-	db.CreateUser("testcheckpw", "testcheckpw@dude.dude", "dudedude", "dudedude")
-	_, err := db.CheckPw("testcheckpw", "dudedude")
+	_, err := db.CreateUser("testcheckpw", "testcheckpw@dude.dude", "dudedude", "dudedude")
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = db.CheckPw("testcheckpw", "dudedude")
 
 	if err != nil {
 		t.Error(err)
@@ -47,7 +52,20 @@ func setup() {
 }
 
 func teardown() {
-	db.Query("DELETE FROM players")
-	db.Query("DELETE FROM games")
-	db.Query("DELETE FROM users")
+	_, err := db.Exec("DELETE FROM players")
+	if err != nil {
+		fmt.Println(err)
+	}
+	_, err = db.Exec("DELETE FROM stones")
+	if err != nil {
+		fmt.Println(err)
+	}
+	_, err = db.Exec("DELETE FROM games")
+	if err != nil {
+		fmt.Println(err)
+	}
+	_, err = db.Exec("DELETE FROM users")
+	if err != nil {
+		fmt.Println(err)
+	}
 }

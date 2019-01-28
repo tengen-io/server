@@ -37,7 +37,7 @@ func createGame(t *testing.T) {
 	_, err := CreateGame(params)
 
 	if err != nil {
-		t.Errorf("Expected new game, got error %e", err)
+		t.Errorf("Expected new game, got error: %s", err.Error())
 	}
 }
 
@@ -48,7 +48,7 @@ func TestGetGame(t *testing.T) {
 	game, err := GetGame(params)
 
 	if err != nil {
-		t.Error("Expected Game, got error")
+		t.Errorf("Expected Game, got error: %s", err.Error())
 	}
 
 	if _, ok := game.(*models.Game); !ok {
@@ -136,7 +136,7 @@ func pass(t *testing.T) {
 	game, err := Pass(params)
 
 	if err != nil {
-		t.Errorf("Expected Game, got error %e", err)
+		t.Errorf("Expected Game, got error: %s", err.Error())
 	}
 
 	if _, ok := game.(*models.Game); !ok {
@@ -191,14 +191,16 @@ func addStoneNotInGame(t *testing.T) {
 func addStone(t *testing.T) {
 	params := setupAuth()
 	params.Args["gameId"] = "4"
+	params.Args["x"] = 3
+	params.Args["y"] = 3
 
-	game, err := Pass(params)
+	stone, err := AddStone(params)
 
 	if err != nil {
-		t.Errorf("Expected Game, got error %e", err)
+		t.Errorf("Expected Stone, got error: %s", err.Error())
 	}
 
-	if _, ok := game.(*models.Game); !ok {
-		t.Errorf("Expected Game, got %v", game)
+	if _, ok := stone.(*models.Stone); !ok {
+		t.Errorf("Expected Stone, got %v", stone)
 	}
 }

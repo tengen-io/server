@@ -10,7 +10,6 @@ type Objects struct {
 	AuthUser *graphql.Object
 	Player   *graphql.Object
 	Game     *graphql.Object
-	Board    *graphql.Object
 	Stone    *graphql.Object
 }
 
@@ -102,6 +101,15 @@ func buildObjects() *Objects {
 	stoneType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Stone",
 		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if stone, ok := p.Source.(models.Stone); ok {
+						return stone.Id, nil
+					}
+					return nil, nil
+				},
+			},
 			"x": &graphql.Field{
 				Type: graphql.Int,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -125,39 +133,6 @@ func buildObjects() *Objects {
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if stone, ok := p.Source.(models.Stone); ok {
 						return stone.Color, nil
-					}
-					return nil, nil
-				},
-			},
-		},
-	})
-
-	boardType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "Board",
-		Fields: graphql.Fields{
-			"size": &graphql.Field{
-				Type: graphql.Int,
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					if board, ok := p.Source.(*models.Board); ok {
-						return board.Size, nil
-					}
-					return nil, nil
-				},
-			},
-			"lastTaker": &graphql.Field{
-				Type: stoneType,
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					if board, ok := p.Source.(*models.Board); ok {
-						return board.LastTaker, nil
-					}
-					return nil, nil
-				},
-			},
-			"stones": &graphql.Field{
-				Type: graphql.NewList(stoneType),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					if board, ok := p.Source.(*models.Board); ok {
-						return board.Stones, nil
 					}
 					return nil, nil
 				},
@@ -204,11 +179,29 @@ func buildObjects() *Objects {
 					return nil, nil
 				},
 			},
-			"board": &graphql.Field{
-				Type: boardType,
+			"boardSize": &graphql.Field{
+				Type: graphql.Int,
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if game, ok := p.Source.(*models.Game); ok {
-						return game.Board, nil
+						return game.BoardSize, nil
+					}
+					return nil, nil
+				},
+			},
+			"lastTaker": &graphql.Field{
+				Type: stoneType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if game, ok := p.Source.(*models.Game); ok {
+						return game.LastTaker, nil
+					}
+					return nil, nil
+				},
+			},
+			"stones": &graphql.Field{
+				Type: graphql.NewList(stoneType),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if game, ok := p.Source.(*models.Game); ok {
+						return game.Stones, nil
 					}
 					return nil, nil
 				},
@@ -245,7 +238,6 @@ func buildObjects() *Objects {
 		tokenType,
 		playerType,
 		gameType,
-		boardType,
 		stoneType,
 	}
 }

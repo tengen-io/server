@@ -29,12 +29,9 @@ func testBasicLiberties(t *testing.T) {
 	s7 := models.Stone{X: 12, Y: 1, Color: "black"}
 	s8 := models.Stone{X: 11, Y: 0, Color: "black"}
 
-	b := &models.Board{
-		Size:   models.SmallBoardSize,
-		Stones: []models.Stone{s1, s2, s3, s4, s5, s6, s7, s8},
-	}
+	stones := []models.Stone{s1, s2, s3, s4, s5, s6, s7, s8}
 
-	strings, _ := Run(b, s4)
+	strings, _ := Run(models.SmallBoardSize, stones, s4)
 
 	if len(strings) != 2 {
 		t.Errorf("Expected 2 Strings, found %d", len(strings))
@@ -75,32 +72,29 @@ func testStrings(t *testing.T) {
 	w6 := models.Stone{X: 1, Y: 3, Color: "white"}
 	w7 := models.Stone{X: 1, Y: 2, Color: "white"}
 
-	b := &models.Board{
-		Size: models.SmallBoardSize,
-		Stones: []models.Stone{
-			b1,
-			b2,
-			b3,
-			b4,
-			b5,
-			b6,
-			b7,
-			b8,
-			b9,
-			b10,
-			b11,
-			b12,
-			w1,
-			w2,
-			w3,
-			w4,
-			w5,
-			w6,
-			w7,
-		},
+	stones := []models.Stone{
+		b1,
+		b2,
+		b3,
+		b4,
+		b5,
+		b6,
+		b7,
+		b8,
+		b9,
+		b10,
+		b11,
+		b12,
+		w1,
+		w2,
+		w3,
+		w4,
+		w5,
+		w6,
+		w7,
 	}
 
-	strings, _ := Run(b, b7)
+	strings, _ := Run(models.SmallBoardSize, stones, b7)
 
 	if len(strings) != 1 {
 		t.Errorf("Expected 1 String, found %d", len(strings))
@@ -124,23 +118,20 @@ func testSelfCaptureViolation(t *testing.T) {
 
 	w1 := models.Stone{X: 1, Y: 1, Color: "white"}
 
-	b := &models.Board{
-		Size: models.SmallBoardSize,
-		Stones: []models.Stone{
-			b1,
-			b2,
-			b3,
-			b4,
-			b5,
-			b6,
-			b7,
-			b8,
-			b9,
-			w1,
-		},
+	stones := []models.Stone{
+		b1,
+		b2,
+		b3,
+		b4,
+		b5,
+		b6,
+		b7,
+		b8,
+		b9,
+		w1,
 	}
 
-	_, err := Run(b, w1)
+	_, err := Run(models.SmallBoardSize, stones, w1)
 
 	expectedErr := selfCaptureError{}
 	if err.Error() != expectedErr.Error() {
@@ -169,31 +160,28 @@ func testValidSelfCapture(t *testing.T) {
 	w10 := models.Stone{X: 2, Y: 1, Color: "white"}
 	w11 := models.Stone{X: 2, Y: 0, Color: "white"}
 
-	b := &models.Board{
-		Size: models.SmallBoardSize,
-		Stones: []models.Stone{
-			b1,
-			b2,
-			b3,
-			b4,
-			b5,
-			b6,
-			b7,
-			w1,
-			w2,
-			w3,
-			w4,
-			w5,
-			w6,
-			w7,
-			w8,
-			w9,
-			w10,
-			w11,
-		},
+	stones := []models.Stone{
+		b1,
+		b2,
+		b3,
+		b4,
+		b5,
+		b6,
+		b7,
+		w1,
+		w2,
+		w3,
+		w4,
+		w5,
+		w6,
+		w7,
+		w8,
+		w9,
+		w10,
+		w11,
 	}
 
-	strings, err := Run(b, w11)
+	strings, err := Run(models.SmallBoardSize, stones, w11)
 
 	if err != nil {
 		t.Errorf("Expected 1 String, got error: %s", err.Error())

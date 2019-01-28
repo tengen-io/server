@@ -1,7 +1,6 @@
 package models
 
 import (
-	_ "fmt"
 	"testing"
 )
 
@@ -27,8 +26,14 @@ func createGameInvalidOpponent(t *testing.T) {
 }
 
 func createGame(t *testing.T) {
-	user1, _ := db.CreateUser("creategame1", "creategame1@dude.dude", "dudedude", "dudedude")
-	user2, _ := db.CreateUser("creategame2", "creategame2@dude.dude", "dudedude", "dudedude")
+	user1, err := db.CreateUser("creategame1", "creategame1@dude.dude", "dudedude", "dudedude")
+	if err != nil {
+		t.Error(err)
+	}
+	user2, err := db.CreateUser("creategame2", "creategame2@dude.dude", "dudedude", "dudedude")
+	if err != nil {
+		t.Error(err)
+	}
 
 	game, err := db.CreateGame(user1.Id, user2)
 
@@ -42,8 +47,8 @@ func createGame(t *testing.T) {
 	if game.Status != "active" {
 		t.Error("Expected game status to be 'active'")
 	}
-	if game.Board.Size != RegBoardSize {
-		t.Errorf("Expected board size to be %d, got %d", RegBoardSize, game.Board.Size)
+	if game.BoardSize != RegBoardSize {
+		t.Errorf("Expected board size to be %d, got %d", RegBoardSize, game.BoardSize)
 	}
 }
 
@@ -116,11 +121,11 @@ func TestUpdateBoard(t *testing.T) {
 	user2, _ := db.CreateUser("updateboard2", "updateboard2@dude.dude", "dudedude", "dudedude")
 	game, _ := db.CreateGame(user1.Id, user2)
 
-	stone := Stone{0, 0, "black"}
-	game.Board.Stones = []Stone{stone}
+	stone := Stone{X: 0, Y: 0, Color: "black"}
+	game.Stones = []Stone{stone}
 	turnId := game.PlayerTurnId
 
-	game, err := db.UpdateBoard(user1.Id, game)
+	game, err := db.UpdateBoard(user1.Id, game, stone, game.Stones)
 
 	if err != nil {
 		t.Error(err)
@@ -130,7 +135,7 @@ func TestUpdateBoard(t *testing.T) {
 		t.Error("Expected player turn to change")
 	}
 
-	if len(game.Board.Stones) != 1 {
+	if len(game.Stones) != 1 {
 		t.Error("Expected Board to have 1 Stone")
 	}
 
