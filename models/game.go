@@ -196,14 +196,12 @@ func (db *DB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) 
 		return err
 	}
 
-	if game.LastTaker != nil {
-		encoded, _ := json.Marshal(game.LastTaker)
-		_, err := tx.Exec("UPDATE games SET last_taker = $1", encoded)
+	encoded, _ := json.Marshal(game.LastTaker)
+	_, err = tx.Exec("UPDATE games SET last_taker = $1", encoded)
 
-		if err != nil {
-			_ = tx.Rollback()
-			return err
-		}
+	if err != nil {
+		_ = tx.Rollback()
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {

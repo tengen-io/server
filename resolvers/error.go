@@ -25,7 +25,7 @@ func (e gameNotStartedError) Error() string {
 }
 
 func (e koViolationError) Error() string {
-	return "Invalid Ko move"
+	return "Illegal Ko move"
 }
 
 func (e stoneExistsError) Error() string {

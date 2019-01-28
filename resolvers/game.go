@@ -1,11 +1,11 @@
 package resolvers
 
 import (
-	_ "fmt"
+	// "fmt"
 	"github.com/camirmas/go_stop/models"
 	"github.com/camirmas/go_stop/rules"
 	"github.com/graphql-go/graphql"
-	"reflect"
+	// "reflect"
 )
 
 // GetGame retrieves a Game by integer id.
@@ -145,7 +145,7 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	if len(toRemove) > 0 {
+	if len(toRemove) == 1 {
 		game.LastTaker = &stone
 	} else {
 		game.LastTaker = nil
@@ -218,7 +218,7 @@ func validateKo(game *models.Game, toRemove []models.Stone) error {
 	if len(toRemove) != 1 {
 		return nil
 	}
-	if reflect.DeepEqual(game.LastTaker, toRemove[0]) {
+	if game.LastTaker.X == toRemove[0].X && game.LastTaker.Y == toRemove[0].Y {
 		return koViolationError{}
 	}
 	return nil
