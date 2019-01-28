@@ -42,7 +42,7 @@ func buildMutations(objects *Objects) *graphql.Object {
 				Type: objects.Game,
 				Args: graphql.FieldConfigArgument{
 					"gameId": &graphql.ArgumentConfig{
-						Type: graphql.ID,
+						Type: graphql.NewNonNull(graphql.ID),
 					},
 				},
 				Resolve: resolvers.Pass,
@@ -62,7 +62,7 @@ func buildMutations(objects *Objects) *graphql.Object {
 			},
 
 			"addStone": &graphql.Field{
-				Type: objects.Game,
+				Type: objects.Stone,
 				Args: graphql.FieldConfigArgument{
 					"gameId": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.ID),

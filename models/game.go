@@ -164,7 +164,8 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 	return game, nil
 }
 
-func (db *DB) UpdateBoard(userId int, game *Game, toAdd Stone, toRemove []Stone) (*Game, error) {
+// Updates the `Game`, changing the player turn, adding a Stone, and removing Stones.
+func (db *DB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) error {
 	_, otherPlayer := game.CurrentPlayer(userId)
 	time := pq.FormatTimestamp(time.Now())
 	tx, _ := db.Begin()
@@ -172,27 +173,29 @@ func (db *DB) UpdateBoard(userId int, game *Game, toAdd Stone, toRemove []Stone)
 
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, err
+		return err
 	}
 
-	ids := make([]string, 0)
-	for _, stone := range toRemove {
-		ids = append(ids, fmt.Sprintf("%d", stone.Id))
-	}
-	allIds := strings.Join(ids, ", ")
+	if len(toRemove) > 0 {
+		ids := make([]string, 0)
+		for _, stone := range toRemove {
+			ids = append(ids, fmt.Sprintf("%d", stone.Id))
+		}
+		allIds := strings.Join(ids, ", ")
 
-	_, err = tx.Exec("DELETE FROM stones WHERE id IN ($1)", allIds)
+		_, err = tx.Exec("DELETE FROM stones WHERE id IN ($1)", allIds)
+
+		if err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+	}
+
+	_, err = tx.Exec("INSERT INTO stones (game_id, x, y, color, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", game.Id, stone.X, stone.Y, stone.Color, time, time)
 
 	if err != nil {
 		_ = tx.Rollback()
-		return nil, err
-	}
-
-	_, err = tx.Exec("INSERT INTO stones (game_id, x, y, color, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", game.Id, toAdd.X, toAdd.Y, toAdd.Color, time, time)
-
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
+		return err
 	}
 
 	if game.LastTaker != nil {
@@ -201,18 +204,19 @@ func (db *DB) UpdateBoard(userId int, game *Game, toAdd Stone, toRemove []Stone)
 
 		if err != nil {
 			_ = tx.Rollback()
-			return nil, err
+			return err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
 		_ = tx.Rollback()
-		return nil, err
+		return err
 	}
 
-	game, err = db.GetGame(game.Id)
+	g, err := db.GetGame(game.Id)
+	*game = *g
 
-	return game, nil
+	return nil
 }
 
 func buildGame(db *DB, game *Game) error {

@@ -158,7 +158,7 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 		}
 	}
 
-	game, err = db.UpdateBoard(user.Id, game, stone, toRemove)
+	err = db.UpdateGame(user.Id, game, stone, toRemove)
 
 	if err != nil {
 		return nil, err
@@ -170,7 +170,9 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 		}
 	}
 
-	return &stone, nil
+	stone.Game = game
+
+	return stone, nil
 }
 
 func validateGame(game *models.Game) error {
