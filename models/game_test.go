@@ -117,6 +117,11 @@ func TestPass(t *testing.T) {
 }
 
 func TestUpdateGame(t *testing.T) {
+	t.Run("adding a stone", addStone)
+	t.Run("removing stones", removeStones)
+}
+
+func addStone(t *testing.T) {
 	user1, _ := db.CreateUser("UpdateGame1", "UpdateGame1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("UpdateGame2", "UpdateGame2@dude.dude", "dudedude", "dudedude")
 	game, _ := db.CreateGame(user1.Id, user2)
@@ -137,6 +142,34 @@ func TestUpdateGame(t *testing.T) {
 
 	if len(game.Stones) != 1 {
 		t.Error("Expected Board to have 1 Stone")
+	}
+
+	teardown()
+}
+
+func removeStones(t *testing.T) {
+	user1, _ := db.CreateUser("UpdateGame1", "UpdateGame1@dude.dude", "dudedude", "dudedude")
+	user2, _ := db.CreateUser("UpdateGame2", "UpdateGame2@dude.dude", "dudedude", "dudedude")
+	game, _ := db.CreateGame(user1.Id, user2)
+
+	stone := Stone{X: 0, Y: 0, Color: "black"}
+	game.Stones = []Stone{stone}
+
+	err := db.UpdateGame(user1.Id, game, stone, []Stone{})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	stone2 := Stone{X: 1, Y: 1, Color: "black"}
+	err = db.UpdateGame(user2.Id, game, stone2, game.Stones)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(game.Stones) != 1 {
+		t.Errorf("Expected Board to have 1 Stone, got %d", len(game.Stones))
 	}
 
 	teardown()

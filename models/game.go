@@ -3,9 +3,7 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"github.com/lib/pq"
-	"strings"
 	"time"
 )
 
@@ -177,13 +175,13 @@ func (db *DB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) 
 	}
 
 	if len(toRemove) > 0 {
-		ids := make([]string, 0)
+		ids := make([]int, 0)
 		for _, stone := range toRemove {
-			ids = append(ids, fmt.Sprintf("%d", stone.Id))
+			ids = append(ids, stone.Id)
 		}
-		allIds := strings.Join(ids, ", ")
+		allIds := pq.Array(ids)
 
-		_, err = tx.Exec("DELETE FROM stones WHERE id IN ($1)", allIds)
+		_, err = tx.Exec("DELETE FROM stones WHERE id = ANY($1)", allIds)
 
 		if err != nil {
 			_ = tx.Rollback()
