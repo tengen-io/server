@@ -116,16 +116,16 @@ func TestPass(t *testing.T) {
 	teardown()
 }
 
-func TestUpdateBoard(t *testing.T) {
-	user1, _ := db.CreateUser("updateboard1", "updateboard1@dude.dude", "dudedude", "dudedude")
-	user2, _ := db.CreateUser("updateboard2", "updateboard2@dude.dude", "dudedude", "dudedude")
+func TestUpdateGame(t *testing.T) {
+	user1, _ := db.CreateUser("UpdateGame1", "UpdateGame1@dude.dude", "dudedude", "dudedude")
+	user2, _ := db.CreateUser("UpdateGame2", "UpdateGame2@dude.dude", "dudedude", "dudedude")
 	game, _ := db.CreateGame(user1.Id, user2)
 
 	stone := Stone{X: 0, Y: 0, Color: "black"}
 	game.Stones = []Stone{stone}
 	turnId := game.PlayerTurnId
 
-	game, err := db.UpdateBoard(user1.Id, game, stone, game.Stones)
+	err := db.UpdateGame(user1.Id, game, stone, game.Stones)
 
 	if err != nil {
 		t.Error(err)

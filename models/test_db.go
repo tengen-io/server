@@ -89,13 +89,10 @@ func (db *TestDB) CreateGame(userId int, opponent *User) (*Game, error) {
 	}, nil
 }
 
-func (db *TestDB) UpdateBoard(userId int, game *Game, stone Stone, toRemove []Stone) (*Game, error) {
-	return &Game{
-		Id:           1,
-		Status:       "active",
-		PlayerTurnId: userId,
-		Stones:       []Stone{stone},
-	}, nil
+func (db *TestDB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) error {
+	game.Stones = []Stone{stone}
+
+	return nil
 }
 
 func (db *TestDB) Pass(userId int, game *Game) (*Game, error) {

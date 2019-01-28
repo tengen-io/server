@@ -11,6 +11,7 @@ type Stone struct {
 	X      int    `json:"x"`
 	Y      int    `json:"y"`
 	Color  string `json:"color"`
+	Game   *Game
 	Timestamps
 }
 

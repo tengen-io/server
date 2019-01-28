@@ -209,6 +209,19 @@ func buildObjects() *Objects {
 		},
 	})
 
+	stoneType.AddFieldConfig(
+		"game",
+		&graphql.Field{
+			Type: gameType,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if stone, ok := p.Source.(models.Stone); ok {
+					return stone.Game, nil
+				}
+				return nil, nil
+			},
+		},
+	)
+
 	tokenType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "AuthUser",
 		Fields: graphql.Fields{

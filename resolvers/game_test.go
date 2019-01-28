@@ -200,7 +200,7 @@ func addStone(t *testing.T) {
 		t.Errorf("Expected Stone, got error: %s", err.Error())
 	}
 
-	if _, ok := stone.(*models.Stone); !ok {
+	if _, ok := stone.(models.Stone); !ok {
 		t.Errorf("Expected Stone, got %v", stone)
 	}
 }
