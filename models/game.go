@@ -123,29 +123,74 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 	if otherPlayer.HasPassed {
 		tx, _ := db.Begin()
 
-		_, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3", true, time, currentPlayer.Id)
+		_, err := tx.Exec(`
+			UPDATE players
+			SET has_passed = $1, updated_at = $2
+			WHERE id = $3`,
+			true, time, currentPlayer.Id,
+		)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
 
-		_, err = tx.Exec("UPDATE games SET (status, updated_at) = ($1, $2) WHERE id = $3", "complete", time, game.Id)
+		_, err = tx.Exec(`
+			UPDATE players
+			SET prisoners = $1, updated_at = $2
+			WHERE id = $3`,
+			otherPlayer.Prisoners+1, time, otherPlayer.Id,
+		)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+
+		_, err = tx.Exec(`
+			UPDATE games
+			SET status = $1, updated_at = $2
+			WHERE id = $3`,
+			"complete", time, game.Id,
+		)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
 
 		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
 			return nil, err
 		}
 	} else {
 		tx, _ := db.Begin()
-		_, err := tx.Exec("UPDATE players SET (has_passed, updated_at) = ($1, $2) WHERE id = $3", true, time, currentPlayer.Id)
+
+		_, err := tx.Exec(`
+			UPDATE players
+			SET has_passed = $1, updated_at = $2
+			WHERE id = $3`,
+			true, time, currentPlayer.Id,
+		)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
 		}
-		_, err = tx.Exec("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) WHERE id = $3", otherPlayer.Id, time, game.Id)
+
+		_, err = tx.Exec(`
+			UPDATE players
+			SET prisoners = $1, updated_at = $2
+			WHERE id = $3`,
+			otherPlayer.Prisoners+1, time, otherPlayer.Id,
+		)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+
+		_, err = tx.Exec(`
+			UPDATE games
+			SET player_turn_id = $1, updated_at = $2
+			WHERE id = $3`,
+			otherPlayer.Id, time, game.Id,
+		)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -164,17 +209,22 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 
 // Updates the `Game`, changing the player turn, adding a Stone, and removing Stones.
 func (db *DB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) error {
-	_, otherPlayer := game.CurrentPlayer(userId)
+	currentPlayer, otherPlayer := game.CurrentPlayer(userId)
 	time := pq.FormatTimestamp(time.Now())
 	tx, _ := db.Begin()
-	_, err := tx.Exec("UPDATE games SET (player_turn_id, updated_at) = ($1, $2) where id = $3", otherPlayer.Id, time, game.Id)
+	_, err := tx.Exec(`
+		UPDATE games
+		SET player_turn_id = $1, updated_at = $2
+		where id = $3`,
+		otherPlayer.Id, time, game.Id,
+	)
 
 	if err != nil {
 		_ = tx.Rollback()
 		return err
 	}
 
-	if len(toRemove) > 0 {
+	if numToRemove := len(toRemove); numToRemove > 0 {
 		ids := make([]int, 0)
 		for _, stone := range toRemove {
 			ids = append(ids, stone.Id)
@@ -187,9 +237,25 @@ func (db *DB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) 
 			_ = tx.Rollback()
 			return err
 		}
+
+		prisoners := currentPlayer.Prisoners + numToRemove
+		_, err := tx.Exec(`
+			UPDATE players
+			SET prisoners = $1, updated_at = $2 where id = $3`,
+			prisoners, time, currentPlayer.Id,
+		)
+
+		if err != nil {
+			_ = tx.Rollback()
+			return err
+		}
 	}
 
-	_, err = tx.Exec("INSERT INTO stones (game_id, x, y, color, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", game.Id, stone.X, stone.Y, stone.Color, time, time)
+	_, err = tx.Exec(`
+		INSERT INTO stones (game_id, x, y, color, inserted_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)`,
+		game.Id, stone.X, stone.Y, stone.Color, time, time,
+	)
 
 	if err != nil {
 		_ = tx.Rollback()

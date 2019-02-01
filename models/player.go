@@ -14,6 +14,7 @@ type Player struct {
 	Color     string
 	Stats     *Stats
 	HasPassed bool
+	Prisoners int
 	User      *User
 	Timestamps
 }
@@ -63,6 +64,7 @@ func parsePlayerRows(rows *sql.Rows) ([]Player, error) {
 			&player.Color,
 			&player.Stats,
 			&player.HasPassed,
+			&player.Prisoners,
 			&player.InsertedAt,
 			&player.UpdatedAt,
 		)
