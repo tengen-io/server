@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var db *DB
+var db *PostgresDB
 
 func TestMain(m *testing.M) {
 	setup()
@@ -42,7 +42,15 @@ func expectErr(t *testing.T, expected, err error) {
 }
 
 func setup() {
-	newDb, err := ConnectDB()
+	config := &PostgresDBConfig{
+		"localhost",
+		5432,
+		"postgres",
+		"postgres",
+		"go_stop_test",
+		1,
+	}
+	newDb, err := NewPostgresDB(config)
 
 	if err != nil {
 		log.Fatal(err)

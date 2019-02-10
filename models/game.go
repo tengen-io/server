@@ -35,7 +35,7 @@ func (game Game) CurrentPlayer(userId int) (Player, Player) {
 }
 
 // GetGame gets a Game by id.
-func (db *DB) GetGame(gameId interface{}) (*Game, error) {
+func (db *PostgresDB) GetGame(gameId interface{}) (*Game, error) {
 	rows, _ := db.Query("SELECT * from games where id = $1", gameId)
 	games, _ := parseGameRows(rows)
 	if len(games) == 0 {
@@ -51,7 +51,7 @@ func (db *DB) GetGame(gameId interface{}) (*Game, error) {
 }
 
 // GetGames gets a list of Games for a given User id.
-func (db *DB) GetGames(userId interface{}) ([]*Game, error) {
+func (db *PostgresDB) GetGames(userId interface{}) ([]*Game, error) {
 	var games []Game
 	if userId == nil {
 		rows, _ := db.Query("SELECT * FROM games ORDER BY updated_at limit 20")
@@ -72,7 +72,7 @@ func (db *DB) GetGames(userId interface{}) ([]*Game, error) {
 
 // CreateGame builds all the necessary information to start a game, including
 // associated Player entries.
-func (db *DB) CreateGame(userId int, opponent *User) (*Game, error) {
+func (db *PostgresDB) CreateGame(userId int, opponent *User) (*Game, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (db *DB) CreateGame(userId int, opponent *User) (*Game, error) {
 
 // Pass is a game action where a player decides that they cannot make a
 // move on their turn. If both players pass, the game ends.
-func (db *DB) Pass(userId int, game *Game) (*Game, error) {
+func (db *PostgresDB) Pass(userId int, game *Game) (*Game, error) {
 	currentPlayer, otherPlayer := game.CurrentPlayer(userId)
 
 	time := pq.FormatTimestamp(time.Now())
@@ -208,7 +208,7 @@ func (db *DB) Pass(userId int, game *Game) (*Game, error) {
 }
 
 // Updates the `Game`, changing the player turn, adding a Stone, and removing Stones.
-func (db *DB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) error {
+func (db *PostgresDB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) error {
 	currentPlayer, otherPlayer := game.CurrentPlayer(userId)
 	time := pq.FormatTimestamp(time.Now())
 	tx, _ := db.Begin()
@@ -281,7 +281,7 @@ func (db *DB) UpdateGame(userId int, game *Game, stone Stone, toRemove []Stone) 
 	return nil
 }
 
-func buildGame(db *DB, game *Game) error {
+func buildGame(db *PostgresDB, game *Game) error {
 	rows, _ := db.Query("SELECT * from players where game_id = $1", game.Id)
 	players, _ := parsePlayerRows(rows)
 

@@ -10,12 +10,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type DB struct {
-	Config *DbConfig
+type PostgresDB struct {
+	config *PostgresDBConfig
 	*sql.DB
 }
 
-type Database interface {
+type DB interface {
 	CheckPw(username, password string) (*User, error)
 	GetUser(id interface{}) (*User, error)
 	CreateUser(username, email, password, passwordConfirm string) (*User, error)
@@ -26,29 +26,22 @@ type Database interface {
 	Pass(userId int, game *Game) (*Game, error)
 }
 
-// ConnectDB creates a connection with the postgres database, using credentials
-// pulled from environment variables:
-//
-//	POSTGRES_DB - reads value
-//	POSTGRES_USER - reads a file
-//	POSTGRES_PASSWORD - reads a file
-// 	POSTGRES_HOST - reads value
-func ConnectDB() (*DB, error) {
-	config := setupConfig()
-	conn, err := sql.Open("postgres", config.DbUrl)
+// NewPostgresDB creates a connection to the postgres database
+func NewPostgresDB(config *PostgresDBConfig) (*PostgresDB, error) {
+	conn, err := sql.Open("postgres", config.Url())
 	if err != nil {
 		return nil, err
 	}
 	if err = conn.Ping(); err != nil {
 		return nil, err
 	}
-	db := &DB{config, conn}
+	db := &PostgresDB{config, conn}
 
 	return db, nil
 }
 
 // CheckPw compares the given password against the encrypted password for the given User.
-func (db *DB) CheckPw(username, password string) (*User, error) {
+func (db *PostgresDB) CheckPw(username, password string) (*User, error) {
 	user, err := db.GetUser(username)
 
 	if err != nil {
