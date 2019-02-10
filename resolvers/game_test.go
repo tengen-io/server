@@ -13,28 +13,28 @@ func TestCreateGame(t *testing.T) {
 }
 
 func createGameInvalidToken(t *testing.T) {
-	params := setup()
+	r, params := setup()
 	params.Context = context.WithValue(params.Context, "token", nil)
 
-	_, err := CreateGame(params)
+	_, err := r.CreateGame(params)
 
 	expectErr(t, invalidTokenError{}, err)
 }
 
 func createGameSelf(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["opponentUsername"] = "dude"
 
-	_, err := CreateGame(params)
+	_, err := r.CreateGame(params)
 
 	expectErr(t, sameUserError{}, err)
 }
 
 func createGame(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["opponentUsername"] = "saitama"
 
-	_, err := CreateGame(params)
+	_, err := r.CreateGame(params)
 
 	if err != nil {
 		t.Errorf("Expected new game, got error: %s", err.Error())
@@ -42,10 +42,10 @@ func createGame(t *testing.T) {
 }
 
 func TestGetGame(t *testing.T) {
-	params := setup()
+	r, params := setup()
 	params.Args["id"] = "1"
 
-	game, err := GetGame(params)
+	game, err := r.GetGame(params)
 
 	if err != nil {
 		t.Errorf("Expected Game, got error: %s", err.Error())
@@ -57,10 +57,10 @@ func TestGetGame(t *testing.T) {
 }
 
 func TestGetGames(t *testing.T) {
-	params := setup()
+	r, params := setup()
 	params.Args["userId"] = "1"
 
-	games, err := GetGames(params)
+	games, err := r.GetGames(params)
 
 	if err != nil {
 		t.Error("Expected Games, got error")
@@ -72,9 +72,9 @@ func TestGetGames(t *testing.T) {
 }
 
 func TestGetLobby(t *testing.T) {
-	params := setup()
+	r, params := setup()
 
-	games, err := GetLobby(params)
+	games, err := r.GetLobby(params)
 
 	if err != nil {
 		t.Error("Expected Games, got error")
@@ -94,46 +94,46 @@ func TestPass(t *testing.T) {
 }
 
 func passInvalidToken(t *testing.T) {
-	params := setup()
+	r, params := setup()
 	params.Context = context.WithValue(params.Context, "token", nil)
 
-	_, err := Pass(params)
+	_, err := r.Pass(params)
 
 	expectErr(t, invalidTokenError{}, err)
 }
 
 func passComplete(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["gameId"] = "2"
 
-	_, err := Pass(params)
+	_, err := r.Pass(params)
 
 	expectErr(t, gameCompleteError{}, err)
 }
 
 func passInvalidTurn(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["gameId"] = "3"
 
-	_, err := Pass(params)
+	_, err := r.Pass(params)
 
 	expectErr(t, wrongTurnError{}, err)
 }
 
 func passNotInGame(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["gameId"] = "10"
 
-	_, err := Pass(params)
+	_, err := r.Pass(params)
 
 	expectErr(t, userNotInGameError{}, err)
 }
 
 func pass(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["gameId"] = "4"
 
-	game, err := Pass(params)
+	game, err := r.Pass(params)
 
 	if err != nil {
 		t.Errorf("Expected Game, got error: %s", err.Error())
@@ -153,48 +153,48 @@ func TestAddStone(t *testing.T) {
 }
 
 func addStoneInvalidToken(t *testing.T) {
-	params := setup()
+	r, params := setup()
 	params.Context = context.WithValue(params.Context, "token", nil)
 
-	_, err := AddStone(params)
+	_, err := r.AddStone(params)
 
 	expectErr(t, invalidTokenError{}, err)
 }
 
 func addStoneComplete(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["gameId"] = "2"
 
-	_, err := AddStone(params)
+	_, err := r.AddStone(params)
 
 	expectErr(t, gameCompleteError{}, err)
 }
 
 func addStoneInvalidTurn(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["gameId"] = "3"
 
-	_, err := AddStone(params)
+	_, err := r.AddStone(params)
 
 	expectErr(t, wrongTurnError{}, err)
 }
 
 func addStoneNotInGame(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["gameId"] = "10"
 
-	_, err := AddStone(params)
+	_, err := r.AddStone(params)
 
 	expectErr(t, userNotInGameError{}, err)
 }
 
 func addStone(t *testing.T) {
-	params := setupAuth()
+	r, params := setupAuth()
 	params.Args["gameId"] = "4"
 	params.Args["x"] = 3
 	params.Args["y"] = 3
 
-	stone, err := AddStone(params)
+	stone, err := r.AddStone(params)
 
 	if err != nil {
 		t.Errorf("Expected Stone, got error: %s", err.Error())

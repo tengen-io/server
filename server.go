@@ -41,16 +41,14 @@ func (s *Server) Start() {
 	})
 
 	log.Println("Listening on http://localhost:8000")
-	http.Handle("/graphql", applyMiddlewares(s, h))
+	http.Handle("/graphql", s.applyMiddlewares(h))
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
-func applyMiddlewares(s *Server, next *handler.Handler) http.Handler {
+func (s *Server) applyMiddlewares(next *handler.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		enableCors(&w)
-		ctx := context.WithValue(r.Context(), "db", s.db)
-		ctx = context.WithValue(ctx, "signingKey", s.config.signingKey)
-		ctx = authHandler(ctx, r)
+		ctx := authHandler(r.Context(), r)
 		next.ContextHandler(ctx, w, r)
 	})
 }

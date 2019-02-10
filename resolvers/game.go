@@ -9,39 +9,34 @@ import (
 )
 
 // GetGame retrieves a Game by integer id.
-func GetGame(p graphql.ResolveParams) (interface{}, error) {
-	db := p.Context.Value("db").(models.DB)
-	return db.GetGame(p.Args["id"].(string))
+func (r *Resolvers) GetGame(p graphql.ResolveParams) (interface{}, error) {
+	return r.db.GetGame(p.Args["id"].(string))
 }
 
 // GetGames retrieves Games for a given User id.
-func GetGames(p graphql.ResolveParams) (interface{}, error) {
-	db := p.Context.Value("db").(models.DB)
-	return db.GetGames(p.Args["userId"].(string))
+func (r *Resolvers) GetGames(p graphql.ResolveParams) (interface{}, error) {
+	return r.db.GetGames(p.Args["userId"].(string))
 }
 
-func GetLobby(p graphql.ResolveParams) (interface{}, error) {
-	db := p.Context.Value("db").(models.DB)
-	return db.GetGames(nil)
+func (r *Resolvers) GetLobby(p graphql.ResolveParams) (interface{}, error) {
+	return r.db.GetGames(nil)
 }
 
 // CreateGame starts a new Game, with the current User and a provided opponent
 // as Players.
-func CreateGame(p graphql.ResolveParams) (interface{}, error) {
-	db := p.Context.Value("db").(models.DB)
-	signingKey := p.Context.Value("signingKey").([]byte)
+func (r *Resolvers) CreateGame(p graphql.ResolveParams) (interface{}, error) {
 	token, ok := p.Context.Value("token").(string)
 	if !ok {
 		return nil, invalidTokenError{}
 	}
 
 	opponentUsername := p.Args["opponentUsername"].(string)
-	opponent, err := db.GetUser(opponentUsername)
+	opponent, err := r.db.GetUser(opponentUsername)
 	if err != nil {
 		return nil, err
 	}
 
-	claims, err := ValidateToken(token, signingKey)
+	claims, err := ValidateToken(token, r.signingKey)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +45,11 @@ func CreateGame(p graphql.ResolveParams) (interface{}, error) {
 		return nil, sameUserError{}
 	}
 
-	return db.CreateGame(claims.UserId, opponent)
+	return r.db.CreateGame(claims.UserId, opponent)
 }
 
 // Pass executes a pass maneuver for the Game with the current User.
-func Pass(p graphql.ResolveParams) (interface{}, error) {
-	db := p.Context.Value("db").(models.DB)
-	signingKey := p.Context.Value("signingKey").([]byte)
+func (r *Resolvers) Pass(p graphql.ResolveParams) (interface{}, error) {
 	token, ok := p.Context.Value("token").(string)
 
 	if !ok {
@@ -64,14 +57,14 @@ func Pass(p graphql.ResolveParams) (interface{}, error) {
 	}
 	gameId := p.Args["gameId"].(string)
 
-	claims, err := ValidateToken(token, signingKey)
+	claims, err := ValidateToken(token, r.signingKey)
 
 	if err != nil {
 		return nil, err
 	}
 
-	user, _ := db.GetUser(claims.UserId)
-	game, err := db.GetGame(gameId)
+	user, _ := r.db.GetUser(claims.UserId)
+	game, err := r.db.GetGame(gameId)
 
 	if err != nil {
 		return nil, err
@@ -85,14 +78,12 @@ func Pass(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	return db.Pass(user.Id, game)
+	return r.db.Pass(user.Id, game)
 }
 
 // AddStone executes a move by the current User to add a Stone
 // to the Board, with given X and Y coordinates.
-func AddStone(p graphql.ResolveParams) (interface{}, error) {
-	db := p.Context.Value("db").(models.DB)
-	signingKey := p.Context.Value("signingKey").([]byte)
+func (r Resolvers) AddStone(p graphql.ResolveParams) (interface{}, error) {
 	token, ok := p.Context.Value("token").(string)
 
 	if !ok {
@@ -100,14 +91,14 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 	}
 	gameId := p.Args["gameId"].(string)
 
-	claims, err := ValidateToken(token, signingKey)
+	claims, err := ValidateToken(token, r.signingKey)
 
 	if err != nil {
 		return nil, err
 	}
 
-	user, _ := db.GetUser(claims.UserId)
-	game, err := db.GetGame(gameId)
+	user, _ := r.db.GetUser(claims.UserId)
+	game, err := r.db.GetGame(gameId)
 
 	if err != nil {
 		return nil, err
@@ -158,7 +149,7 @@ func AddStone(p graphql.ResolveParams) (interface{}, error) {
 		}
 	}
 
-	err = db.UpdateGame(user.Id, game, stone, toRemove)
+	err = r.db.UpdateGame(user.Id, game, stone, toRemove)
 
 	if err != nil {
 		return nil, err
