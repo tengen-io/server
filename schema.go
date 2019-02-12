@@ -5,7 +5,7 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-func CreateSchema() (graphql.Schema, error) {
+func NewSchema() (graphql.Schema, error) {
 	objects := buildObjects()
 	schemaConfig := graphql.SchemaConfig{
 		Query:    buildQueries(objects),

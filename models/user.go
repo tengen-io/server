@@ -25,7 +25,7 @@ type AuthUser struct {
 }
 
 // GetUser gets a User by id or username.
-func (db *DB) GetUser(identifier interface{}) (*User, error) {
+func (db *PostgresDB) GetUser(identifier interface{}) (*User, error) {
 	var rows *sql.Rows
 	switch identifier.(type) {
 	case int:
@@ -43,7 +43,7 @@ func (db *DB) GetUser(identifier interface{}) (*User, error) {
 }
 
 // CreateUser starts a new User account.
-func (db *DB) CreateUser(username, email, password, passwordConfirm string) (*User, error) {
+func (db *PostgresDB) CreateUser(username, email, password, passwordConfirm string) (*User, error) {
 	if len(password) < MinPasswordLength {
 		return nil, passwordTooShortError{}
 	}
@@ -54,7 +54,7 @@ func (db *DB) CreateUser(username, email, password, passwordConfirm string) (*Us
 		return nil, invalidEmailError{}
 	}
 
-	pw, err := bcrypt.GenerateFromPassword([]byte(password), db.Config.BcryptRounds)
+	pw, err := bcrypt.GenerateFromPassword([]byte(password), db.config.BcryptRounds)
 
 	if err != nil {
 		return nil, err
