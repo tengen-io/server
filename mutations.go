@@ -5,7 +5,7 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-func buildMutations(objects *Objects) *graphql.Object {
+func buildMutations(resolvers *resolvers.Resolvers, objects *Objects) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{

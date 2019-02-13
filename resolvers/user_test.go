@@ -8,14 +8,14 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	params := setup()
+	r, params := setup()
 
 	params.Args["username"] = "dude"
 	params.Args["email"] = "dude@dude.dude"
 	params.Args["password"] = "dudedude"
 	params.Args["passwordConfirmation"] = "dudedude"
 
-	u, err := CreateUser(params)
+	u, err := r.CreateUser(params)
 
 	if err != nil {
 		t.Error(err)
@@ -33,10 +33,10 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	params := setup()
+	r, params := setup()
 	params.Args["username"] = "dude"
 
-	_, err := GetUser(params)
+	_, err := r.GetUser(params)
 
 	if err != nil {
 		t.Error("Expected User, got error")
@@ -44,11 +44,11 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestLogIn(t *testing.T) {
-	params := setup()
+	r, params := setup()
 	params.Args["username"] = "dude"
 	params.Args["password"] = "dudedude"
 
-	user, err := LogIn(params)
+	user, err := r.LogIn(params)
 
 	if err != nil {
 		t.Error("Expected logged in User")
@@ -66,42 +66,35 @@ func TestLogIn(t *testing.T) {
 }
 
 func TestCurrentUser(t *testing.T) {
-	db := &models.TestDB{}
-	signingKey := []byte("secret")
-	params := graphql.ResolveParams{}
-	params.Args = map[string]interface{}{}
-	ctx := context.WithValue(params.Context, "db", db)
-	token, _ := GenerateToken(1, signingKey)
-	ctx = context.WithValue(ctx, "token", token)
-	ctx = context.WithValue(ctx, "signingKey", signingKey)
-	params.Context = ctx
-
-	_, err := CurrentUser(params)
+	r, params := setupAuth()
+	_, err := r.CurrentUser(params)
 
 	if err != nil {
 		t.Error("Expected User, got error")
 	}
 }
 
-func setup() graphql.ResolveParams {
+func setup() (*Resolvers, graphql.ResolveParams) {
 	db := &models.TestDB{}
 	signingKey := []byte("secret")
 	params := graphql.ResolveParams{}
 	params.Args = map[string]interface{}{}
-	ctx := context.WithValue(params.Context, "db", db)
-	ctx = context.WithValue(ctx, "signingKey", signingKey)
-	params.Context = ctx
+	params.Context = context.Background()
 
-	return params
+	r := &Resolvers{
+		db:         db,
+		signingKey: signingKey,
+	}
+
+	return r, params
 }
 
-func setupAuth() graphql.ResolveParams {
-	params := setup()
-	signingKey := params.Context.Value("signingKey").([]byte)
-	token, _ := GenerateToken(1, signingKey)
+func setupAuth() (*Resolvers, graphql.ResolveParams) {
+	r, params := setup()
+	token, _ := GenerateToken(1, r.signingKey)
 	params.Context = context.WithValue(params.Context, "token", token)
 
-	return params
+	return r, params
 }
 
 func expectErr(t *testing.T, expected, err error) {

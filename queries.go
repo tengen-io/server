@@ -5,7 +5,7 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-func buildQueries(objects *Objects) *graphql.Object {
+func buildQueries(resolvers *resolvers.Resolvers, objects *Objects) *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Query",
 		Fields: graphql.Fields{

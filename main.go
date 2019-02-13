@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"github.com/camirmas/go_stop/models"
+	"github.com/camirmas/go_stop/resolvers"
 	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
 	"log"
@@ -63,17 +64,23 @@ func makeDb() *models.PostgresDB {
 	return db
 }
 
+func makeResolvers(db models.DB) *resolvers.Resolvers {
+	return resolvers.NewResolvers(db, getSigningKey())
+}
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Could not load .env", err)
 	}
 
-	schema, err := NewSchema()
+	db := makeDb()
+	resolvers := makeResolvers(db)
+
+	schema, err := NewSchema(resolvers)
 	if err != nil {
-		log.Fatal("Could not create GraphQL schema", err)
+		log.Fatal("Could not crete GraphQL schema", err)
 	}
 
-	db := makeDb()
 	s := makeServer(db, &schema)
 	s.Start()
 }
