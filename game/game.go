@@ -1,8 +1,11 @@
 package game
 
-import "fmt"
-
 type Color byte
+
+type point struct {
+	x int
+	y int
+}
 
 const (
 	White Color = iota
@@ -14,6 +17,7 @@ type Game struct {
 	captures []int
 	currentColor Color
 	move int
+	ko *point
 }
 
 func NewGame(size int) *Game {
@@ -29,13 +33,18 @@ func (g *Game) PlayMove(x int, y int) error {
 	// Ensure the position is empty
 	old := g.board.GetNode(x, y)
 	if old != empty {
-		return fmt.Errorf("position has a stone already")
+		return NonEmptyError{}
+	}
+
+	if g.ko != nil && x == g.ko.x && y == g.ko.y {
+		return KoViolationError{}
 	}
 
 	// count new liberties around the stone
 	north, south, east, west := g.board.GetNeighbors(x, y)
 	newLiberties := 0
 	isolated := true
+	potentialSuicide := false
 	for _, neighbor := range []node{north, south, east, west} {
 		if neighbor == empty {
 			newLiberties += 1
@@ -45,7 +54,7 @@ func (g *Game) PlayMove(x int, y int) error {
 	}
 
 	if isolated && newLiberties == 0 {
-		return fmt.Errorf("move is suicidal")
+		potentialSuicide = true
 	}
 
 	// we have to check the surrounding groups to ensure move legality and compute captures
@@ -60,16 +69,22 @@ func (g *Game) PlayMove(x int, y int) error {
 			// capture
 			toRemove = append(toRemove, string)
 		} else if liberties == 1 && toNode(g.currentColor) == stringColor && newLiberties == 0 {
-			return fmt.Errorf("move is suicidal")
+			potentialSuicide = true
 		}
 	}
 
 	// check for suicide
-	if len(toRemove) == 0 {
-		north, south, east, west := g.board.GetNeighbors(x, y)
-		if north != empty && south != empty && east != empty && west != empty {
-			return fmt.Errorf("move is suicidal")
-		}
+	if len(toRemove) == 0 && potentialSuicide {
+		return SuicideError{}
+	}
+
+	// The move is valid at this point. Clear Ko.
+	g.ko = nil
+
+	// Check for new ko.
+	if isolated && len(toRemove) == 1 && len(toRemove[0]) == 1 {
+		koX, koY := g.board.coord(toRemove[0][0])
+		g.ko = &point{koX, koY}
 	}
 
 	// if we haven't exploded yet, remove all captured strings
@@ -105,4 +120,21 @@ func toNode(c Color) node {
 	}
 
 	return black
+}
+
+type NonEmptyError struct {}
+
+func (e NonEmptyError) Error() string {
+	return "position is not empty"
+}
+
+type KoViolationError struct {}
+
+func (e KoViolationError) Error() string {
+	return "ko violation"
+}
+
+type SuicideError struct {}
+func (e SuicideError) Error() string {
+	return "move is suicidal"
 }

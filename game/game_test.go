@@ -1,14 +1,10 @@
 package game
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
-
-type point struct {
-	x int
-	y int
-}
 
 type pointcolor struct {
 	x     int
@@ -60,7 +56,6 @@ func TestGame_PlayMove(t *testing.T) {
 				}
 			}
 
-			printBoard(game.board)
 			for _, expected := range testCase.expectedBoard {
 				assert.Equal(t, expected.color, game.board.GetNode(expected.x, expected.y))
 			}
@@ -74,7 +69,7 @@ func TestGame_PlayMove_ExistingStone(t *testing.T) {
 	game := NewGame(5)
 	assert.Nil(t, game.PlayMove(2, 2))
 	err := game.PlayMove(2, 2)
-	assert.EqualError(t, err, "position has a stone already")
+	assert.EqualError(t, err, NonEmptyError{}.Error())
 }
 
 func TestGame_Pass(t *testing.T) {
@@ -85,37 +80,36 @@ func TestGame_Pass(t *testing.T) {
 }
 
 func TestGame_PlayMove_Suicide(t *testing.T) {
-	testCases := []struct
-	{
-		name string
+	testCases := []struct {
+		name  string
 		moves []*point
 	}{
 		{
 			"suicide in corner single stone",
-			[]*point{{0,1},nil,{1,0},{0,0}},
+			[]*point{{0, 1}, nil, {1, 0}, {0, 0}},
 		},
 		{
 			"suicide in corner string",
-			[]*point{{0,2},{0,0},{2,0},{1,0},{1,1},{0,1}},
+			[]*point{{0, 2}, {0, 0}, {2, 0}, {1, 0}, {1, 1}, {0, 1}},
 		},
 		{
 			"suicide on edge single stone",
-			[]*point{nil,{1,0},nil,{2,1},nil,{3,0},{2,0}},
+			[]*point{nil, {1, 0}, nil, {2, 1}, nil, {3, 0}, {2, 0}},
 		},
 		{
 			"suicide on edge string",
-			[]*point{{1,0},{0,0},{2,0},{1,1},nil,{2,1},nil,{3,1},nil,{4,0},{3,0}},
+			[]*point{{1, 0}, {0, 0}, {2, 0}, {1, 1}, nil, {2, 1}, nil, {3, 1}, nil, {4, 0}, {3, 0}},
 		},
 		{
 			"suicide in center single stone",
-			[]*point{nil,{0,2},nil,{1,3},nil,{2,2},nil,{1,1},{1,2}},
+			[]*point{nil, {0, 2}, nil, {1, 3}, nil, {2, 2}, nil, {1, 1}, {1, 2}},
 		},
 		{
 			"suicide in center string",
-			[]*point{nil,{0,2},{1,2},{1,3},{2,3},{2,4},{3,2},{3,3},{2,1},{4,2},nil,{3,1},nil,{2,0},nil,{1,1},{2,2}},
+			[]*point{nil, {0, 2}, {1, 2}, {1, 3}, {2, 3}, {2, 4}, {3, 2}, {3, 3}, {2, 1}, {4, 2}, nil, {3, 1}, nil, {2, 0}, nil, {1, 1}, {2, 2}},
 		},
 	}
-	
+
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			game := NewGame(5)
@@ -128,7 +122,56 @@ func TestGame_PlayMove_Suicide(t *testing.T) {
 				}
 			}
 
-			assert.EqualError(t, err, "move is suicidal")
+			assert.EqualError(t, err, SuicideError{}.Error())
 		})
 	}
+}
+
+func TestGame_PlayMove_Ko(t *testing.T) {
+	game := NewGame(5)
+	assert.Nil(t, game.PlayMove(2, 2))
+	assert.Nil(t, game.PlayMove(1, 2))
+	assert.Nil(t, game.PlayMove(3, 3))
+	assert.Nil(t, game.PlayMove(2, 3))
+	assert.Nil(t, game.PlayMove(4, 2))
+	assert.Nil(t, game.PlayMove(2, 1))
+	assert.Nil(t, game.PlayMove(3, 1))
+	assert.Nil(t, game.PlayMove(3, 2))
+
+	assert.NotNil(t, game.ko)
+	assert.Equal(t, game.ko.x, 2)
+	assert.Equal(t, game.ko.y, 2)
+
+	err := game.PlayMove(2, 2)
+	assert.EqualError(t, err, KoViolationError{}.Error())
+
+	assert.Nil(t, game.PlayMove(4,4))
+	assert.Nil(t, game.ko)
+	game.Pass()
+	assert.Nil(t, game.PlayMove(2,2))
+
+	assert.NotNil(t, game.ko)
+	assert.Equal(t, game.ko.x, 3)
+	assert.Equal(t, game.ko.y, 2)
+}
+
+func printGame(game *Game) {
+	for y := game.board.size - 1; y >= 0; y-- {
+		for x := 0; x < game.board.size; x++ {
+			node := game.board.board[game.board.idx(x, y)]
+			var nodeStr = "."
+			if game.ko != nil && game.ko.x == x && game.ko.y == y {
+				nodeStr = "X"
+			} else if node == white {
+				nodeStr = "W"
+			} else if node == black {
+				nodeStr = "B"
+			}
+			fmt.Printf("%s ", nodeStr)
+		}
+		fmt.Print("\n")
+	}
+	fmt.Printf("Move: %d\n", game.move)
+	fmt.Printf("B Captures: %d\n", game.captures[Black])
+	fmt.Printf("W Captures: %d\n", game.captures[White])
 }

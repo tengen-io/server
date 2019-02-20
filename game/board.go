@@ -18,8 +18,6 @@ const (
 	white node = iota
 	black node = iota
 	edge node = iota
-	// TODO(eac): does ko need to be here?
-	//	Ko = iota
 )
 
 func NewBoard(size int) *Board {
