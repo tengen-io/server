@@ -53,7 +53,7 @@ func setup() {
 	newDb, err := NewPostgresDB(config)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Could not connect to test Postgres database: %s", err)
 	}
 
 	db = newDb
