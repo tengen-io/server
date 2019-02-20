@@ -13,19 +13,19 @@ const (
 )
 
 type Game struct {
-	board *Board
-	captures []int
+	board        *Board
+	captures     []int
 	currentColor Color
-	move int
-	ko *point
+	move         int
+	ko           *point
 }
 
 func NewGame(size int) *Game {
-	return &Game {
-		board: NewBoard(size),
-		captures: make([]int, 2),
+	return &Game{
+		board:        NewBoard(size),
+		captures:     make([]int, 2),
 		currentColor: Black,
-		move: 0,
+		move:         0,
 	}
 }
 
@@ -122,19 +122,20 @@ func toNode(c Color) node {
 	return black
 }
 
-type NonEmptyError struct {}
+type NonEmptyError struct{}
 
 func (e NonEmptyError) Error() string {
 	return "position is not empty"
 }
 
-type KoViolationError struct {}
+type KoViolationError struct{}
 
 func (e KoViolationError) Error() string {
 	return "ko violation"
 }
 
-type SuicideError struct {}
+type SuicideError struct{}
+
 func (e SuicideError) Error() string {
 	return "move is suicidal"
 }

@@ -9,7 +9,7 @@ type node byte
 type nodestring []int
 
 type Board struct {
-	size int
+	size  int
 	board []node
 }
 
@@ -17,13 +17,13 @@ const (
 	empty node = iota
 	white node = iota
 	black node = iota
-	edge node = iota
+	edge  node = iota
 )
 
 func NewBoard(size int) *Board {
-	board := make([]node, size * size)
-	return &Board {
-		size: size,
+	board := make([]node, size*size)
+	return &Board{
+		size:  size,
 		board: board,
 	}
 }
@@ -37,11 +37,11 @@ func (b *Board) GetNode(x int, y int) node {
 		return edge
 	}
 
-	return b.board[b.idx(x,y)]
+	return b.board[b.idx(x, y)]
 }
 
 func (b *Board) SetNode(x int, y int, value node) {
-	b.board[b.idx(x,y)] = value
+	b.board[b.idx(x, y)] = value
 }
 
 func (b *Board) GetString(x int, y int) (nodestring, error) {
@@ -173,7 +173,7 @@ func (b *Board) findString(idx int) nodestring {
 		eastIdx := i + 1
 		westIdx := i - 1
 
-		if northIdx < b.size * b.size && !seen[northIdx] && b.board[northIdx] == origColor {
+		if northIdx < b.size*b.size && !seen[northIdx] && b.board[northIdx] == origColor {
 			stack = append(stack, northIdx)
 		}
 
@@ -181,11 +181,11 @@ func (b *Board) findString(idx int) nodestring {
 			stack = append(stack, southIdx)
 		}
 
-		if eastIdx % b.size > idx % b.size && !seen[eastIdx] && b.board[eastIdx] == origColor {
+		if eastIdx%b.size > idx%b.size && !seen[eastIdx] && b.board[eastIdx] == origColor {
 			stack = append(stack, eastIdx)
 		}
 
-		if westIdx >= 0 && westIdx % b.size < idx % b.size && !seen[westIdx] && b.board[westIdx] == origColor {
+		if westIdx >= 0 && westIdx%b.size < idx%b.size && !seen[westIdx] && b.board[westIdx] == origColor {
 			stack = append(stack, westIdx)
 		}
 	}
@@ -202,7 +202,7 @@ func (b *Board) RemoveString(string nodestring) int {
 	return len(string)
 }
 
-func (b* Board) idx(x int, y int) int {
+func (b *Board) idx(x int, y int) int {
 	return x + y*b.size
 }
 

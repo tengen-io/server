@@ -145,10 +145,10 @@ func TestGame_PlayMove_Ko(t *testing.T) {
 	err := game.PlayMove(2, 2)
 	assert.EqualError(t, err, KoViolationError{}.Error())
 
-	assert.Nil(t, game.PlayMove(4,4))
+	assert.Nil(t, game.PlayMove(4, 4))
 	assert.Nil(t, game.ko)
 	game.Pass()
-	assert.Nil(t, game.PlayMove(2,2))
+	assert.Nil(t, game.PlayMove(2, 2))
 
 	assert.NotNil(t, game.ko)
 	assert.Equal(t, game.ko.x, 3)
