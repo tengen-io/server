@@ -1,4 +1,3 @@
 #!/usr/bin/env bash
 
-psql postgres --command='CREATE ROLE postgres LOGIN;'
-createdb go_stop_test
+psql postgres --command='CREATE ROLE postgres SUPERUSER LOGIN;'

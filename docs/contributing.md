@@ -15,15 +15,9 @@ Install and start PostgreSQL
 
 Set up your PostgreSQL database:
 
-* Run `./script/bootstrap`, or:
+Run the `./script/bootstrap` script, or manually create a `postgres` user:
 
-Create a `postgres` user
-
-    $ psql postgres -c 'CREATE ROLE postgres superuser;'
-
-Create the `go_stop_test` database:
-
-    $ createdb go_stop_test
+    $ psql postgres -c 'CREATE ROLE postgres SUPERUSER LOGIN;'
 
 ### Running the test suite
 

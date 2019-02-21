@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+migrations=$(ls db/migrations/*.up.sql)
+
+echo "Migrating database..."
+for migration in $migrations; do
+  psql --quiet --file=$migration go_stop_test
+done

@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
 
-go test ./...
+echo "Creating database..."
+dropdb --if-exists go_stop_test
+createdb go_stop_test
+
+./script/db_migrate
+
+go test ./game ./models ./resolvers ./rules
