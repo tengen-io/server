@@ -5,12 +5,14 @@ package main
 
 import (
 	"context"
-	"github.com/camirmas/go_stop/models"
-	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/handler"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/camirmas/go_stop/models"
+	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/handler"
 )
 
 type ServerConfig struct {
@@ -42,6 +44,7 @@ func (s *Server) Start() {
 
 	log.Println("Listening on http://localhost:8000")
 	http.Handle("/graphql", s.applyMiddlewares(h))
+	http.HandleFunc("/", Homepage)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
@@ -72,4 +75,13 @@ func authHandler(ctx context.Context, r *http.Request) context.Context {
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
+func Homepage(w http.ResponseWriter, req *http.Request) {
+	heading := "Go Stop Server"
+	greeting := `
+		Click here to visit <a href="/graphql">GraphiQL</a>
+	`
+
+	fmt.Fprintf(w, "<html><h1>%s</h1><p>%s</p></html>", heading, greeting)
 }
