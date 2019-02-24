@@ -48,19 +48,6 @@ func buildMutations(resolvers *resolvers.Resolvers, objects *Objects) *graphql.O
 				Resolve: resolvers.Pass,
 			},
 
-			"logIn": &graphql.Field{
-				Type: objects.AuthUser,
-				Args: graphql.FieldConfigArgument{
-					"username": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
-					},
-					"password": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
-					},
-				},
-				Resolve: resolvers.LogIn,
-			},
-
 			"addStone": &graphql.Field{
 				Type: objects.Stone,
 				Args: graphql.FieldConfigArgument{
