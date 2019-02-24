@@ -26,46 +26,22 @@ func (r *Resolvers) CreateUser(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
-	token, err := GenerateToken(user.Id, r.signingKey)
-
-	return &models.AuthUser{token, user}, nil
-}
-
-// LogIn generates a new JWT given a valid username/password.
-func (r *Resolvers) LogIn(p graphql.ResolveParams) (interface{}, error) {
-	username := p.Args["username"].(string)
-	password := p.Args["password"].(string)
-	user, err := r.db.CheckPw(username, password)
-
+	token, err := r.auth.SignJWT(*user)
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := GenerateToken(user.Id, r.signingKey)
-
-	if err != nil {
-		return user, err
-	}
-
-	authUser := &models.AuthUser{token, user}
-
-	return authUser, nil
+	return &models.AuthUser{token, user}, nil
 }
 
 // CurrentUser gets the user corresponding to the provided JWT from request
 // Content Headers.
 func (r *Resolvers) CurrentUser(p graphql.ResolveParams) (interface{}, error) {
-	token, ok := p.Context.Value("token").(string)
+	currentUser, ok := p.Context.Value("currentUser").(*models.User)
 
 	if !ok {
 		return nil, missingTokenError{}
 	}
 
-	claims, err := ValidateToken(token, r.signingKey)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return r.db.GetUser(claims.UserId)
+	return currentUser, nil
 }

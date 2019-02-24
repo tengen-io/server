@@ -3,8 +3,10 @@ package resolvers
 import (
 	"context"
 	"github.com/camirmas/go_stop/models"
+	"github.com/camirmas/go_stop/providers"
 	"github.com/graphql-go/graphql"
 	"testing"
+	"time"
 )
 
 func TestCreateUser(t *testing.T) {
@@ -43,28 +45,6 @@ func TestGetUser(t *testing.T) {
 	}
 }
 
-func TestLogIn(t *testing.T) {
-	r, params := setup()
-	params.Args["username"] = "dude"
-	params.Args["password"] = "dudedude"
-
-	user, err := r.LogIn(params)
-
-	if err != nil {
-		t.Error("Expected logged in User")
-	}
-
-	authUser, ok := user.(*models.AuthUser)
-
-	if !ok {
-		t.Error("Expected AuthUser")
-	}
-
-	if authUser.Jwt == "" {
-		t.Error("Expected JWT to exist for User")
-	}
-}
-
 func TestCurrentUser(t *testing.T) {
 	r, params := setupAuth()
 	_, err := r.CurrentUser(params)
@@ -76,14 +56,16 @@ func TestCurrentUser(t *testing.T) {
 
 func setup() (*Resolvers, graphql.ResolveParams) {
 	db := &models.TestDB{}
-	signingKey := []byte("secret")
 	params := graphql.ResolveParams{}
 	params.Args = map[string]interface{}{}
 	params.Context = context.Background()
 
+	authDuration, _ := time.ParseDuration("1 week")
+	auth := providers.NewAuth([]byte("supersecret"), authDuration)
+
 	r := &Resolvers{
-		db:         db,
-		signingKey: signingKey,
+		db:   db,
+		auth: auth,
 	}
 
 	return r, params
@@ -91,9 +73,8 @@ func setup() (*Resolvers, graphql.ResolveParams) {
 
 func setupAuth() (*Resolvers, graphql.ResolveParams) {
 	r, params := setup()
-	token, _ := GenerateToken(1, r.signingKey)
-	params.Context = context.WithValue(params.Context, "token", token)
-
+	user := models.User{Id: 1, Email: "test@example.org", Username: "test"}
+	params.Context = context.WithValue(params.Context, "currentUser", &user)
 	return r, params
 }
 
