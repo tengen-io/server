@@ -83,8 +83,8 @@ func TestServer_LoginHandler(t *testing.T) {
 }
 
 func makeServer(db models.DB) *Server {
-	config := ServerConfig {
-		"", 0,
+	config := ServerConfig{
+		"", 0, false,
 	}
 	duration, _ := time.ParseDuration("1 week")
 	return NewServer(&config, db, providers.NewAuth([]byte("supersecret"), duration), &graphql.Schema{})

@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"io/ioutil"
@@ -10,13 +10,16 @@ import (
 
 func TestHomepage(t *testing.T) {
 	recorder := httptest.NewRecorder()
+	config := ServerConfig{"", 0, false}
+	server := Server{config: &config}
+	handler := server.getHomepageHandler()
 
 	request, err := http.NewRequest(http.MethodGet, "/", nil)
 	if err != nil {
 		t.Fatalf("Unable to build a new request err: %s", err)
 	}
 
-	Homepage(recorder, request)
+	handler(recorder, request)
 	response := recorder.Result()
 
 	if response.StatusCode != 200 {
