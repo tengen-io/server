@@ -67,10 +67,12 @@ func makeDb() *models.PostgresDB {
 }
 
 func makeAuth() *providers.Auth {
-	keyDuration, err := time.ParseDuration("1 week")
+	day, err := time.ParseDuration("24h")
 	if err != nil {
 		log.Fatal("could not parse auth key duration", err)
 	}
+
+	keyDuration := day * 7
 
 	return providers.NewAuth(getSigningKey(), keyDuration)
 }
