@@ -2,17 +2,42 @@ package main
 
 import (
 	"encoding/base64"
+	"log"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/camirmas/go_stop/models"
 	"github.com/camirmas/go_stop/providers"
 	"github.com/camirmas/go_stop/resolvers"
 	"github.com/camirmas/go_stop/server"
 	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
-	"log"
-	"os"
-	"strconv"
-	"time"
 )
+
+type Config struct {
+	Environment string
+	Port        int
+}
+
+func NewConfig() Config {
+	environment := os.Getenv("GO_ENV")
+	goStopPort := os.Getenv("GOSTOP_PORT")
+
+	if environment == "" {
+		environment = "development"
+	}
+
+	port, err := strconv.Atoi(goStopPort)
+	if err != nil {
+		log.Fatalf("Could not parse GOSTOP_PORT err: %s", err)
+	}
+
+	return Config{
+		Environment: environment,
+		Port:        port,
+	}
+}
 
 func getSigningKey() []byte {
 	encoded := os.Getenv("GOSTOP_JWT_SECRET_KEY")
@@ -25,17 +50,15 @@ func getSigningKey() []byte {
 }
 
 func makeServer(db models.DB, auth *providers.Auth, schema *graphql.Schema) *server.Server {
-	port, err := strconv.Atoi(os.Getenv("GOSTOP_PORT"))
-	if err != nil {
-		log.Fatal("Could not parse GOSTOP_PORT")
+	config := NewConfig()
+
+	serverConfig := &server.ServerConfig{
+		Host:            os.Getenv("GOSTOP_HOST"),
+		Port:            config.Port,
+		GraphiQLEnabled: config.Environment == "development",
 	}
 
-	config := &server.ServerConfig{
-		Host:       os.Getenv("GOSTOP_HOST"),
-		Port:       port,
-	}
-
-	return server.NewServer(config, db, auth, schema)
+	return server.NewServer(serverConfig, db, auth, schema)
 }
 
 func makeDb() *models.PostgresDB {
