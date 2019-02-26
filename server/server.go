@@ -41,12 +41,10 @@ func (s *Server) Start() {
 	h := handler.New(&handler.Config{
 		Schema:   s.schema,
 		Pretty:   true,
-		GraphiQL: true,
+		GraphiQL: config.GraphiQLEnabled,
 	})
 
-	if config.GraphiQLEnabled {
-		http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(gqlMiddleware(h))))
-	}
+	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(gqlMiddleware(h))))
 	http.Handle("/login", s.LoginHandler())
 	http.HandleFunc("/", s.getHomepageHandler())
 
