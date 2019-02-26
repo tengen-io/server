@@ -1,9 +1,9 @@
 # 2/25
 
 Attending:
-E: Ed (@ceezy)
-I: Ian (@wesspacito)
-C: Cam (@formomosan)
+- E: Ed (@ceezy)
+- I: Ian (@wesspacito)
+- C: Cam (@formomosan)
 
 Notes taken by: Cam
 
