@@ -6,4 +6,4 @@ createdb go_stop_test
 
 ./script/db_migrate
 
-go test ./game ./models ./resolvers ./rules
+go test ./game ./models ./providers ./resolvers ./rules ./server
