@@ -2,9 +2,9 @@ package resolvers
 
 import (
 	"context"
-	"github.com/camirmas/go_stop/models"
-	"github.com/camirmas/go_stop/providers"
 	"github.com/graphql-go/graphql"
+	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/providers"
 	"testing"
 	"time"
 )

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/camirmas/go_stop/models"
 	"github.com/graphql-go/graphql"
+	"github.com/tengen-io/server/models"
 )
 
 type Objects struct {

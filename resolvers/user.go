@@ -4,8 +4,8 @@ Package resolvers is responsible for handling GraphQL queries and mutations.
 package resolvers
 
 import (
-	"github.com/camirmas/go_stop/models"
 	"github.com/graphql-go/graphql"
+	"github.com/tengen-io/server/models"
 )
 
 // GetUser gets a User by username.

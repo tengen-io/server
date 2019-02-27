@@ -1,8 +1,8 @@
 package resolvers
 
 import (
-	"github.com/camirmas/go_stop/models"
-	"github.com/camirmas/go_stop/providers"
+	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/providers"
 )
 
 type Resolvers struct {

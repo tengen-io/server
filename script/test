@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 echo "Creating database..."
-dropdb --if-exists go_stop_test
-createdb go_stop_test
+dropdb --if-exists tengen_test
+createdb tengen_test
 
 ./script/db_migrate
 

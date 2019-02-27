@@ -2,7 +2,7 @@ package resolvers
 
 import (
 	"context"
-	"github.com/camirmas/go_stop/models"
+	"github.com/tengen-io/server/models"
 	"testing"
 )
 

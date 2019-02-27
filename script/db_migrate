@@ -4,5 +4,5 @@ migrations=$(ls db/migrations/*.up.sql)
 
 echo "Migrating database..."
 for migration in $migrations; do
-  psql --quiet --file=$migration go_stop_test
+  psql --quiet --file=$migration tengen_test
 done

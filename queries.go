@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/camirmas/go_stop/resolvers"
 	"github.com/graphql-go/graphql"
+	"github.com/tengen-io/server/resolvers"
 )
 
 func buildQueries(resolvers *resolvers.Resolvers, objects *Objects) *graphql.Object {

@@ -5,4 +5,4 @@ test:
 	go test ./...
 
 docker:
-	docker build -t formomosan/go_stop:latest . -f Dockerfile
+	docker build -t formomosan/tengen-server:latest . -f Dockerfile

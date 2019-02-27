@@ -2,12 +2,12 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/camirmas/go_stop/models"
-	"github.com/camirmas/go_stop/providers"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/providers"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -25,38 +25,38 @@ func (m mockDb) CheckPw(username, password string) (*models.User, error) {
 	return args.Get(0).(*models.User), args.Error(1)
 }
 
-func ( mockDb) GetUser(id interface{}) (*models.User, error) {
+func (mockDb) GetUser(id interface{}) (*models.User, error) {
 	panic("implement me")
 }
 
-func ( mockDb) CreateUser(username, email, password, passwordConfirm string) (*models.User, error) {
+func (mockDb) CreateUser(username, email, password, passwordConfirm string) (*models.User, error) {
 	panic("implement me")
 }
 
-func ( mockDb) GetGame(gameId interface{}) (*models.Game, error) {
+func (mockDb) GetGame(gameId interface{}) (*models.Game, error) {
 	panic("implement me")
 }
 
-func ( mockDb) GetGames(userId interface{}) ([]*models.Game, error) {
+func (mockDb) GetGames(userId interface{}) ([]*models.Game, error) {
 	panic("implement me")
 }
 
-func ( mockDb) CreateGame(userId int, opponent *models.User) (*models.Game, error) {
+func (mockDb) CreateGame(userId int, opponent *models.User) (*models.Game, error) {
 	panic("implement me")
 }
 
-func ( mockDb) UpdateGame(userId int, game *models.Game, toAdd models.Stone, toRemove []models.Stone) error {
+func (mockDb) UpdateGame(userId int, game *models.Game, toAdd models.Stone, toRemove []models.Stone) error {
 	panic("implement me")
 }
 
-func ( mockDb) Pass(userId int, game *models.Game) (*models.Game, error) {
+func (mockDb) Pass(userId int, game *models.Game) (*models.Game, error) {
 	panic("implement me")
 }
 
 func TestServer_LoginHandler(t *testing.T) {
 	db := &mockDb{}
 	server := makeServer(db)
-	user := models.User{Id: 1, Username: "asdf", Email: "asdf@derp.com", }
+	user := models.User{Id: 1, Username: "asdf", Email: "asdf@derp.com"}
 	reqBody := "{\"username\": \"asdf@derp.com\", \"password\": \"secretpass\"}"
 
 	req, err := http.NewRequest("POST", "/login", strings.NewReader(reqBody))
@@ -70,7 +70,7 @@ func TestServer_LoginHandler(t *testing.T) {
 
 	assert.Equal(t, rr.Code, 200)
 
-	var resp struct { Token string }
+	var resp struct{ Token string }
 
 	bodyBuf, _ := ioutil.ReadAll(rr.Body)
 	json.Unmarshal(bodyBuf, &resp)

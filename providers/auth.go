@@ -2,8 +2,8 @@ package providers
 
 import (
 	"fmt"
-	"github.com/camirmas/go_stop/models"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/tengen-io/server/models"
 	"strconv"
 	"time"
 )
@@ -37,10 +37,9 @@ func (a *Auth) SignJWT(user models.User) (string, error) {
 		Id:        strconv.Itoa(user.Id),
 		NotBefore: time.Now().Unix(),
 		ExpiresAt: time.Now().Add(a.lifetime * time.Second).Unix(),
-		Issuer:    "gostop",
+		Issuer:    "tengen",
 	})
 
-	fmt.Printf("%s\n", a.signingKey)
 	ss, err := token.SignedString(a.signingKey)
 	if err != nil {
 		return "", err

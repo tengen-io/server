@@ -8,10 +8,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/camirmas/go_stop/models"
-	"github.com/camirmas/go_stop/providers"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
+	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/providers"
 )
 
 type ServerConfig struct {
