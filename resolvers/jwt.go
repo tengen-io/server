@@ -15,7 +15,7 @@ func GenerateToken(userId int, signingKey []byte) (string, error) {
 	claims := MyCustomClaims{
 		userId,
 		jwt.StandardClaims{
-			Issuer: "GoStop",
+			Issuer: "Tengen",
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

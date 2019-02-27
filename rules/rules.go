@@ -7,7 +7,7 @@ package rules
 
 import (
 	_ "fmt"
-	"github.com/camirmas/go_stop/models"
+	"github.com/tengen-io/server/models"
 	"reflect"
 	"sort"
 )

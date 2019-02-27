@@ -2,8 +2,8 @@ package main
 
 import (
 	_ "fmt"
-	"github.com/camirmas/go_stop/resolvers"
 	"github.com/graphql-go/graphql"
+	"github.com/tengen-io/server/resolvers"
 )
 
 func NewSchema(resolvers *resolvers.Resolvers) (graphql.Schema, error) {

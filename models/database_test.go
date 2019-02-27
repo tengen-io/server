@@ -47,7 +47,7 @@ func setup() {
 		5432,
 		"postgres",
 		"postgres",
-		"go_stop_test",
+		"tengen_test",
 		1,
 	}
 	newDb, err := NewPostgresDB(config)

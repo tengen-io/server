@@ -1,9 +1,9 @@
 package providers
 
 import (
-	"github.com/camirmas/go_stop/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/tengen-io/server/models"
 	"testing"
 	"time"
 )
@@ -13,9 +13,9 @@ func TestAuth_SignAndVerifyJWT(t *testing.T) {
 	auth := NewAuth([]byte("supersecret"), duration)
 
 	user := models.User{
-		Id: 1,
+		Id:       1,
 		Username: "test",
-		Email: "test@test.com",
+		Email:    "test@test.com",
 	}
 
 	tokenStr, err := auth.SignJWT(user)
@@ -27,7 +27,7 @@ func TestAuth_SignAndVerifyJWT(t *testing.T) {
 	claims, ok := token.Claims.(*jwt.StandardClaims)
 	assert.True(t, ok)
 	assert.Equal(t, claims.Id, "1")
-	assert.Equal(t, claims.Issuer, "gostop")
+	assert.Equal(t, claims.Issuer, "tengen")
 }
 
 func TestAuth_ValidateInvalidJWT(t *testing.T) {

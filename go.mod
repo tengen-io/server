@@ -1,4 +1,4 @@
-module github.com/camirmas/go_stop
+module github.com/tengen-io/server
 
 require (
 	github.com/badoux/checkmail v0.0.0-20181210160741-9661bd69e9ad
@@ -8,5 +8,5 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.0.0
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
+	golang.org/x/crypto v0.0.0-20190225124518-7f87c0fbb88b
 )
