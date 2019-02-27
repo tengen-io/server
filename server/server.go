@@ -4,6 +4,7 @@ Server implementation of the board game Go.
 package server
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -48,8 +49,8 @@ func (s *Server) Start() {
 	http.Handle("/login", s.LoginHandler())
 	http.HandleFunc("/", s.getHomepageHandler())
 
-	log.Println("Listening on http://localhost:8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Printf("Listening on http://%s:%d", s.config.Host, s.config.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Host, s.config.Port), nil))
 }
 
 func gqlMiddleware(next *handler.Handler) http.Handler {
