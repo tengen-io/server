@@ -1,24 +1,13 @@
 package resolvers
 
 import (
-	"context"
 	"github.com/tengen-io/server/models"
 	"testing"
 )
 
 func TestCreateGame(t *testing.T) {
-	t.Run("with missing token", createGameInvalidToken)
 	t.Run("with self as opponent", createGameSelf)
 	t.Run("with non-self opponent", createGame)
-}
-
-func createGameInvalidToken(t *testing.T) {
-	r, params := setup()
-	params.Context = context.WithValue(params.Context, "token", nil)
-
-	_, err := r.CreateGame(params)
-
-	expectErr(t, invalidTokenError{}, err)
 }
 
 func createGameSelf(t *testing.T) {
@@ -34,10 +23,16 @@ func createGame(t *testing.T) {
 	r, params := setupAuth()
 	params.Args["opponentUsername"] = "saitama"
 
-	_, err := r.CreateGame(params)
+	g, err := r.CreateGame(params)
 
 	if err != nil {
 		t.Errorf("Expected new game, got error: %s", err.Error())
+	}
+
+	game, _ := g.(*models.Game)
+
+	if game.BoardSize != models.RegBoardSize {
+		t.Errorf("Expected default board size of %d, got %d", models.RegBoardSize, game.BoardSize)
 	}
 }
 
@@ -86,20 +81,10 @@ func TestGetLobby(t *testing.T) {
 }
 
 func TestPass(t *testing.T) {
-	t.Run("with missing token", passInvalidToken)
 	t.Run("with already completed game", passComplete)
 	t.Run("with invalid turn", passInvalidTurn)
 	t.Run("when not in game", passNotInGame)
 	t.Run("with valid turn", pass)
-}
-
-func passInvalidToken(t *testing.T) {
-	r, params := setup()
-	params.Context = context.WithValue(params.Context, "token", nil)
-
-	_, err := r.Pass(params)
-
-	expectErr(t, invalidTokenError{}, err)
 }
 
 func passComplete(t *testing.T) {
@@ -145,20 +130,10 @@ func pass(t *testing.T) {
 }
 
 func TestAddStone(t *testing.T) {
-	t.Run("with missing token", addStoneInvalidToken)
 	t.Run("with already completed game", addStoneComplete)
 	t.Run("with invalid turn", addStoneInvalidTurn)
 	t.Run("when not in game", addStoneNotInGame)
 	t.Run("with valid turn", addStone)
-}
-
-func addStoneInvalidToken(t *testing.T) {
-	r, params := setup()
-	params.Context = context.WithValue(params.Context, "token", nil)
-
-	_, err := r.AddStone(params)
-
-	expectErr(t, invalidTokenError{}, err)
 }
 
 func addStoneComplete(t *testing.T) {

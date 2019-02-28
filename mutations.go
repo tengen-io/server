@@ -34,6 +34,9 @@ func buildMutations(resolvers *resolvers.Resolvers, objects *Objects) *graphql.O
 					"opponentUsername": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
+					"size": &graphql.ArgumentConfig{
+						Type: graphql.Int,
+					},
 				},
 				Resolve: resolvers.CreateGame,
 			},

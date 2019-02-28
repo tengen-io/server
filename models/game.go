@@ -72,7 +72,7 @@ func (db *PostgresDB) GetGames(userId interface{}) ([]*Game, error) {
 
 // CreateGame builds all the necessary information to start a game, including
 // associated Player entries.
-func (db *PostgresDB) CreateGame(userId int, opponent *User) (*Game, error) {
+func (db *PostgresDB) CreateGame(userId int, opponent *User, size int) (*Game, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (db *PostgresDB) CreateGame(userId int, opponent *User) (*Game, error) {
 	time := pq.FormatTimestamp(time.Now())
 
 	// Create Game
-	rows, err := tx.Query("INSERT INTO games (status, board_size, inserted_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING *", "active", RegBoardSize, time, time)
+	rows, err := tx.Query("INSERT INTO games (status, board_size, inserted_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING *", "active", size, time, time)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err

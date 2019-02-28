@@ -41,7 +41,7 @@ func (mockDb) GetGames(userId interface{}) ([]*models.Game, error) {
 	panic("implement me")
 }
 
-func (mockDb) CreateGame(userId int, opponent *models.User) (*models.Game, error) {
+func (mockDb) CreateGame(userId int, opponent *models.User, size int) (*models.Game, error) {
 	panic("implement me")
 }
 

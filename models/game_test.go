@@ -13,14 +13,14 @@ func TestCreateGame(t *testing.T) {
 }
 
 func createGameInvalidUser(t *testing.T) {
-	_, err := db.CreateGame(1234, &User{})
+	_, err := db.CreateGame(1234, &User{}, RegBoardSize)
 
 	expectErr(t, userNotFoundError{}, err)
 }
 
 func createGameInvalidOpponent(t *testing.T) {
 	user, _ := db.CreateUser("creategame", "creategame@dude.dude", "dudedude", "dudedude")
-	_, err := db.CreateGame(user.Id, &User{})
+	_, err := db.CreateGame(user.Id, &User{}, RegBoardSize)
 
 	expectErr(t, userNotFoundError{}, err)
 }
@@ -35,7 +35,7 @@ func createGame(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	game, err := db.CreateGame(user1.Id, user2)
+	game, err := db.CreateGame(user1.Id, user2, RegBoardSize)
 
 	if err != nil {
 		t.Fatal(err)
@@ -61,7 +61,7 @@ func TestGetGames(t *testing.T) {
 func getGamesByUser(t *testing.T) {
 	user1, _ := db.CreateUser("getgames1", "getgames1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("getgames2", "getgames2@dude.dude", "dudedude", "dudedude")
-	db.CreateGame(user1.Id, user2)
+	db.CreateGame(user1.Id, user2, RegBoardSize)
 
 	games, err := db.GetGames(user1.Id)
 
@@ -89,7 +89,7 @@ func getGamesRecent(t *testing.T) {
 func TestPass(t *testing.T) {
 	user1, _ := db.CreateUser("pass1", "pass1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("pass2", "pass2@dude.dude", "dudedude", "dudedude")
-	game, _ := db.CreateGame(user1.Id, user2)
+	game, _ := db.CreateGame(user1.Id, user2, RegBoardSize)
 
 	turnId := game.PlayerTurnId
 
@@ -130,7 +130,7 @@ func TestUpdateGame(t *testing.T) {
 func addStone(t *testing.T) {
 	user1, _ := db.CreateUser("UpdateGame1", "UpdateGame1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("UpdateGame2", "UpdateGame2@dude.dude", "dudedude", "dudedude")
-	game, _ := db.CreateGame(user1.Id, user2)
+	game, _ := db.CreateGame(user1.Id, user2, RegBoardSize)
 
 	stone := Stone{X: 0, Y: 0, Color: "black"}
 	game.Stones = []Stone{stone}
@@ -156,7 +156,7 @@ func addStone(t *testing.T) {
 func removeStones(t *testing.T) {
 	user1, _ := db.CreateUser("UpdateGame1", "UpdateGame1@dude.dude", "dudedude", "dudedude")
 	user2, _ := db.CreateUser("UpdateGame2", "UpdateGame2@dude.dude", "dudedude", "dudedude")
-	game, _ := db.CreateGame(user1.Id, user2)
+	game, _ := db.CreateGame(user1.Id, user2, RegBoardSize)
 
 	stone := Stone{X: 0, Y: 0, Color: "black"}
 	game.Stones = []Stone{stone}

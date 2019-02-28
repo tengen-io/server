@@ -81,11 +81,12 @@ func (db *TestDB) GetGames(userId interface{}) ([]*Game, error) {
 	return []*Game{game}, nil
 }
 
-func (db *TestDB) CreateGame(userId int, opponent *User) (*Game, error) {
+func (db *TestDB) CreateGame(userId int, opponent *User, size int) (*Game, error) {
 	return &Game{
 		Id:           1,
 		Status:       "active",
 		PlayerTurnId: userId,
+		BoardSize:    size,
 	}, nil
 }
 
