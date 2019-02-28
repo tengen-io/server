@@ -27,7 +27,7 @@ func (r *Resolvers) GetLobby(p graphql.ResolveParams) (interface{}, error) {
 func (r *Resolvers) CreateGame(p graphql.ResolveParams) (interface{}, error) {
 	currentUser, ok := p.Context.Value("currentUser").(*models.User)
 	if !ok {
-		return nil, invalidTokenError{}
+		return nil, currentUserError{}
 	}
 
 	opponentUsername := p.Args["opponentUsername"].(string)
@@ -36,18 +36,26 @@ func (r *Resolvers) CreateGame(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 
+	s := p.Args["size"]
+	var size int
+	if s == nil {
+		size = models.RegBoardSize
+	} else {
+		size = s.(int)
+	}
+
 	if opponent.Id == currentUser.Id {
 		return nil, sameUserError{}
 	}
 
-	return r.db.CreateGame(currentUser.Id, opponent)
+	return r.db.CreateGame(currentUser.Id, opponent, size)
 }
 
 // Pass executes a pass maneuver for the Game with the current User.
 func (r *Resolvers) Pass(p graphql.ResolveParams) (interface{}, error) {
 	currentUser, ok := p.Context.Value("currentUser").(*models.User)
 	if !ok {
-		return nil, invalidTokenError{}
+		return nil, currentUserError{}
 	}
 
 	gameId := p.Args["gameId"].(string)
@@ -73,7 +81,7 @@ func (r *Resolvers) Pass(p graphql.ResolveParams) (interface{}, error) {
 func (r Resolvers) AddStone(p graphql.ResolveParams) (interface{}, error) {
 	currentUser, ok := p.Context.Value("currentUser").(*models.User)
 	if !ok {
-		return nil, invalidTokenError{}
+		return nil, currentUserError{}
 	}
 	gameId := p.Args["gameId"].(string)
 	game, err := r.db.GetGame(gameId)

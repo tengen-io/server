@@ -40,7 +40,7 @@ func (r *Resolvers) CurrentUser(p graphql.ResolveParams) (interface{}, error) {
 	currentUser, ok := p.Context.Value("currentUser").(*models.User)
 
 	if !ok {
-		return nil, missingTokenError{}
+		return nil, currentUserError{}
 	}
 
 	return currentUser, nil

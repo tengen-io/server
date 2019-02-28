@@ -6,6 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -77,12 +78,14 @@ func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			user, err := s.db.GetUser(claims.Id)
+			id, _ := strconv.Atoi(claims.Id)
+			user, err := s.db.GetUser(id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 
 			ctx = context.WithValue(ctx, "currentUser", user)
+			r = r.WithContext(ctx)
 		}
 
 		next.ServeHTTP(w, r)
