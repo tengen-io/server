@@ -15,7 +15,7 @@ RUN go build -o /go/bin/tengen -v .
 FROM ubuntu:bionic
 
 COPY --from=build /go/bin/tengen /usr/local/bin/tengen
-COPY .env .
+COPY .env.development .env.production ./
 
 EXPOSE 8080
 
