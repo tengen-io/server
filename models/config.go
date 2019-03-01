@@ -9,12 +9,12 @@ const (
 )
 
 type PostgresDBConfig struct {
-	Host         string
-	Port         int
-	User         string
-	Password     string
-	Database     string
-	BcryptRounds int
+	Host       string
+	Port       int
+	User       string
+	Password   string
+	Database   string
+	BcryptCost int
 }
 
 func (c *PostgresDBConfig) Url() string {

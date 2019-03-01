@@ -67,18 +67,18 @@ func makeDb() *models.PostgresDB {
 		log.Fatal("Cold not parse TENGEN_DB_PORT")
 	}
 
-	bcryptRounds, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_ROUNDS"))
+	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
 	if err != nil {
-		log.Fatal("Could not parse TENGEN_BCRYPT_ROUNDS")
+		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
 	}
 
 	config := &models.PostgresDBConfig{
-		Host:         os.Getenv("TENGEN_DB_HOST"),
-		Port:         port,
-		User:         os.Getenv("TENGEN_DB_USER"),
-		Database:     os.Getenv("TENGEN_DB_DATABASE"),
-		Password:     os.Getenv("TENGEN_DB_PASSWORD"),
-		BcryptRounds: bcryptRounds,
+		Host:       os.Getenv("TENGEN_DB_HOST"),
+		Port:       port,
+		User:       os.Getenv("TENGEN_DB_USER"),
+		Database:   os.Getenv("TENGEN_DB_DATABASE"),
+		Password:   os.Getenv("TENGEN_DB_PASSWORD"),
+		BcryptCost: bcryptCost,
 	}
 
 	db, err := models.NewPostgresDB(config)
@@ -105,9 +105,13 @@ func makeResolvers(db models.DB, auth *providers.Auth) *resolvers.Resolvers {
 }
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Could not load .env", err)
+	env := os.Getenv("TENGEN_ENV")
+	if env == "" {
+		env = "development"
 	}
+
+	godotenv.Load(".env."+env)
+	godotenv.Load()
 
 	db := makeDb()
 	auth := makeAuth()

@@ -54,7 +54,7 @@ func (db *PostgresDB) CreateUser(username, email, password, passwordConfirm stri
 		return nil, invalidEmailError{}
 	}
 
-	pw, err := bcrypt.GenerateFromPassword([]byte(password), db.config.BcryptRounds)
+	pw, err := bcrypt.GenerateFromPassword([]byte(password), db.config.BcryptCost)
 
 	if err != nil {
 		return nil, err

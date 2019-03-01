@@ -5,4 +5,4 @@ test:
 	go test ./...
 
 docker:
-	docker build -t formomosan/tengen-server:latest . -f Dockerfile
+	docker build -t gcr.io/tengen-io/server:latest . -f Dockerfile
