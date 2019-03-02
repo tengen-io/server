@@ -31,15 +31,15 @@ func (p *IdentityProvider) CreateIdentity(input models.CreateIdentityInput) (*mo
 	var rv models.Identity
 	ts := pq.FormatTimestamp(time.Now().UTC())
 
-	identity := tx.QueryRowx("INSERT INTO identities (email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?) RETURNING id, email", input.Email, passwordHash, ts, ts)
-	err = identity.StructScan(&rv)
+	identity := tx.QueryRowx("INSERT INTO identities (email, password_hash, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, email", input.Email, passwordHash, ts, ts)
+	err = identity.Scan(&rv.Id, &rv.Email)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	user := tx.QueryRowx("INSERT INTO users (identity_id, name, created_at, updated_at) VALUES (?, ?, ?, ?)", rv.Id, input.Name, ts, ts)
-	err = user.StructScan(&rv.User)
+	user := tx.QueryRowx("INSERT INTO users (identity_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, name", rv.Id, input.Name, ts, ts)
+	err = user.Scan(&rv.User.Id, &rv.User.Name)
 	if err != nil {
 		tx.Rollback()
 		return nil, err

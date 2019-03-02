@@ -1,12 +1,20 @@
 package models
 
-type User struct {
-	IdentityID int32
-	Name       string `json:"name"`
+import "time"
+
+type Timestamps struct {
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Identity struct {
-	Id    int32  `json:"id"`
+	Id    int  `json:"id",db:"identity_id"`
 	Email string `json:"email"`
-	User  `json:"user"`
+	User
 }
+
+type User struct {
+	Id int `json:"id",db:"user_id"`
+	Name       string `json:"name"`
+}
+

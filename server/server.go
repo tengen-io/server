@@ -36,9 +36,9 @@ func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *prov
 }
 
 func (s *Server) Start() {
-	http.Handle("/query", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
+	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
 	http.Handle("/login", s.LoginHandler())
-	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/query"))
+	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/graphql"))
 
 	log.Printf("Listening on http://%s:%d", s.config.Host, s.config.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Host, s.config.Port), nil))

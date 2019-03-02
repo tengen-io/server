@@ -18,6 +18,7 @@ type AuthProvider struct {
 
 func NewAuthProvider(db *sqlx.DB, signingKey []byte, lifetime time.Duration) *AuthProvider {
 	return &AuthProvider{
+		db: db,
 		signingKey: signingKey,
 		lifetime:   lifetime,
 	}

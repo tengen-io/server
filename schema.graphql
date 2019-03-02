@@ -1,4 +1,5 @@
 type Identity {
+    id: ID!
     email: String!
     user: User!
 }
@@ -10,6 +11,7 @@ input CreateIdentityInput {
 }
 
 type User {
+    id: ID!
     name: String!
 }
 
