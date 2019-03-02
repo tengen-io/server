@@ -9,7 +9,7 @@ import (
 )
 
 type IdentityProvider struct {
-	db *sqlx.DB
+	db         *sqlx.DB
 	BcryptCost int
 }
 

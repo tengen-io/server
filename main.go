@@ -25,7 +25,6 @@ func NewServerConfig() ServerConfig {
 		environment = "development"
 	}
 
-
 	return ServerConfig{
 		Environment: environment,
 	}
@@ -65,11 +64,11 @@ func makeDb() *sqlx.DB {
 	}
 
 	config := &PostgresDBConfig{
-		Host:         os.Getenv("TENGEN_DB_HOST"),
-		Port:         port,
-		User:         os.Getenv("TENGEN_DB_USER"),
-		Database:     os.Getenv("TENGEN_DB_DATABASE"),
-		Password:     os.Getenv("TENGEN_DB_PASSWORD"),
+		Host:     os.Getenv("TENGEN_DB_HOST"),
+		Port:     port,
+		User:     os.Getenv("TENGEN_DB_USER"),
+		Database: os.Getenv("TENGEN_DB_DATABASE"),
+		Password: os.Getenv("TENGEN_DB_PASSWORD"),
 	}
 
 	db, err := NewPostgresDb(config)
@@ -104,11 +103,10 @@ func makeSchema(identity *providers.IdentityProvider, user *providers.UserProvid
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			identity: identity,
-			user: user,
+			user:     user,
 		},
 	})
 }
-
 
 func main() {
 	env := os.Getenv("TENGEN_ENV")
@@ -116,7 +114,7 @@ func main() {
 		env = "development"
 	}
 
-	godotenv.Load(".env."+env)
+	godotenv.Load(".env." + env)
 	godotenv.Load()
 
 	db := makeDb()

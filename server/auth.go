@@ -12,7 +12,7 @@ import (
 
 func (s *Server) LoginHandler() http.Handler {
 	type credentials struct {
-		Email string
+		Email    string
 		Password string
 	}
 

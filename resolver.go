@@ -8,9 +8,9 @@ import (
 
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
-type Resolver struct{
+type Resolver struct {
 	identity *providers.IdentityProvider
-	user *providers.UserProvider
+	user     *providers.UserProvider
 }
 
 func (r *Resolver) Mutation() MutationResolver {

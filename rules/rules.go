@@ -4,6 +4,7 @@ The rules followed for this implementation come from the British Go Association,
 and can be found at https://www.britgo.org/intro/intro2.html
 */
 package rules
+
 /*
 import (
 	_ "fmt"
