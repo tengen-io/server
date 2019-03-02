@@ -8,13 +8,12 @@ type Timestamps struct {
 }
 
 type Identity struct {
-	Id    int  `json:"id",db:"identity_id"`
+	Id    string `json:"id",db:"identity_id"`
 	Email string `json:"email"`
 	User
 }
 
 type User struct {
-	Id int `json:"id",db:"user_id"`
-	Name       string `json:"name"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
-

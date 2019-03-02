@@ -6,7 +6,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/tengen-io/server/models"
 	"golang.org/x/crypto/bcrypt"
-	"strconv"
 	"time"
 )
 
@@ -18,7 +17,7 @@ type AuthProvider struct {
 
 func NewAuthProvider(db *sqlx.DB, signingKey []byte, lifetime time.Duration) *AuthProvider {
 	return &AuthProvider{
-		db: db,
+		db:         db,
 		signingKey: signingKey,
 		lifetime:   lifetime,
 	}
@@ -39,7 +38,7 @@ func (p *AuthProvider) ValidateJWT(tokenString string) (*jwt.Token, error) {
 func (p *AuthProvider) SignJWT(identity models.Identity) (string, error) {
 	// TODO(eac): reintroduce custom claims for ID
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		Id:        strconv.Itoa(int(identity.Id)),
+		Id:        identity.Id,
 		NotBefore: time.Now().Unix(),
 		ExpiresAt: time.Now().Add(p.lifetime * time.Second).Unix(),
 		Issuer:    "tengen.io",

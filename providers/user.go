@@ -22,10 +22,14 @@ func (p *UserProvider) GetUserById(id string) (*models.User, error) {
 		return nil, err
 	}
 
+	var rvId int
 	var user models.User
-	err = p.db.Select(&user, "SELECT name FROM users WHERE id = $1", idInt)
+	row := p.db.QueryRow("SELECT id, name FROM users WHERE id = $1", idInt)
+	err = row.Scan(&rvId, &user.Name)
+	user.Id = strconv.Itoa(rvId)
 	if err != nil {
 		return nil, err
 	}
+
 	return &user, nil
 }

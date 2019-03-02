@@ -31,6 +31,7 @@ func (p *IdentityProvider) CreateIdentity(input models.CreateIdentityInput) (*mo
 	var rv models.Identity
 	ts := pq.FormatTimestamp(time.Now().UTC())
 
+	// TODO(eac): do a precondition check for duplicate users to save autoincrement IDs
 	identity := tx.QueryRowx("INSERT INTO identities (email, password_hash, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, email", input.Email, passwordHash, ts, ts)
 	err = identity.Scan(&rv.Id, &rv.Email)
 	if err != nil {
