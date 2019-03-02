@@ -6,12 +6,13 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
 func (s *Server) LoginHandler() http.Handler {
 	type credentials struct {
-		Username string
+		Email string
 		Password string
 	}
 
@@ -32,13 +33,13 @@ func (s *Server) LoginHandler() http.Handler {
 		}
 
 		// TODO(eac): find a way to differentiate between auth and db failure
-		user, err := s.db.CheckPw(credentials.Username, credentials.Password)
+		identity, err := s.auth.CheckPasswordByEmail(credentials.Email, credentials.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		token, err := s.auth.SignJWT(*user)
+		token, err := s.auth.SignJWT(*identity)
 
 		w.Header().Set("Content-Type", "application/json")
 		out, err := json.Marshal(struct{ Token string }{token})
@@ -77,12 +78,17 @@ func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			user, err := s.db.GetUser(claims.Id)
+			idInt, err := strconv.Atoi(claims.Id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 
-			ctx = context.WithValue(ctx, "currentUser", user)
+			identity, err := s.identity.GetIdentityById(int32(idInt))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+
+			ctx = context.WithValue(ctx, "identity", identity)
 		}
 
 		next.ServeHTTP(w, r)

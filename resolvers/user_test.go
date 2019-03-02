@@ -61,7 +61,7 @@ func setup() (*Resolvers, graphql.ResolveParams) {
 	params.Context = context.Background()
 
 	authDuration, _ := time.ParseDuration("1 week")
-	auth := providers.NewAuth([]byte("supersecret"), authDuration)
+	auth := providers.NewAuthProvider([]byte("supersecret"), authDuration)
 
 	r := &Resolvers{
 		db:   db,

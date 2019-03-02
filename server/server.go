@@ -5,13 +5,11 @@ package server
 
 import (
 	"fmt"
-	"html/template"
+	"github.com/99designs/gqlgen/graphql"
 	"log"
 	"net/http"
 
-	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/handler"
-	"github.com/tengen-io/server/models"
+	"github.com/99designs/gqlgen/handler"
 	"github.com/tengen-io/server/providers"
 )
 
@@ -22,41 +20,28 @@ type ServerConfig struct {
 }
 
 type Server struct {
-	config *ServerConfig
-	db     models.DB
-	schema *graphql.Schema
-	auth   *providers.Auth
+	config           *ServerConfig
+	executableSchema graphql.ExecutableSchema
+	auth             *providers.AuthProvider
+	identity         *providers.IdentityProvider
 }
 
-func NewServer(config *ServerConfig, db models.DB, auth *providers.Auth, schema *graphql.Schema) *Server {
+func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *providers.AuthProvider, identity *providers.IdentityProvider) *Server {
 	return &Server{
 		config,
-		db,
 		schema,
 		auth,
+		identity,
 	}
 }
 
 func (s *Server) Start() {
-	config := s.config
-	h := handler.New(&handler.Config{
-		Schema:   s.schema,
-		Pretty:   true,
-		GraphiQL: config.GraphiQLEnabled,
-	})
-
-	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(gqlMiddleware(h))))
+	http.Handle("/query", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
 	http.Handle("/login", s.LoginHandler())
-	http.HandleFunc("/", s.getHomepageHandler())
+	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/query"))
 
 	log.Printf("Listening on http://%s:%d", s.config.Host, s.config.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Host, s.config.Port), nil))
-}
-
-func gqlMiddleware(next *handler.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ContextHandler(r.Context(), w, r)
-	})
 }
 
 func enableCorsMiddleware(next http.Handler) http.Handler {
@@ -65,35 +50,4 @@ func enableCorsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		next.ServeHTTP(w, r)
 	})
-}
-
-type homepagePresenter struct {
-	Title           string
-	GraphiQLEnabled bool
-}
-
-func (s *Server) getHomepageHandler() http.HandlerFunc {
-	config := s.config
-	tmpl, err := template.New("homepage").Parse(`
-		<html>
-			<h1>{{.Title}}</h1>
-
-			{{if .GraphiQLEnabled}}
-				<p>Click here to visit <a href="/graphql">GraphiQL</a>.</p>
-			{{end}}
-		</html>
-	`)
-
-	if err != nil {
-		log.Fatalf("Error parsing homepage template err: %s", err)
-	}
-
-	return func(w http.ResponseWriter, req *http.Request) {
-		presenter := homepagePresenter{
-			Title:           "Go Stop Server",
-			GraphiQLEnabled: config.GraphiQLEnabled,
-		}
-
-		tmpl.Execute(w, presenter)
-	}
 }

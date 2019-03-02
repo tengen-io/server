@@ -1,0 +1,23 @@
+type Identity {
+    email: String!
+    user: User!
+}
+
+input CreateIdentityInput {
+    email: String!
+    password: String!
+    name: String!
+}
+
+type User {
+    name: String!
+}
+
+type Query {
+    user(id: ID, name: String): User
+    users(ids: [ID!], names: [String!]): [User]
+}
+
+type Mutation {
+    createIdentity(input: CreateIdentityInput): Identity
+}

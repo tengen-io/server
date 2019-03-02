@@ -2,7 +2,7 @@
 Package resolvers is responsible for handling GraphQL queries and mutations.
 */
 package resolvers
-
+/*
 import (
 	"github.com/graphql-go/graphql"
 	"github.com/tengen-io/server/models"
@@ -44,4 +44,4 @@ func (r *Resolvers) CurrentUser(p graphql.ResolveParams) (interface{}, error) {
 	}
 
 	return currentUser, nil
-}
+} */

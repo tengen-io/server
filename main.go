@@ -2,40 +2,32 @@ package main
 
 import (
 	"encoding/base64"
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
-	"github.com/tengen-io/server/models"
 	"github.com/tengen-io/server/providers"
-	"github.com/tengen-io/server/resolvers"
 	"github.com/tengen-io/server/server"
 )
 
-type Config struct {
+type ServerConfig struct {
 	Environment string
-	Port        int
 }
 
-func NewConfig() Config {
+func NewServerConfig() ServerConfig {
 	environment := os.Getenv("GO_ENV")
-	tengenPort := os.Getenv("TENGEN_PORT")
 
 	if environment == "" {
 		environment = "development"
 	}
 
-	port, err := strconv.Atoi(tengenPort)
-	if err != nil {
-		log.Fatalf("Could not parse TENGEN_PORT err: %s", err)
-	}
 
-	return Config{
+	return ServerConfig{
 		Environment: environment,
-		Port:        port,
 	}
 }
 
@@ -49,39 +41,38 @@ func getSigningKey() []byte {
 	return decoded
 }
 
-func makeServer(db models.DB, auth *providers.Auth, schema *graphql.Schema) *server.Server {
-	config := NewConfig()
+func makeServer(schema graphql.ExecutableSchema, auth *providers.AuthProvider, identity *providers.IdentityProvider) *server.Server {
+	config := NewServerConfig()
+	tengenPort := os.Getenv("TENGEN_PORT")
+	port, err := strconv.Atoi(tengenPort)
+	if err != nil {
+		log.Fatalf("Could not parse TENGEN_PORT err: %s", err)
+	}
 
 	serverConfig := &server.ServerConfig{
 		Host:            os.Getenv("TENGEN_HOST"),
-		Port:            config.Port,
+		Port:            port,
 		GraphiQLEnabled: config.Environment == "development",
 	}
 
-	return server.NewServer(serverConfig, db, auth, schema)
+	return server.NewServer(serverConfig, schema, auth, identity)
 }
 
-func makeDb() *models.PostgresDB {
+func makeDb() *sqlx.DB {
 	port, err := strconv.Atoi(os.Getenv("TENGEN_DB_PORT"))
 	if err != nil {
 		log.Fatal("Cold not parse TENGEN_DB_PORT")
 	}
 
-	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
-	if err != nil {
-		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
+	config := &PostgresDBConfig{
+		Host:         os.Getenv("TENGEN_DB_HOST"),
+		Port:         port,
+		User:         os.Getenv("TENGEN_DB_USER"),
+		Database:     os.Getenv("TENGEN_DB_DATABASE"),
+		Password:     os.Getenv("TENGEN_DB_PASSWORD"),
 	}
 
-	config := &models.PostgresDBConfig{
-		Host:       os.Getenv("TENGEN_DB_HOST"),
-		Port:       port,
-		User:       os.Getenv("TENGEN_DB_USER"),
-		Database:   os.Getenv("TENGEN_DB_DATABASE"),
-		Password:   os.Getenv("TENGEN_DB_PASSWORD"),
-		BcryptCost: bcryptCost,
-	}
-
-	db, err := models.NewPostgresDB(config)
+	db, err := NewPostgresDb(config)
 	if err != nil {
 		log.Fatal("Unable to connect to DB.", err)
 	}
@@ -89,7 +80,7 @@ func makeDb() *models.PostgresDB {
 	return db
 }
 
-func makeAuth() *providers.Auth {
+func makeAuth(db *sqlx.DB) *providers.AuthProvider {
 	day, err := time.ParseDuration("24h")
 	if err != nil {
 		log.Fatal("could not parse auth key duration", err)
@@ -97,12 +88,27 @@ func makeAuth() *providers.Auth {
 
 	keyDuration := day * 7
 
-	return providers.NewAuth(getSigningKey(), keyDuration)
+	return providers.NewAuthProvider(db, getSigningKey(), keyDuration)
 }
 
-func makeResolvers(db models.DB, auth *providers.Auth) *resolvers.Resolvers {
-	return resolvers.NewResolvers(db, auth)
+func makeIdentity(db *sqlx.DB) *providers.IdentityProvider {
+	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
+	if err != nil {
+		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
+	}
+
+	return providers.NewIdentityProvider(db, bcryptCost)
 }
+
+func makeSchema(identity *providers.IdentityProvider, user *providers.UserProvider) graphql.ExecutableSchema {
+	return NewExecutableSchema(Config{
+		Resolvers: &Resolver{
+			identity: identity,
+			user: user,
+		},
+	})
+}
+
 
 func main() {
 	env := os.Getenv("TENGEN_ENV")
@@ -114,14 +120,11 @@ func main() {
 	godotenv.Load()
 
 	db := makeDb()
-	auth := makeAuth()
-	resolvers := makeResolvers(db, auth)
+	auth := makeAuth(db)
+	identity := makeIdentity(db)
+	user := providers.NewUserProvider(db)
+	schema := makeSchema(identity, user)
 
-	schema, err := NewSchema(resolvers)
-	if err != nil {
-		log.Fatal("Could not crete GraphQL schema", err)
-	}
-
-	s := makeServer(db, auth, &schema)
+	s := makeServer(schema, auth, identity)
 	s.Start()
 }

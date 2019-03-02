@@ -1,4 +1,5 @@
 package models
+/*
 
 import (
 	"database/sql"
@@ -326,4 +327,4 @@ func parseGameRows(rows *sql.Rows) ([]Game, error) {
 	}
 
 	return games, rows.Err()
-}
+} */

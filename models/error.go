@@ -1,5 +1,6 @@
 package models
 
+/*
 import "fmt"
 
 func HandleError(e error) error {
@@ -70,4 +71,4 @@ func (e gameNotFoundError) Error() string {
 
 func (e passwordTooShortError) Error() string {
 	return fmt.Sprintf("Password must be at least %d characters", MinPasswordLength)
-}
+} */

@@ -87,5 +87,5 @@ func makeServer(db models.DB) *Server {
 		"", 0, false,
 	}
 	duration, _ := time.ParseDuration("1 week")
-	return NewServer(&config, db, providers.NewAuth([]byte("supersecret"), duration), &graphql.Schema{})
+	return NewServer(&config, db, providers.NewAuthProvider([]byte("supersecret"), duration), &graphql.Schema{})
 }

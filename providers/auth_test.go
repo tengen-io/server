@@ -10,7 +10,7 @@ import (
 
 func TestAuth_SignAndVerifyJWT(t *testing.T) {
 	duration, _ := time.ParseDuration("1 week")
-	auth := NewAuth([]byte("supersecret"), duration)
+	auth := NewAuthProvider([]byte("supersecret"), duration)
 
 	user := models.User{
 		Id:       1,
@@ -32,7 +32,7 @@ func TestAuth_SignAndVerifyJWT(t *testing.T) {
 
 func TestAuth_ValidateInvalidJWT(t *testing.T) {
 	duration, _ := time.ParseDuration("1 week")
-	auth := NewAuth([]byte("supersecret"), duration)
+	auth := NewAuthProvider([]byte("supersecret"), duration)
 
 	_, err := auth.ValidateJWT("lol this wont work")
 	assert.Error(t, err)

@@ -4,7 +4,7 @@ The rules followed for this implementation come from the British Go Association,
 and can be found at https://www.britgo.org/intro/intro2.html
 */
 package rules
-
+/*
 import (
 	_ "fmt"
 	"github.com/tengen-io/server/models"
@@ -170,4 +170,4 @@ type selfCaptureError struct{}
 
 func (e selfCaptureError) Error() string {
 	return "Move is suicidal"
-}
+} */

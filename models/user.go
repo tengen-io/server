@@ -1,5 +1,5 @@
 package models
-
+/*
 import (
 	"database/sql"
 	"github.com/badoux/checkmail"
@@ -9,15 +9,6 @@ import (
 )
 
 const MinPasswordLength int = 8
-
-type User struct {
-	Id                int
-	Username          string
-	Email             string
-	encryptedPassword string
-	Games             []Game
-	Timestamps
-}
 
 type AuthUser struct {
 	Jwt  string
@@ -89,4 +80,4 @@ func parseUserRows(rows *sql.Rows) ([]User, error) {
 	}
 
 	return users, rows.Err()
-}
+}*/

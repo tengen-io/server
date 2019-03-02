@@ -1,4 +1,5 @@
 package main
+/*
 
 import (
 	"github.com/graphql-go/graphql"
@@ -253,4 +254,4 @@ func buildObjects() *Objects {
 		gameType,
 		stoneType,
 	}
-}
+} */

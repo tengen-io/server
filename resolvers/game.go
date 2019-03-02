@@ -1,6 +1,6 @@
 package resolvers
 
-import (
+/*import (
 	// "fmt"
 	"github.com/graphql-go/graphql"
 	"github.com/tengen-io/server/models"
@@ -201,4 +201,4 @@ func flatten(strings []rules.String) []models.Stone {
 		}
 	}
 	return flattened
-}
+} */
