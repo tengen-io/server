@@ -14,9 +14,16 @@ resolver:
   filename: resolver.go
   type: Resolver
 
-
 models:
   User:
     model: github.com/tengen-io/server/models.User
   Identity:
     model: github.com/tengen-io/server/models.Identity
+  Game:
+    model: github.com/tengen-io/server/models.Game
+  GameState:
+    model: github.com/tengen-io/server/models.GameState
+  GameType:
+    model: github.com/tengen-io/server/models.GameType
+  Timestamp:
+    model: github.com/tengen-io/server/models.Timestamp

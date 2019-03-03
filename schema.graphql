@@ -1,17 +1,48 @@
-type Identity {
+# Types
+scalar Timestamp
+
+enum GameType {
+    STANDARD
+}
+
+enum GameState {
+    IN_PROGRESS
+    FINISHED
+}
+
+interface Node {
+    id: ID!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
+}
+
+type Identity implements Node {
     id: ID!
     email: String!
     user: User!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
 }
 
+type User implements Node {
+    id: ID!
+    name: String!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
+}
+
+type Game implements Node {
+    id: ID!
+    type: GameType!
+    state: GameState!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
+}
+
+# Inputs
 input CreateIdentityInput {
     email: String!
     password: String!
-    name: String!
-}
-
-type User {
-    id: ID!
     name: String!
 }
 

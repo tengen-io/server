@@ -2,6 +2,10 @@
 
 package models
 
+type Node interface {
+	IsNode()
+}
+
 type CreateIdentityInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
