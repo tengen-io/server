@@ -9,6 +9,7 @@ import (
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 type Resolver struct {
+	game     *providers.GameProvider
 	identity *providers.IdentityProvider
 	user     *providers.UserProvider
 }
@@ -31,6 +32,15 @@ func (r *mutationResolver) CreateIdentity(ctx context.Context, input *models.Cre
 	return rv, nil
 }
 
+func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.Game, error) {
+	rv, err := r.game.CreateInvitation(*input)
+	if err != nil {
+		return nil, err
+	}
+
+	return rv, nil
+}
+
 type queryResolver struct{ *Resolver }
 
 func (r *queryResolver) User(ctx context.Context, id *string, name *string) (*models.User, error) {
@@ -45,6 +55,7 @@ func (r *queryResolver) User(ctx context.Context, id *string, name *string) (*mo
 
 	panic("not implemented")
 }
+
 func (r *queryResolver) Users(ctx context.Context, ids []string, names []string) ([]*models.User, error) {
 	panic("not implemented")
 }

@@ -99,11 +99,12 @@ func makeIdentity(db *sqlx.DB) *providers.IdentityProvider {
 	return providers.NewIdentityProvider(db, bcryptCost)
 }
 
-func makeSchema(identity *providers.IdentityProvider, user *providers.UserProvider) graphql.ExecutableSchema {
+func makeSchema(identity *providers.IdentityProvider, user *providers.UserProvider, game *providers.GameProvider) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			identity: identity,
 			user:     user,
+			game:     game,
 		},
 	})
 }
@@ -121,7 +122,8 @@ func main() {
 	auth := makeAuth(db)
 	identity := makeIdentity(db)
 	user := providers.NewUserProvider(db)
-	schema := makeSchema(identity, user)
+	game := providers.NewGameProvider(db)
+	schema := makeSchema(identity, user, game)
 
 	s := makeServer(schema, auth, identity)
 	s.Start()

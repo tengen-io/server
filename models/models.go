@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
@@ -69,15 +70,36 @@ func (g GameType) MarshalGQL(w io.Writer) {
 	fmt.Fprintf(w, strconv.Quote(g.String()))
 }
 
+func (g *GameType) Scan(value interface{}) error {
+	val, ok := value.([]byte)
+	if !ok {
+		return errors.New("cannot scan non-string as gametype")
+	}
+
+	var err error
+	*g, err = GameTypeForString(string(val))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g GameType) Value() (driver.Value, error) {
+	return g.String(), nil
+}
+
 type GameState int8
 
 const (
-	InProgress GameState = iota
-	Finished   GameState = iota
+	Invitation GameState = iota
+	InProgress
+	Finished
 )
 
 func GameStateForString(str string) (GameState, error) {
 	switch str {
+	case "INVITATION":
+		return Invitation, nil
 	case "IN_PROGRESS":
 		return InProgress, nil
 	case "FINISHED":
@@ -89,6 +111,8 @@ func GameStateForString(str string) (GameState, error) {
 
 func (g GameState) String() string {
 	switch g {
+	case Invitation:
+		return "INVITATION"
 	case InProgress:
 		return "IN_PROGRESS"
 	case Finished:
@@ -113,9 +137,27 @@ func (g GameState) MarshalGQL(w io.Writer) {
 	fmt.Fprintf(w, strconv.Quote(g.String()))
 }
 
+func (g *GameState) Scan(value interface{}) error {
+	val, ok := value.([]byte)
+	if !ok {
+		return errors.New("cannot scan non-[]byte as gamestate")
+	}
+
+	var err error
+	*g, err = GameStateForString(string(val))
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+
+func (g GameState) Value() (driver.Value, error) {
+	return g.String(), nil
+}
+
 type Game struct {
 	NodeFields
-	BoardSize int       `json:"boardSize"`
+	BoardSize int       `json:"boardSize",db:"board_size"`
 	Type      GameType  `json:"type"`
 	State     GameState `json:"state"`
 }

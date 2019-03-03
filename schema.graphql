@@ -6,6 +6,7 @@ enum GameType {
 }
 
 enum GameState {
+    INVITATION
     IN_PROGRESS
     FINISHED
 }
@@ -35,6 +36,7 @@ type Game implements Node {
     id: ID!
     type: GameType!
     state: GameState!
+    boardSize: Int!
     createdAt: Timestamp!
     updatedAt: Timestamp
 }
@@ -46,6 +48,11 @@ input CreateIdentityInput {
     name: String!
 }
 
+input CreateGameInvitationInput {
+    type: GameType!
+    boardSize: Int!
+}
+
 type Query {
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
@@ -53,4 +60,5 @@ type Query {
 
 type Mutation {
     createIdentity(input: CreateIdentityInput): Identity
+    createGameInvitation(input: CreateGameInvitationInput): Game
 }

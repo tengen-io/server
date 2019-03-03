@@ -7,6 +7,6 @@ CREATE TABLE players (
     stats json,
     has_passed boolean DEFAULT false,
     prisoners int DEFAULT 0,
-    inserted_at timestamp without time zone NOT NULL,
+    created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );

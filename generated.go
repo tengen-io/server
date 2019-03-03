@@ -48,6 +48,7 @@ type ComplexityRoot struct {
 		Id        func(childComplexity int) int
 		Type      func(childComplexity int) int
 		State     func(childComplexity int) int
+		BoardSize func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
@@ -61,7 +62,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateIdentity func(childComplexity int, input *models.CreateIdentityInput) int
+		CreateIdentity       func(childComplexity int, input *models.CreateIdentityInput) int
+		CreateGameInvitation func(childComplexity int, input *models.CreateGameInvitationInput) int
 	}
 
 	Query struct {
@@ -79,6 +81,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateIdentity(ctx context.Context, input *models.CreateIdentityInput) (*models.Identity, error)
+	CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.Game, error)
 }
 type QueryResolver interface {
 	User(ctx context.Context, id *string, name *string) (*models.User, error)
@@ -120,6 +123,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Game.State(childComplexity), true
+
+	case "Game.BoardSize":
+		if e.complexity.Game.BoardSize == nil {
+			break
+		}
+
+		return e.complexity.Game.BoardSize(childComplexity), true
 
 	case "Game.CreatedAt":
 		if e.complexity.Game.CreatedAt == nil {
@@ -181,6 +191,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateIdentity(childComplexity, args["input"].(*models.CreateIdentityInput)), true
+
+	case "Mutation.CreateGameInvitation":
+		if e.complexity.Mutation.CreateGameInvitation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createGameInvitation_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateGameInvitation(childComplexity, args["input"].(*models.CreateGameInvitationInput)), true
 
 	case "Query.User":
 		if e.complexity.Query.User == nil {
@@ -319,6 +341,7 @@ enum GameType {
 }
 
 enum GameState {
+    INVITATION
     IN_PROGRESS
     FINISHED
 }
@@ -348,6 +371,7 @@ type Game implements Node {
     id: ID!
     type: GameType!
     state: GameState!
+    boardSize: Int!
     createdAt: Timestamp!
     updatedAt: Timestamp
 }
@@ -359,6 +383,11 @@ input CreateIdentityInput {
     name: String!
 }
 
+input CreateGameInvitationInput {
+    type: GameType!
+    boardSize: Int!
+}
+
 type Query {
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
@@ -366,6 +395,7 @@ type Query {
 
 type Mutation {
     createIdentity(input: CreateIdentityInput): Identity
+    createGameInvitation(input: CreateGameInvitationInput): Game
 }
 `},
 )
@@ -373,6 +403,20 @@ type Mutation {
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createGameInvitation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.CreateGameInvitationInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOCreateGameInvitationInput2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateGameInvitationInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createIdentity_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -554,6 +598,32 @@ func (ec *executionContext) _Game_state(ctx context.Context, field graphql.Colle
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNGameState2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Game_boardSize(ctx context.Context, field graphql.CollectedField, obj *models.Game) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Game",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BoardSize, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Game_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Game) graphql.Marshaler {
@@ -760,6 +830,36 @@ func (ec *executionContext) _Mutation_createIdentity(ctx context.Context, field 
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOIdentity2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐIdentity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createGameInvitation(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Mutation",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createGameInvitation_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateGameInvitation(rctx, args["input"].(*models.CreateGameInvitationInput))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Game)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOGame2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1775,6 +1875,30 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCreateGameInvitationInput(ctx context.Context, v interface{}) (models.CreateGameInvitationInput, error) {
+	var it models.CreateGameInvitationInput
+	var asMap = v.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "type":
+			var err error
+			it.Type, err = ec.unmarshalNGameType2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "boardSize":
+			var err error
+			it.BoardSize, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateIdentityInput(ctx context.Context, v interface{}) (models.CreateIdentityInput, error) {
 	var it models.CreateIdentityInput
 	var asMap = v.(map[string]interface{})
@@ -1860,6 +1984,11 @@ func (ec *executionContext) _Game(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "boardSize":
+			out.Values[i] = ec._Game_boardSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "createdAt":
 			out.Values[i] = ec._Game_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1939,6 +2068,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "createIdentity":
 			out.Values[i] = ec._Mutation_createIdentity(ctx, field)
+		case "createGameInvitation":
+			out.Values[i] = ec._Mutation_createGameInvitation(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2320,6 +2451,14 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return graphql.MarshalID(v)
 }
 
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	return graphql.UnmarshalInt(v)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	return graphql.MarshalInt(v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	return graphql.UnmarshalString(v)
 }
@@ -2583,6 +2722,18 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
 }
 
+func (ec *executionContext) unmarshalOCreateGameInvitationInput2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateGameInvitationInput(ctx context.Context, v interface{}) (models.CreateGameInvitationInput, error) {
+	return ec.unmarshalInputCreateGameInvitationInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOCreateGameInvitationInput2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateGameInvitationInput(ctx context.Context, v interface{}) (*models.CreateGameInvitationInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOCreateGameInvitationInput2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateGameInvitationInput(ctx, v)
+	return &res, err
+}
+
 func (ec *executionContext) unmarshalOCreateIdentityInput2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateIdentityInput(ctx context.Context, v interface{}) (models.CreateIdentityInput, error) {
 	return ec.unmarshalInputCreateIdentityInput(ctx, v)
 }
@@ -2593,6 +2744,17 @@ func (ec *executionContext) unmarshalOCreateIdentityInput2ᚖgithubᚗcomᚋteng
 	}
 	res, err := ec.unmarshalOCreateIdentityInput2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateIdentityInput(ctx, v)
 	return &res, err
+}
+
+func (ec *executionContext) marshalOGame2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx context.Context, sel ast.SelectionSet, v models.Game) graphql.Marshaler {
+	return ec._Game(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOGame2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx context.Context, sel ast.SelectionSet, v *models.Game) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Game(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2string(ctx context.Context, v interface{}) (string, error) {
