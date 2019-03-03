@@ -1,6 +1,9 @@
 build:
 	go build -o tengen .
 
+gen:
+	go run scripts/gqlgen.go generate
+
 test:
 	go test ./...
 

@@ -52,6 +52,7 @@ func (p *AuthProvider) SignJWT(identity models.Identity) (string, error) {
 	return ss, nil
 }
 
+// TODO(eac): Figure out how to use dbx structs for nested structures
 func (p *AuthProvider) CheckPasswordByEmail(email, password string) (*models.Identity, error) {
 	var passwordHash string
 	err := p.db.Select(&passwordHash, "SELECT passwordHash FROM identities WHERE email = ?", email)
@@ -68,7 +69,9 @@ func (p *AuthProvider) CheckPasswordByEmail(email, password string) (*models.Ide
 	}
 
 	var rv models.Identity
-	err = p.db.Select(&rv, "SELECT i.*, u.* FROM identities i JOIN users u USING (i.id, u.identityId) WHERE email = ?", email)
+	row := p.db.QueryRowx("SELECT i.id, i.email, u.id, u.name FROM identities i JOIN users u USING (i.id, u.identityId) WHERE email = ?", email)
+	err = row.Scan(&rv.Id, &rv.Email, &rv.User.Id, &rv.User.Name)
+
 	if err != nil {
 		return nil, err
 	}

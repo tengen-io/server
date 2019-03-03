@@ -11,9 +11,9 @@ import (
 )
 
 type NodeFields struct {
-	Id        string `json:"id"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id        string    `json:"id"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 type Identity struct {
@@ -157,12 +157,29 @@ func (g GameState) Value() (driver.Value, error) {
 
 type Game struct {
 	NodeFields
-	BoardSize int       `json:"boardSize",db:"board_size"`
+	BoardSize int       `json:"boardSize" db:"board_size"`
 	Type      GameType  `json:"type"`
 	State     GameState `json:"state"`
 }
 
 func (Game) IsNode() {}
+
+func (g *GameUserEdgeType) Scan(value interface{}) error {
+	val, ok := value.([]byte)
+	if !ok {
+		return errors.New("cannot scan non-[]byte as gameuseredgetype")
+	}
+
+	*g = GameUserEdgeType(string(val))
+	if !g.IsValid() {
+		return fmt.Errorf("%s is not a valid GameUserEdgeType", string(val))
+	}
+	return nil
+}
+
+func (g GameUserEdgeType) Value() (driver.Value, error) {
+	return g.String(), nil
+}
 
 func MarshalTimestamp(t time.Time) graphql.Marshaler {
 	return graphql.WriterFunc(func(w io.Writer) {

@@ -106,6 +106,7 @@ func makeSchema(identity *providers.IdentityProvider, user *providers.UserProvid
 			user:     user,
 			game:     game,
 		},
+		Directives: Directives(),
 	})
 }
 

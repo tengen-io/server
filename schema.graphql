@@ -1,4 +1,6 @@
 # Types
+directive @hasAuth on FIELD_DEFINITION
+
 scalar Timestamp
 
 enum GameType {
@@ -9,6 +11,10 @@ enum GameState {
     INVITATION
     IN_PROGRESS
     FINISHED
+}
+
+enum GameUserEdgeType {
+    OWNER
 }
 
 interface Node {
@@ -39,6 +45,13 @@ type Game implements Node {
     boardSize: Int!
     createdAt: Timestamp!
     updatedAt: Timestamp
+    users: [GameUserEdge]
+}
+
+# Relationships
+type GameUserEdge {
+    user: User!
+    type: GameUserEdgeType!
 }
 
 # Inputs
@@ -53,12 +66,14 @@ input CreateGameInvitationInput {
     boardSize: Int!
 }
 
+
 type Query {
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
+    game(id: ID): Game
+    games(ids: [ID!]): [Game]
 }
 
 type Mutation {
-    createIdentity(input: CreateIdentityInput): Identity
-    createGameInvitation(input: CreateGameInvitationInput): Game
+    createGameInvitation(input: CreateGameInvitationInput): Game @hasAuth
 }

@@ -37,6 +37,7 @@ func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *prov
 
 func (s *Server) Start() {
 	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
+	http.Handle("/register", s.RegistrationHandler())
 	http.Handle("/login", s.LoginHandler())
 	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/graphql"))
 

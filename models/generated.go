@@ -2,6 +2,12 @@
 
 package models
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Node interface {
 	IsNode()
 }
@@ -15,4 +21,48 @@ type CreateIdentityInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Name     string `json:"name"`
+}
+
+type GameUserEdge struct {
+	User User             `json:"user"`
+	Type GameUserEdgeType `json:"type"`
+}
+
+type GameUserEdgeType string
+
+const (
+	GameUserEdgeTypeOwner GameUserEdgeType = "OWNER"
+)
+
+var AllGameUserEdgeType = []GameUserEdgeType{
+	GameUserEdgeTypeOwner,
+}
+
+func (e GameUserEdgeType) IsValid() bool {
+	switch e {
+	case GameUserEdgeTypeOwner:
+		return true
+	}
+	return false
+}
+
+func (e GameUserEdgeType) String() string {
+	return string(e)
+}
+
+func (e *GameUserEdgeType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GameUserEdgeType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GameUserEdgeType", str)
+	}
+	return nil
+}
+
+func (e GameUserEdgeType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

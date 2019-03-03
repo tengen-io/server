@@ -16,6 +16,7 @@ func NewUserProvider(db *sqlx.DB) *UserProvider {
 	}
 }
 
+// TODO(eac): switch to sqlx get
 func (p *UserProvider) GetUserById(id string) (*models.User, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {

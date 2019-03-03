@@ -20,17 +20,17 @@ func (r *Resolver) Mutation() MutationResolver {
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
 }
+func (r *Resolver) Game() GameResolver {
+	return &gameResolver{r}
+}
+
+type gameResolver struct{ *Resolver }
+
+func (r *gameResolver) Users(ctx context.Context, obj *models.Game) ([]*models.GameUserEdge, error) {
+	panic("not implemented yet")
+}
 
 type mutationResolver struct{ *Resolver }
-
-func (r *mutationResolver) CreateIdentity(ctx context.Context, input *models.CreateIdentityInput) (*models.Identity, error) {
-	rv, err := r.identity.CreateIdentity(*input)
-	if err != nil {
-		return nil, err
-	}
-
-	return rv, nil
-}
 
 func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.Game, error) {
 	rv, err := r.game.CreateInvitation(*input)
@@ -57,5 +57,22 @@ func (r *queryResolver) User(ctx context.Context, id *string, name *string) (*mo
 }
 
 func (r *queryResolver) Users(ctx context.Context, ids []string, names []string) ([]*models.User, error) {
+	panic("not implemented")
+}
+
+func (r *queryResolver) Game(ctx context.Context, id *string) (*models.Game, error) {
+	if id != nil {
+		game, err := r.game.GetGameById(*id)
+		if err != nil {
+			return nil, err
+		}
+
+		return game, nil
+	}
+
+	panic("not implemented")
+}
+
+func (r *queryResolver) Games(ctx context.Context, ids []string) ([]*models.Game, error) {
 	panic("not implemented")
 }
