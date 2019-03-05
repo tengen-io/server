@@ -4,17 +4,20 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/test"
 	"testing"
 	"time"
 )
 
 func TestAuth_SignAndVerifyJWT(t *testing.T) {
+	db := test.MakeDb()
 	duration, _ := time.ParseDuration("1 week")
-	auth := NewAuthProvider([]byte("supersecret"), duration)
+	auth := NewAuthProvider(db, []byte("supersecret"), duration)
 
-	user := models.User{
-		Id:       1,
-		Username: "test",
+	user := models.Identity{
+		NodeFields: models.NodeFields {
+			Id: "1",
+		},
 		Email:    "test@test.com",
 	}
 
@@ -31,8 +34,9 @@ func TestAuth_SignAndVerifyJWT(t *testing.T) {
 }
 
 func TestAuth_ValidateInvalidJWT(t *testing.T) {
+	db := test.MakeDb()
 	duration, _ := time.ParseDuration("1 week")
-	auth := NewAuthProvider([]byte("supersecret"), duration)
+	auth := NewAuthProvider(db, []byte("supersecret"), duration)
 
 	_, err := auth.ValidateJWT("lol this wont work")
 	assert.Error(t, err)

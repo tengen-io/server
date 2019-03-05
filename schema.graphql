@@ -56,7 +56,7 @@ type GameUserEdge {
 
 # Inputs
 input CreateIdentityInput {
-    email: String!
+    email: String
     password: String!
     name: String!
 }
@@ -66,12 +66,11 @@ input CreateGameInvitationInput {
     boardSize: Int!
 }
 
-
 type Query {
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
     game(id: ID): Game
-    games(ids: [ID!]): [Game]
+    games(ids: [ID!], states: [GameState!]): [Game]
 }
 
 type Mutation {

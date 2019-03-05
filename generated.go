@@ -77,7 +77,7 @@ type ComplexityRoot struct {
 		User  func(childComplexity int, id *string, name *string) int
 		Users func(childComplexity int, ids []string, names []string) int
 		Game  func(childComplexity int, id *string) int
-		Games func(childComplexity int, ids []string) int
+		Games func(childComplexity int, ids []string, states []models.GameState) int
 	}
 
 	User struct {
@@ -98,7 +98,7 @@ type QueryResolver interface {
 	User(ctx context.Context, id *string, name *string) (*models.User, error)
 	Users(ctx context.Context, ids []string, names []string) ([]*models.User, error)
 	Game(ctx context.Context, id *string) (*models.Game, error)
-	Games(ctx context.Context, ids []string) ([]*models.Game, error)
+	Games(ctx context.Context, ids []string, states []models.GameState) ([]*models.Game, error)
 }
 
 type executableSchema struct {
@@ -272,7 +272,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Games(childComplexity, args["ids"].([]string)), true
+		return e.complexity.Query.Games(childComplexity, args["ids"].([]string), args["states"].([]models.GameState)), true
 
 	case "User.Id":
 		if e.complexity.User.Id == nil {
@@ -449,7 +449,7 @@ type GameUserEdge {
 
 # Inputs
 input CreateIdentityInput {
-    email: String!
+    email: String
     password: String!
     name: String!
 }
@@ -459,12 +459,11 @@ input CreateGameInvitationInput {
     boardSize: Int!
 }
 
-
 type Query {
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
     game(id: ID): Game
-    games(ids: [ID!]): [Game]
+    games(ids: [ID!], states: [GameState!]): [Game]
 }
 
 type Mutation {
@@ -530,6 +529,14 @@ func (ec *executionContext) field_Query_games_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["ids"] = arg0
+	var arg1 []models.GameState
+	if tmp, ok := rawArgs["states"]; ok {
+		arg1, err = ec.unmarshalOGameState2ᚕgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameState(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["states"] = arg1
 	return args, nil
 }
 
@@ -1103,7 +1110,7 @@ func (ec *executionContext) _Query_games(ctx context.Context, field graphql.Coll
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Games(rctx, args["ids"].([]string))
+		return ec.resolvers.Query().Games(rctx, args["ids"].([]string), args["states"].([]models.GameState))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -2099,7 +2106,7 @@ func (ec *executionContext) unmarshalInputCreateIdentityInput(ctx context.Contex
 		switch k {
 		case "email":
 			var err error
-			it.Email, err = ec.unmarshalNString2string(ctx, v)
+			it.Email, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3044,6 +3051,63 @@ func (ec *executionContext) marshalOGame2ᚖgithubᚗcomᚋtengenᚑioᚋserver�
 		return graphql.Null
 	}
 	return ec._Game(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGameState2ᚕgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameState(ctx context.Context, v interface{}) ([]models.GameState, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]models.GameState, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalNGameState2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameState(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOGameState2ᚕgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameState(ctx context.Context, sel ast.SelectionSet, v []models.GameState) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNGameState2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameState(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOGameUserEdge2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx context.Context, sel ast.SelectionSet, v models.GameUserEdge) graphql.Marshaler {

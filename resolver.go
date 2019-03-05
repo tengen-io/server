@@ -73,6 +73,6 @@ func (r *queryResolver) Game(ctx context.Context, id *string) (*models.Game, err
 	panic("not implemented")
 }
 
-func (r *queryResolver) Games(ctx context.Context, ids []string) ([]*models.Game, error) {
+func (r *queryResolver) Games(ctx context.Context, ids []string, states []models.GameState) ([]*models.Game, error) {
 	panic("not implemented")
 }

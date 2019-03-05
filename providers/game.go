@@ -60,7 +60,7 @@ func (p *GameProvider) GetGameById(id string) (*models.Game, error) {
 	return &game, nil
 }
 
-func (p *GameProvider) GetUsers(id string) ([]*models.GameUserEdge, error) {
+func (p *GameProvider) GetUsersForGame(id string) ([]*models.GameUserEdge, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
@@ -70,6 +70,62 @@ func (p *GameProvider) GetUsers(id string) ([]*models.GameUserEdge, error) {
 	err = p.db.Select(&rv, "SELECT * FROM game_user WHERE game_id = $1", idInt)
 	if err != nil {
 		return nil, err
+	}
+
+	return rv, nil
+}
+
+func (p *GameProvider) GetGamesByIdAndState(ids []string, states []models.GameState) ([]models.Game, error) {
+	query := "SELECT * FROM games WHERE "
+	args := make([]interface{}, 0)
+
+	if len(ids) > 0 {
+		idInts := make([]int, len(ids))
+		for i, id := range ids {
+			idInt, err := strconv.Atoi(id)
+			if err != nil {
+				return nil, err
+			}
+			idInts[i] = idInt
+		}
+
+		fragment, fragArgs, err := sqlx.In("id IN (?)", idInts)
+		if err != nil {
+			return nil, err
+		}
+
+		query += fragment
+		args = append(args, fragArgs...)
+	}
+
+	if len(states) > 0 {
+		query += "id IN (?)"
+		fragment, fragArgs, err := sqlx.In("state IN (?)", states)
+		if err != nil {
+			return nil, err
+		}
+		if len(ids) > 0 {
+			query += " AND"
+		}
+		query += fragment
+		args = append(args, fragArgs...)
+	}
+
+	query = p.db.Rebind(query)
+	rows, err := p.db.Queryx(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	rv := make([]models.Game, 0)
+	for rows.Next() {
+		var i models.Game
+		err := rows.StructScan(&i)
+		if err != nil {
+			return nil, err
+		}
+		rv = append(rv, i)
 	}
 
 	return rv, nil

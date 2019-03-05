@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/jmoiron/sqlx"
+	"github.com/tengen-io/server/db"
 	"log"
 	"os"
 	"strconv"
@@ -63,7 +64,7 @@ func makeDb() *sqlx.DB {
 		log.Fatal("Cold not parse TENGEN_DB_PORT")
 	}
 
-	config := &PostgresDBConfig{
+	config := &db.PostgresDBConfig{
 		Host:     os.Getenv("TENGEN_DB_HOST"),
 		Port:     port,
 		User:     os.Getenv("TENGEN_DB_USER"),
@@ -71,7 +72,7 @@ func makeDb() *sqlx.DB {
 		Password: os.Getenv("TENGEN_DB_PASSWORD"),
 	}
 
-	db, err := NewPostgresDb(config)
+	db, err := db.NewPostgresDb(config)
 	if err != nil {
 		log.Fatal("Unable to connect to DB.", err)
 	}
