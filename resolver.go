@@ -4,15 +4,14 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/tengen-io/server/models"
-	"github.com/tengen-io/server/providers"
 )
 
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 type Resolver struct {
-	game     *providers.GameProvider
-	identity *providers.IdentityProvider
-	user     *providers.UserProvider
+	game     *GameProvider
+	identity *IdentityProvider
+	user     *UserProvider
 }
 
 func (r *Resolver) Mutation() MutationResolver {

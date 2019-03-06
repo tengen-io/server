@@ -11,22 +11,20 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/tengen-io/server/providers"
-	"github.com/tengen-io/server/server"
 )
 
-type ServerConfig struct {
+type envConfig struct {
 	Environment string
 }
 
-func NewServerConfig() ServerConfig {
+func newServerConfig() envConfig {
 	environment := os.Getenv("GO_ENV")
 
 	if environment == "" {
 		environment = "development"
 	}
 
-	return ServerConfig{
+	return envConfig {
 		Environment: environment,
 	}
 }
@@ -41,21 +39,21 @@ func getSigningKey() []byte {
 	return decoded
 }
 
-func makeServer(schema graphql.ExecutableSchema, auth *providers.AuthProvider, identity *providers.IdentityProvider) *server.Server {
-	config := NewServerConfig()
+func makeServer(schema graphql.ExecutableSchema, auth *AuthProvider, identity *IdentityProvider) *Server {
+	config := newServerConfig()
 	tengenPort := os.Getenv("TENGEN_PORT")
 	port, err := strconv.Atoi(tengenPort)
 	if err != nil {
 		log.Fatalf("Could not parse TENGEN_PORT err: %s", err)
 	}
 
-	serverConfig := &server.ServerConfig{
+	serverConfig := &ServerConfig{
 		Host:            os.Getenv("TENGEN_HOST"),
 		Port:            port,
 		GraphiQLEnabled: config.Environment == "development",
 	}
 
-	return server.NewServer(serverConfig, schema, auth, identity)
+	return NewServer(serverConfig, schema, auth, identity)
 }
 
 func makeDb() *sqlx.DB {
@@ -80,7 +78,7 @@ func makeDb() *sqlx.DB {
 	return db
 }
 
-func makeAuth(db *sqlx.DB) *providers.AuthProvider {
+func makeAuth(db *sqlx.DB) *AuthProvider {
 	day, err := time.ParseDuration("24h")
 	if err != nil {
 		log.Fatal("could not parse auth key duration", err)
@@ -88,19 +86,19 @@ func makeAuth(db *sqlx.DB) *providers.AuthProvider {
 
 	keyDuration := day * 7
 
-	return providers.NewAuthProvider(db, getSigningKey(), keyDuration)
+	return NewAuthProvider(db, getSigningKey(), keyDuration)
 }
 
-func makeIdentity(db *sqlx.DB) *providers.IdentityProvider {
+func makeIdentity(db *sqlx.DB) *IdentityProvider {
 	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
 	if err != nil {
 		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
 	}
 
-	return providers.NewIdentityProvider(db, bcryptCost)
+	return NewIdentityProvider(db, bcryptCost)
 }
 
-func makeSchema(identity *providers.IdentityProvider, user *providers.UserProvider, game *providers.GameProvider) graphql.ExecutableSchema {
+func makeSchema(identity *IdentityProvider, user *UserProvider, game *GameProvider) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			identity: identity,
@@ -123,8 +121,8 @@ func main() {
 	db := makeDb()
 	auth := makeAuth(db)
 	identity := makeIdentity(db)
-	user := providers.NewUserProvider(db)
-	game := providers.NewGameProvider(db)
+	user := NewUserProvider(db)
+	game := NewGameProvider(db)
 	schema := makeSchema(identity, user, game)
 
 	s := makeServer(schema, auth, identity)

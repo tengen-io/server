@@ -1,18 +1,62 @@
-package server
+package main
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/99designs/gqlgen/handler"
 	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
+type ServerConfig struct {
+	Host            string
+	Port            int
+	GraphiQLEnabled bool
+}
+
+type Server struct {
+	config           *ServerConfig
+	executableSchema graphql.ExecutableSchema
+	auth             *AuthProvider
+	identity         *IdentityProvider
+}
+
+func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *AuthProvider, identity *IdentityProvider) *Server {
+	return &Server{
+		config,
+		schema,
+		auth,
+		identity,
+	}
+}
+
+func (s *Server) Start() {
+	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
+	http.Handle("/register", s.RegistrationHandler())
+	http.Handle("/login", s.LoginHandler())
+	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/graphql"))
+
+	log.Printf("Listening on http://%s:%d", s.config.Host, s.config.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Host, s.config.Port), nil))
+}
+
+func enableCorsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (s *Server) LoginHandler() http.Handler {
 	type credentials struct {
-		Email string
+		Email    string
 		Password string
 	}
 
