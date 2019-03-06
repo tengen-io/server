@@ -1,6 +1,9 @@
 package test
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/file"
@@ -17,6 +20,8 @@ import (
 	"time"
 )
 
+var testDb string
+
 const (
 	Password = "hunter2"
 )
@@ -28,11 +33,16 @@ func MakeDb() *sqlx.DB {
 		log.Fatal("Could not parse TENGEN_DB_PORT: ", err)
 	}
 
+	dbName := os.Getenv("TENGEN_DB_DATABASE")
+	if testDb != "" {
+		dbName += "_" + testDb
+	}
+
 	config := &db.PostgresDBConfig{
 		Host:     os.Getenv("TENGEN_DB_HOST"),
 		Port:     port,
 		User:     os.Getenv("TENGEN_DB_USER"),
-		Database: os.Getenv("TENGEN_DB_DATABASE"),
+		Database: dbName,
 		Password: os.Getenv("TENGEN_DB_PASSWORD"),
 	}
 
@@ -45,14 +55,24 @@ func MakeDb() *sqlx.DB {
 }
 
 func Main(m *testing.M) {
-	db := MakeDb()
-	SetupFixtures(db)
+	fmt.Println("setting up")
+	SetupFixtures()
+	defer TeardownFixtures()
 	rv := m.Run()
-	TeardownFixtures(db)
+	fmt.Println("tearing down")
 	os.Exit(rv)
 }
 
-func SetupFixtures(db *sqlx.DB) {
+// TODO(eac) this whole thing is horrible
+func SetupFixtures() {
+	var bytes [6]byte
+	rand.Read(bytes[:])
+	suffix := base64.StdEncoding.EncodeToString(bytes[:])
+	db := MakeDb()
+	dbName := os.Getenv("TENGEN_DB_DATABASE") + "_" + suffix
+	db.MustExec("CREATE DATABASE "+dbName)
+	testDb = dbName
+	db = MakeDb()
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		panic(err)
@@ -65,14 +85,15 @@ func SetupFixtures(db *sqlx.DB) {
 	if err != nil {
 		panic(err)
 	}
-	m.Down()
-	m.Up()
-
-	fixtures(db)
-
+	err = m.Up()
+	if err != nil {
+		panic(err)
+	}
+	fixtures()
 }
 
-func TeardownFixtures(db *sqlx.DB) {
+func TeardownFixtures() {
+	db := MakeDb()
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		panic(err)
@@ -84,7 +105,8 @@ func TeardownFixtures(db *sqlx.DB) {
 	m.Down()
 }
 
-func fixtures(db *sqlx.DB) {
+func fixtures() {
+	db := MakeDb()
 	hash, _ := bcrypt.GenerateFromPassword([]byte(Password), 4)
 	now := pq.FormatTimestamp(time.Now().UTC())
 	res := db.QueryRow("INSERT INTO identities (email, password_hash, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id", "test1@tengen.io", hash, now, now)
