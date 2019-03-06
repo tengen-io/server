@@ -24,7 +24,7 @@ func newServerConfig() envConfig {
 		environment = "development"
 	}
 
-	return envConfig {
+	return envConfig{
 		Environment: environment,
 	}
 }

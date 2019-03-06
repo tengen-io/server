@@ -90,7 +90,6 @@ func teardownFixtures() {
 	m.Down()
 }
 
-
 func TestMain(m *testing.M) {
 	godotenv.Load(".env.test")
 	setupFixtures()
