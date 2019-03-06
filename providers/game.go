@@ -75,41 +75,23 @@ func (p *GameProvider) GetUsersForGame(id string) ([]*models.GameUserEdge, error
 	return rv, nil
 }
 
-func (p *GameProvider) GetGamesByIdAndState(ids []string, states []models.GameState) ([]models.Game, error) {
-	query := "SELECT * FROM games WHERE "
+func (p *GameProvider) GetGamesByIds(ids []string) ([]*models.Game, error) {
+	idInts := make([]int, len(ids))
+	for i, id := range ids {
+		idInt, err := strconv.Atoi(id)
+		if err != nil {
+			return nil, err
+		}
+		idInts[i] = idInt
+	}
+
+	query, fragArgs, err := sqlx.In("SELECT * FROM games WHERE id IN (?)", idInts)
+	if err != nil {
+		return nil, err
+	}
+
 	args := make([]interface{}, 0)
-
-	if len(ids) > 0 {
-		idInts := make([]int, len(ids))
-		for i, id := range ids {
-			idInt, err := strconv.Atoi(id)
-			if err != nil {
-				return nil, err
-			}
-			idInts[i] = idInt
-		}
-
-		fragment, fragArgs, err := sqlx.In("id IN (?)", idInts)
-		if err != nil {
-			return nil, err
-		}
-
-		query += fragment
-		args = append(args, fragArgs...)
-	}
-
-	if len(states) > 0 {
-		query += "id IN (?)"
-		fragment, fragArgs, err := sqlx.In("state IN (?)", states)
-		if err != nil {
-			return nil, err
-		}
-		if len(ids) > 0 {
-			query += " AND"
-		}
-		query += fragment
-		args = append(args, fragArgs...)
-	}
+	args = append(args, fragArgs...)
 
 	query = p.db.Rebind(query)
 	rows, err := p.db.Queryx(query, args...)
@@ -118,14 +100,43 @@ func (p *GameProvider) GetGamesByIdAndState(ids []string, states []models.GameSt
 	}
 	defer rows.Close()
 
-	rv := make([]models.Game, 0)
+	rv := make([]*models.Game, 0)
 	for rows.Next() {
 		var i models.Game
 		err := rows.StructScan(&i)
 		if err != nil {
 			return nil, err
 		}
-		rv = append(rv, i)
+		rv = append(rv, &i)
+	}
+
+	return rv, nil
+}
+
+func (p *GameProvider) GetGamesByState(states []models.GameState) ([]*models.Game, error) {
+	query, fragArgs, err := sqlx.In("SELECT * FROM games WHERE state IN (?)", states)
+	if err != nil {
+		return nil, err
+	}
+
+	args := make([]interface{}, 0)
+	args = append(args, fragArgs...)
+
+	query = p.db.Rebind(query)
+	rows, err := p.db.Queryx(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	rv := make([]*models.Game, 0)
+	for rows.Next() {
+		var i models.Game
+		err := rows.StructScan(&i)
+		if err != nil {
+			return nil, err
+		}
+		rv = append(rv, &i)
 	}
 
 	return rv, nil

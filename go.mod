@@ -53,6 +53,7 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/mongodb/mongo-go-driver v0.3.0 // indirect
 	github.com/openzipkin/zipkin-go v0.1.5 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
 	github.com/prometheus/procfs v0.0.0-20190227231451-bbced9601137 // indirect
 	github.com/rogpeppe/fastuuid v1.0.0 // indirect

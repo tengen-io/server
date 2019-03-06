@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"github.com/tengen-io/server/models"
 	"github.com/tengen-io/server/providers"
 )
@@ -74,5 +75,17 @@ func (r *queryResolver) Game(ctx context.Context, id *string) (*models.Game, err
 }
 
 func (r *queryResolver) Games(ctx context.Context, ids []string, states []models.GameState) ([]*models.Game, error) {
+	if len(ids) > 0 && len(states) > 0 {
+		return nil, errors.New("arguments are mutually exclusive")
+	}
+
+	if len(ids) > 0 {
+		return r.game.GetGamesByIds(ids)
+	}
+
+	if len(states) > 0 {
+		return r.game.GetGamesByState(states)
+	}
+
 	panic("not implemented")
 }

@@ -91,4 +91,7 @@ func fixtures(db *sqlx.DB) {
 	var id int64
 	res.Scan(&id)
 	db.MustExec("INSERT INTO users (identity_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4)", id, "Test User 1", now, now)
+
+	db.MustExec("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", "STANDARD", "INVITATION", 19, now, now)
+	db.MustExec("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", "STANDARD", "IN_PROGRESS", 19, now, now)
 }

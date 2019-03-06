@@ -30,7 +30,7 @@ func TestAuth_SignAndVerifyJWT(t *testing.T) {
 	claims, ok := token.Claims.(*jwt.StandardClaims)
 	assert.True(t, ok)
 	assert.Equal(t, claims.Id, "1")
-	assert.Equal(t, claims.Issuer, "tengen")
+	assert.Equal(t, claims.Issuer, "tengen.io")
 }
 
 func TestAuth_ValidateInvalidJWT(t *testing.T) {
@@ -40,4 +40,8 @@ func TestAuth_ValidateInvalidJWT(t *testing.T) {
 
 	_, err := auth.ValidateJWT("lol this wont work")
 	assert.Error(t, err)
+}
+
+func TestMain(m *testing.M) {
+	test.Main(m)
 }
