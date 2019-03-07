@@ -4,7 +4,7 @@ build:
 	go build -o tengen .
 
 gen:
-	go run scripts/gqlgen.go generate
+	go run github.com/99designs/gqlgen generate
 
 test:
 	go test ./...
