@@ -2,7 +2,7 @@ CREATE TYPE game_type AS ENUM ('STANDARD');
 
 CREATE TYPE game_state AS ENUM ('INVITATION', 'IN_PROGRESS', 'FINISHED' );
 
-CREATE TYPE game_user_type AS ENUM ('OWNER');
+CREATE TYPE game_user_type AS ENUM ('OWNER', 'PLAYER');
 
 CREATE TABLE games (
     id serial PRIMARY KEY,

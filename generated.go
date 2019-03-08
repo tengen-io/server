@@ -69,8 +69,13 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 	}
 
+	JoinGamePayload struct {
+		Game func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateGameInvitation func(childComplexity int, input *models.CreateGameInvitationInput) int
+		JoinGame             func(childComplexity int, gameID string) int
 	}
 
 	Query struct {
@@ -93,6 +98,7 @@ type GameResolver interface {
 }
 type MutationResolver interface {
 	CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.Game, error)
+	JoinGame(ctx context.Context, gameID string) (*models.JoinGamePayload, error)
 }
 type QueryResolver interface {
 	User(ctx context.Context, id *string, name *string) (*models.User, error)
@@ -214,6 +220,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Identity.UpdatedAt(childComplexity), true
 
+	case "JoinGamePayload.Game":
+		if e.complexity.JoinGamePayload.Game == nil {
+			break
+		}
+
+		return e.complexity.JoinGamePayload.Game(childComplexity), true
+
 	case "Mutation.CreateGameInvitation":
 		if e.complexity.Mutation.CreateGameInvitation == nil {
 			break
@@ -225,6 +238,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateGameInvitation(childComplexity, args["input"].(*models.CreateGameInvitationInput)), true
+
+	case "Mutation.JoinGame":
+		if e.complexity.Mutation.JoinGame == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_joinGame_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.JoinGame(childComplexity, args["gameId"].(string)), true
 
 	case "Query.User":
 		if e.complexity.Query.User == nil {
@@ -408,6 +433,7 @@ enum GameState {
 
 enum GameUserEdgeType {
     OWNER
+    PLAYER
 }
 
 interface Node {
@@ -459,6 +485,10 @@ input CreateGameInvitationInput {
     boardSize: Int!
 }
 
+type JoinGamePayload {
+    game: Game
+}
+
 type Query {
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
@@ -468,6 +498,7 @@ type Query {
 
 type Mutation {
     createGameInvitation(input: CreateGameInvitationInput): Game @hasAuth
+    joinGame(gameId: ID!): JoinGamePayload @hasAuth
 }
 `},
 )
@@ -487,6 +518,20 @@ func (ec *executionContext) field_Mutation_createGameInvitation_args(ctx context
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_joinGame_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["gameId"]; ok {
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gameId"] = arg0
 	return args, nil
 }
 
@@ -971,6 +1016,29 @@ func (ec *executionContext) _Identity_updatedAt(ctx context.Context, field graph
 	return ec.marshalOTimestamp2timeᚐTime(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _JoinGamePayload_game(ctx context.Context, field graphql.CollectedField, obj *models.JoinGamePayload) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "JoinGamePayload",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Game, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Game)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOGame2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_createGameInvitation(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -999,6 +1067,36 @@ func (ec *executionContext) _Mutation_createGameInvitation(ctx context.Context, 
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOGame2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_joinGame(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Mutation",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_joinGame_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().JoinGame(rctx, args["gameId"].(string))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.JoinGamePayload)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOJoinGamePayload2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐJoinGamePayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -2293,6 +2391,30 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var joinGamePayloadImplementors = []string{"JoinGamePayload"}
+
+func (ec *executionContext) _JoinGamePayload(ctx context.Context, sel ast.SelectionSet, obj *models.JoinGamePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, joinGamePayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JoinGamePayload")
+		case "game":
+			out.Values[i] = ec._JoinGamePayload_game(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2310,6 +2432,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "createGameInvitation":
 			out.Values[i] = ec._Mutation_createGameInvitation(ctx, field)
+		case "joinGame":
+			out.Values[i] = ec._Mutation_joinGame(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3208,6 +3332,17 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 	return ec.marshalOID2string(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOJoinGamePayload2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐJoinGamePayload(ctx context.Context, sel ast.SelectionSet, v models.JoinGamePayload) graphql.Marshaler {
+	return ec._JoinGamePayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOJoinGamePayload2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐJoinGamePayload(ctx context.Context, sel ast.SelectionSet, v *models.JoinGamePayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._JoinGamePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

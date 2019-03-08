@@ -67,11 +67,28 @@ func TestGameProvider_GetGamesByState(t *testing.T) {
 	assert.True(t, len(res) > 1)
 }
 
+func TestGameProvider_CreateGameUser(t *testing.T) {
+	db := MakeTestDb()
+	p := NewGameProvider(db)
+
+	res, err := p.CreateGameUser("1", "1", models.GameUserEdgeTypePlayer)
+	assert.NoError(t, err)
+	assert.Equal(t, "1", res.Game.Id)
+}
+
 func TestGameProvider_CreateInvitation(t *testing.T) {
 	db := MakeTestDb()
 	p := NewGameProvider(db)
 
-	res, err := p.CreateInvitation(models.CreateGameInvitationInput{
+	identity := models.Identity{
+		User: models.User{
+			NodeFields: models.NodeFields{
+				Id: "1",
+			},
+		},
+	}
+
+	res, err := p.CreateInvitation(identity, models.CreateGameInvitationInput{
 		BoardSize: 19,
 		Type:      models.Standard,
 	})

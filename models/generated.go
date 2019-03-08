@@ -28,19 +28,25 @@ type GameUserEdge struct {
 	Type GameUserEdgeType `json:"type"`
 }
 
+type JoinGamePayload struct {
+	Game *Game `json:"game"`
+}
+
 type GameUserEdgeType string
 
 const (
-	GameUserEdgeTypeOwner GameUserEdgeType = "OWNER"
+	GameUserEdgeTypeOwner  GameUserEdgeType = "OWNER"
+	GameUserEdgeTypePlayer GameUserEdgeType = "PLAYER"
 )
 
 var AllGameUserEdgeType = []GameUserEdgeType{
 	GameUserEdgeTypeOwner,
+	GameUserEdgeTypePlayer,
 }
 
 func (e GameUserEdgeType) IsValid() bool {
 	switch e {
-	case GameUserEdgeTypeOwner:
+	case GameUserEdgeTypeOwner, GameUserEdgeTypePlayer:
 		return true
 	}
 	return false

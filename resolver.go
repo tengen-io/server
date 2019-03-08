@@ -27,13 +27,28 @@ func (r *Resolver) Game() GameResolver {
 type gameResolver struct{ *Resolver }
 
 func (r *gameResolver) Users(ctx context.Context, obj *models.Game) ([]*models.GameUserEdge, error) {
-	panic("not implemented yet")
+	return r.game.GetUsersForGame(obj.Id)
 }
 
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.Game, error) {
-	rv, err := r.game.CreateInvitation(*input)
+	identity, _ := ctx.Value("currentUser").(models.Identity)
+	rv, err := r.game.CreateInvitation(identity, *input)
+	if err != nil {
+		return nil, err
+	}
+
+	return rv, nil
+}
+
+func (r *mutationResolver) JoinGame(ctx context.Context, gameId string) (*models.JoinGamePayload, error) {
+	identity, ok:= ctx.Value("currentUser").(models.Identity)
+	if !ok {
+		return nil, errors.New("invalid user")
+	}
+
+	rv, err := r.game.CreateGameUser(gameId, identity.Id, models.GameUserEdgeTypePlayer)
 	if err != nil {
 		return nil, err
 	}

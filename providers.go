@@ -91,10 +91,9 @@ func NewGameProvider(db *sqlx.DB) *GameProvider {
 	}
 }
 
-// TODO(eac): Add user from auth
 // TODO(eac): Add validation
 // TODO(eac): Switch to sqlx binding
-func (p *GameProvider) CreateInvitation(input models.CreateGameInvitationInput) (*models.Game, error) {
+func (p *GameProvider) CreateInvitation(identity models.Identity, input models.CreateGameInvitationInput) (*models.Game, error) {
 	tx, err := p.db.Beginx()
 	if err != nil {
 		return nil, err
@@ -110,12 +109,50 @@ func (p *GameProvider) CreateInvitation(input models.CreateGameInvitationInput) 
 		return nil, err
 	}
 
+	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", rv.Id, identity.User.Id, models.GameUserEdgeTypeOwner, ts, ts)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
 
 	return &rv, nil
+}
+
+// TODO(eac): Validation? here or in the resolver
+func (p *GameProvider) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.JoinGamePayload, error) {
+	tx, err := p.db.Beginx()
+	if err != nil {
+		return nil, err
+	}
+
+	var rv models.Game
+	ts := pq.FormatTimestamp(time.Now().UTC())
+	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", gameId, userId, edgeType, ts, ts)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	game := tx.QueryRow("SELECT id, type, state FROM games WHERE id = $1", gameId)
+	err = game.Scan(&rv.Id, &rv.Type, &rv.State)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.JoinGamePayload{
+		Game: &rv,
+	}, nil
 }
 
 func (p *GameProvider) GetGameById(id string) (*models.Game, error) {

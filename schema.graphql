@@ -15,6 +15,7 @@ enum GameState {
 
 enum GameUserEdgeType {
     OWNER
+    PLAYER
 }
 
 interface Node {
@@ -66,6 +67,10 @@ input CreateGameInvitationInput {
     boardSize: Int!
 }
 
+type JoinGamePayload {
+    game: Game
+}
+
 type Query {
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
@@ -75,4 +80,5 @@ type Query {
 
 type Mutation {
     createGameInvitation(input: CreateGameInvitationInput): Game @hasAuth
+    joinGame(gameId: ID!): JoinGamePayload @hasAuth
 }
