@@ -46,6 +46,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	CreateGameInvitationPayload struct {
+		Game func(childComplexity int) int
+	}
+
 	Game struct {
 		Id        func(childComplexity int) int
 		Type      func(childComplexity int) int
@@ -97,7 +101,7 @@ type GameResolver interface {
 	Users(ctx context.Context, obj *models.Game) ([]*models.GameUserEdge, error)
 }
 type MutationResolver interface {
-	CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.Game, error)
+	CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.CreateGameInvitationPayload, error)
 	JoinGame(ctx context.Context, gameID string) (*models.JoinGamePayload, error)
 }
 type QueryResolver interface {
@@ -121,6 +125,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "CreateGameInvitationPayload.Game":
+		if e.complexity.CreateGameInvitationPayload.Game == nil {
+			break
+		}
+
+		return e.complexity.CreateGameInvitationPayload.Game(childComplexity), true
 
 	case "Game.Id":
 		if e.complexity.Game.Id == nil {
@@ -485,6 +496,10 @@ input CreateGameInvitationInput {
     boardSize: Int!
 }
 
+type CreateGameInvitationPayload {
+    game: Game
+}
+
 type JoinGamePayload {
     game: Game
 }
@@ -497,7 +512,7 @@ type Query {
 }
 
 type Mutation {
-    createGameInvitation(input: CreateGameInvitationInput): Game @hasAuth
+    createGameInvitation(input: CreateGameInvitationInput): CreateGameInvitationPayload @hasAuth
     joinGame(gameId: ID!): JoinGamePayload @hasAuth
 }
 `},
@@ -660,6 +675,29 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ***************************** args.gotpl *****************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _CreateGameInvitationPayload_game(ctx context.Context, field graphql.CollectedField, obj *models.CreateGameInvitationPayload) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "CreateGameInvitationPayload",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Game, nil
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Game)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOGame2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Game_id(ctx context.Context, field graphql.CollectedField, obj *models.Game) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
@@ -1063,10 +1101,10 @@ func (ec *executionContext) _Mutation_createGameInvitation(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*models.Game)
+	res := resTmp.(*models.CreateGameInvitationPayload)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOGame2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx, field.Selections, res)
+	return ec.marshalOCreateGameInvitationPayload2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateGameInvitationPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_joinGame(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -2255,6 +2293,30 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 
 // region    **************************** object.gotpl ****************************
 
+var createGameInvitationPayloadImplementors = []string{"CreateGameInvitationPayload"}
+
+func (ec *executionContext) _CreateGameInvitationPayload(ctx context.Context, sel ast.SelectionSet, obj *models.CreateGameInvitationPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, createGameInvitationPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	invalid := false
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateGameInvitationPayload")
+		case "game":
+			out.Values[i] = ec._CreateGameInvitationPayload_game(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
 var gameImplementors = []string{"Game", "Node"}
 
 func (ec *executionContext) _Game(ctx context.Context, sel ast.SelectionSet, obj *models.Game) graphql.Marshaler {
@@ -3127,6 +3189,17 @@ func (ec *executionContext) unmarshalOCreateGameInvitationInput2ᚖgithubᚗcom�
 	}
 	res, err := ec.unmarshalOCreateGameInvitationInput2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateGameInvitationInput(ctx, v)
 	return &res, err
+}
+
+func (ec *executionContext) marshalOCreateGameInvitationPayload2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateGameInvitationPayload(ctx context.Context, sel ast.SelectionSet, v models.CreateGameInvitationPayload) graphql.Marshaler {
+	return ec._CreateGameInvitationPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOCreateGameInvitationPayload2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐCreateGameInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *models.CreateGameInvitationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CreateGameInvitationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOGame2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx context.Context, sel ast.SelectionSet, v models.Game) graphql.Marshaler {

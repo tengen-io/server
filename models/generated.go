@@ -17,6 +17,10 @@ type CreateGameInvitationInput struct {
 	BoardSize int      `json:"boardSize"`
 }
 
+type CreateGameInvitationPayload struct {
+	Game *Game `json:"game"`
+}
+
 type CreateIdentityInput struct {
 	Email    *string `json:"email"`
 	Password string  `json:"password"`

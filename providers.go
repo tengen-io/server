@@ -93,7 +93,7 @@ func NewGameProvider(db *sqlx.DB) *GameProvider {
 
 // TODO(eac): Add validation
 // TODO(eac): Switch to sqlx binding
-func (p *GameProvider) CreateInvitation(identity models.Identity, input models.CreateGameInvitationInput) (*models.Game, error) {
+func (p *GameProvider) CreateGame(identity models.Identity, gameType models.GameType, boardSize int, gameState models.GameState) (*models.Game, error) {
 	tx, err := p.db.Beginx()
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (p *GameProvider) CreateInvitation(identity models.Identity, input models.C
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
 
-	game := tx.QueryRowx("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, type, state, board_size", input.Type, models.Invitation, input.BoardSize, ts, ts)
+	game := tx.QueryRowx("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, type, state, board_size", gameType, gameState, boardSize, ts, ts)
 	err = game.Scan(&rv.Id, &rv.Type, &rv.State, &rv.BoardSize)
 	if err != nil {
 		tx.Rollback()
@@ -124,7 +124,8 @@ func (p *GameProvider) CreateInvitation(identity models.Identity, input models.C
 }
 
 // TODO(eac): Validation? here or in the resolver
-func (p *GameProvider) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.JoinGamePayload, error) {
+// TODO(eac): maybe make this return a gameUser, and have the resolver get the game?
+func (p *GameProvider) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.Game, error) {
 	tx, err := p.db.Beginx()
 	if err != nil {
 		return nil, err
@@ -150,9 +151,7 @@ func (p *GameProvider) CreateGameUser(gameId string, userId string, edgeType mod
 		return nil, err
 	}
 
-	return &models.JoinGamePayload{
-		Game: &rv,
-	}, nil
+	return &rv, nil
 }
 
 func (p *GameProvider) GetGameById(id string) (*models.Game, error) {

@@ -32,28 +32,28 @@ func (r *gameResolver) Users(ctx context.Context, obj *models.Game) ([]*models.G
 
 type mutationResolver struct{ *Resolver }
 
-func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.Game, error) {
+func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.CreateGameInvitationPayload, error) {
 	identity, _ := ctx.Value("currentUser").(models.Identity)
-	rv, err := r.game.CreateInvitation(identity, *input)
+	game, err := r.game.CreateGame(identity, input.Type, input.BoardSize, models.Invitation)
 	if err != nil {
 		return nil, err
 	}
 
-	return rv, nil
+	return &models.CreateGameInvitationPayload{Game: game}, nil
 }
 
 func (r *mutationResolver) JoinGame(ctx context.Context, gameId string) (*models.JoinGamePayload, error) {
-	identity, ok:= ctx.Value("currentUser").(models.Identity)
+	identity, ok := ctx.Value("currentUser").(models.Identity)
 	if !ok {
 		return nil, errors.New("invalid user")
 	}
 
-	rv, err := r.game.CreateGameUser(gameId, identity.Id, models.GameUserEdgeTypePlayer)
+	game, err := r.game.CreateGameUser(gameId, identity.Id, models.GameUserEdgeTypePlayer)
 	if err != nil {
 		return nil, err
 	}
 
-	return rv, nil
+	return &models.JoinGamePayload{Game: game}, nil
 }
 
 type queryResolver struct{ *Resolver }

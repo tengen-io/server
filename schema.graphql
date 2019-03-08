@@ -67,6 +67,10 @@ input CreateGameInvitationInput {
     boardSize: Int!
 }
 
+type CreateGameInvitationPayload {
+    game: Game
+}
+
 type JoinGamePayload {
     game: Game
 }
@@ -79,6 +83,6 @@ type Query {
 }
 
 type Mutation {
-    createGameInvitation(input: CreateGameInvitationInput): Game @hasAuth
+    createGameInvitation(input: CreateGameInvitationInput): CreateGameInvitationPayload @hasAuth
     joinGame(gameId: ID!): JoinGamePayload @hasAuth
 }
