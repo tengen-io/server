@@ -1,5 +1,10 @@
+.PHONY: test
+
 build:
 	go build -o tengen .
+
+gen:
+	go run github.com/99designs/gqlgen generate
 
 test:
 	go test ./...

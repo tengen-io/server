@@ -1,0 +1,88 @@
+# Types
+directive @hasAuth on FIELD_DEFINITION
+
+scalar Timestamp
+
+enum GameType {
+    STANDARD
+}
+
+enum GameState {
+    INVITATION
+    IN_PROGRESS
+    FINISHED
+}
+
+enum GameUserEdgeType {
+    OWNER
+    PLAYER
+}
+
+interface Node {
+    id: ID!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
+}
+
+type Identity implements Node {
+    id: ID!
+    email: String!
+    user: User!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
+}
+
+type User implements Node {
+    id: ID!
+    name: String!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
+}
+
+type Game implements Node {
+    id: ID!
+    type: GameType!
+    state: GameState!
+    boardSize: Int!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
+    users: [GameUserEdge]
+}
+
+# Relationships
+type GameUserEdge {
+    user: User!
+    type: GameUserEdgeType!
+}
+
+# Inputs
+input CreateIdentityInput {
+    email: String
+    password: String!
+    name: String!
+}
+
+input CreateGameInvitationInput {
+    type: GameType!
+    boardSize: Int!
+}
+
+type CreateGameInvitationPayload {
+    game: Game
+}
+
+type JoinGamePayload {
+    game: Game
+}
+
+type Query {
+    user(id: ID, name: String): User
+    users(ids: [ID!], names: [String!]): [User]
+    game(id: ID): Game
+    games(ids: [ID!], states: [GameState!]): [Game]
+}
+
+type Mutation {
+    createGameInvitation(input: CreateGameInvitationInput): CreateGameInvitationPayload @hasAuth
+    joinGame(gameId: ID!): JoinGamePayload @hasAuth
+}
