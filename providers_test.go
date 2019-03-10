@@ -73,7 +73,7 @@ func TestGameProvider_CreateGameUser(t *testing.T) {
 
 	res, err := p.CreateGameUser("1", "1", models.GameUserEdgeTypePlayer)
 	assert.NoError(t, err)
-	assert.Equal(t, "1", res.Game.Id)
+	assert.Equal(t, "1", res.Id)
 }
 
 func TestGameProvider_CreateInvitation(t *testing.T) {
@@ -88,10 +88,7 @@ func TestGameProvider_CreateInvitation(t *testing.T) {
 		},
 	}
 
-	res, err := p.CreateInvitation(identity, models.CreateGameInvitationInput{
-		BoardSize: 19,
-		Type:      models.Standard,
-	})
+	res, err := p.CreateGame(identity, models.Standard, 19, models.Invitation)
 
 	assert.NoError(t, err)
 	assert.Equal(t, models.Standard, res.Type)
