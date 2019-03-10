@@ -13,12 +13,25 @@ Install and start PostgreSQL
 
     $ psql -V
 
-Set up your PostgreSQL database:
+#### Automatically
 
-Run the `./script/bootstrap` script, or manually create a `postgres` user:
+Run the `./script/bootstrap` script, or
+
+#### Manually
 
     $ psql postgres -c 'CREATE ROLE postgres SUPERUSER LOGIN;'
+    $ createdb tengen_test
+    $ createdb tengen
+    $ ./script/db_migrate tengen
+    $ make gen
 
 ### Running the test suite
 
     $ ./script/test
+
+### Run the development server
+
+    $ make
+    $ ./tengen
+
+Visit http://localhost:8180

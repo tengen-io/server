@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-psql postgres --command='CREATE ROLE postgres SUPERUSER LOGIN;'

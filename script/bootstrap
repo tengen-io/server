@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# Idempotently create
+#
+#   * The 'postgres' role
+#   * A test database 'tengen_test'
+#   * A development database 'tengen'
+#
+
+#
+# Determine if a PostgreSQL database exists
+#
+#     db_exists "foo"
+#
+db_exists() {
+  name=$1
+  psql --list --tuples-only --quiet \
+    | cut -d \| -f 1 \
+    | grep --word-regexp --quiet $name
+}
+
+#
+# Determine if a PostgreSQL role exists
+#
+#     role_exists "foo"
+#
+role_exists() {
+  name=$1
+  query="SELECT rolname FROM pg_roles WHERE rolname='${name}';"
+  psql --command="${query}" --quiet --tuples-only postgres \
+    | grep --word-regexp --quiet $name
+}
+
+
+
+if ! role_exists "postgres"; then
+  echo "Creating role postgres..."
+  psql --command="CREATE ROLE postgres SUPERUSER LOGIN;" --quiet postgres
+fi
+
+if ! db_exists "tengen_test"; then
+  echo "Creating test database 'tengen_test'..."
+  createdb "tengen_test"
+fi
+
+if ! db_exists "tengen"; then
+  echo "Creating development database 'tengen'..."
+  createdb "tengen"
+
+  echo "Migrating development database 'tengen"...
+  ./script/db_migrate tengen
+fi
+
+echo "✓ done"

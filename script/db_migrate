@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+db=$1
+migrations=$(ls db/migrations/*.up.sql)
+
+if [[ -z $db ]]; then
+  echo "usage: $0 <database_name>"
+  exit 1
+fi
+
+echo "Migrating '${db}' database..."
+for migration in $migrations; do
+  psql --quiet --file=$migration $db
+done
