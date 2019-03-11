@@ -14,6 +14,7 @@ import (
 	"strings"
 )
 
+
 type ServerConfig struct {
 	Host            string
 	Port            int
@@ -38,8 +39,8 @@ func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *Auth
 
 func (s *Server) Start() {
 	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
-	http.Handle("/register", s.RegistrationHandler())
-	http.Handle("/login", s.LoginHandler())
+	http.Handle("/register", enableCorsMiddleware(s.RegistrationHandler()))
+	http.Handle("/login", enableCorsMiddleware(s.LoginHandler()))
 	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/graphql"))
 
 	log.Printf("Listening on http://%s:%d", s.config.Host, s.config.Port)
@@ -151,8 +152,8 @@ func (s *Server) RegistrationHandler() http.Handler {
 	}
 
 	type output struct {
-		Id    string
-		Token string
+		Id    string `json:"id"`
+		Token string `json:"token"`
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -171,6 +172,12 @@ func (s *Server) RegistrationHandler() http.Handler {
 			return
 		}
 
+		if in.Email == "" || in.Name == "" || in.Password == "" {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		// TODO(eac): Distinguish between database errors?
 		identity, err := s.identity.CreateIdentity(in.Email, in.Password, in.Name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
