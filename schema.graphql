@@ -76,10 +76,11 @@ type JoinGamePayload {
 }
 
 type Query {
-    user(id: ID, name: String): User
-    users(ids: [ID!], names: [String!]): [User]
     game(id: ID): Game
     games(ids: [ID!], states: [GameState!]): [Game]
+    user(id: ID, name: String): User
+    users(ids: [ID!], names: [String!]): [User]
+    viewer: Identity @hasAuth
 }
 
 type Mutation {

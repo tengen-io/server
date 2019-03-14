@@ -33,7 +33,7 @@ func (r *gameResolver) Users(ctx context.Context, obj *models.Game) ([]*models.G
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.CreateGameInvitationPayload, error) {
-	identity, _ := ctx.Value("currentUser").(models.Identity)
+	identity, _ := ctx.Value(IdentityContextKey).(models.Identity)
 	game, err := r.game.CreateGame(identity, input.Type, input.BoardSize, models.Invitation)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *mode
 }
 
 func (r *mutationResolver) JoinGame(ctx context.Context, gameId string) (*models.JoinGamePayload, error) {
-	identity, ok := ctx.Value("currentUser").(models.Identity)
+	identity, ok := ctx.Value(IdentityContextKey).(models.Identity)
 	if !ok {
 		return nil, errors.New("invalid user")
 	}
@@ -73,6 +73,16 @@ func (r *queryResolver) User(ctx context.Context, id *string, name *string) (*mo
 
 func (r *queryResolver) Users(ctx context.Context, ids []string, names []string) ([]*models.User, error) {
 	panic("not implemented")
+}
+
+func (r *queryResolver) Viewer(ctx context.Context) (*models.Identity, error) {
+	identity, ok := ctx.Value(IdentityContextKey).(models.Identity)
+	if !ok {
+		// TODO(eac): this is asserted already by @hasAuth. Should I just ignore the error?
+		return nil, errors.New("invalid user")
+	}
+
+	return &identity, nil
 }
 
 func (r *queryResolver) Game(ctx context.Context, id *string) (*models.Game, error) {
