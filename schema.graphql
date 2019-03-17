@@ -46,7 +46,7 @@ type Game implements Node {
     boardSize: Int!
     createdAt: Timestamp!
     updatedAt: Timestamp
-    users: [GameUserEdge]
+    users: [GameUserEdge!]
 }
 
 # Relationships

@@ -33,7 +33,7 @@ func (r *Resolver) Subscription() SubscriptionResolver {
 
 type gameResolver struct{ *Resolver }
 
-func (r *gameResolver) Users(ctx context.Context, obj *models.Game) ([]*models.GameUserEdge, error) {
+func (r *gameResolver) Users(ctx context.Context, obj *models.Game) ([]models.GameUserEdge, error) {
 	return r.game.GetUsersForGame(obj.Id)
 }
 

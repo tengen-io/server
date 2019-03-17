@@ -110,7 +110,7 @@ type ComplexityRoot struct {
 }
 
 type GameResolver interface {
-	Users(ctx context.Context, obj *models.Game) ([]*models.GameUserEdge, error)
+	Users(ctx context.Context, obj *models.Game) ([]models.GameUserEdge, error)
 }
 type MutationResolver interface {
 	CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.CreateGameInvitationPayload, error)
@@ -553,7 +553,7 @@ type Game implements Node {
     boardSize: Int!
     createdAt: Timestamp!
     updatedAt: Timestamp
-    users: [GameUserEdge]
+    users: [GameUserEdge!]
 }
 
 # Relationships
@@ -971,10 +971,10 @@ func (ec *executionContext) _Game_users(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*models.GameUserEdge)
+	res := resTmp.([]models.GameUserEdge)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOGameUserEdge2ᚕᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx, field.Selections, res)
+	return ec.marshalOGameUserEdge2ᚕgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _GameSubscriptionPayload_game(ctx context.Context, field graphql.CollectedField, obj *models.GameSubscriptionPayload) graphql.Marshaler {
@@ -3183,6 +3183,10 @@ func (ec *executionContext) marshalNGameType2githubᚗcomᚋtengenᚑioᚋserver
 	return v
 }
 
+func (ec *executionContext) marshalNGameUserEdge2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx context.Context, sel ast.SelectionSet, v models.GameUserEdge) graphql.Marshaler {
+	return ec._GameUserEdge(ctx, sel, &v)
+}
+
 func (ec *executionContext) unmarshalNGameUserEdgeType2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdgeType(ctx context.Context, v interface{}) (models.GameUserEdgeType, error) {
 	var res models.GameUserEdgeType
 	return res, res.UnmarshalGQL(v)
@@ -3623,11 +3627,7 @@ func (ec *executionContext) marshalOGameType2ᚖgithubᚗcomᚋtengenᚑioᚋser
 	return v
 }
 
-func (ec *executionContext) marshalOGameUserEdge2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx context.Context, sel ast.SelectionSet, v models.GameUserEdge) graphql.Marshaler {
-	return ec._GameUserEdge(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOGameUserEdge2ᚕᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx context.Context, sel ast.SelectionSet, v []*models.GameUserEdge) graphql.Marshaler {
+func (ec *executionContext) marshalOGameUserEdge2ᚕgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx context.Context, sel ast.SelectionSet, v []models.GameUserEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3651,7 +3651,7 @@ func (ec *executionContext) marshalOGameUserEdge2ᚕᚖgithubᚗcomᚋtengenᚑi
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOGameUserEdge2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNGameUserEdge2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3662,13 +3662,6 @@ func (ec *executionContext) marshalOGameUserEdge2ᚕᚖgithubᚗcomᚋtengenᚑi
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) marshalOGameUserEdge2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGameUserEdge(ctx context.Context, sel ast.SelectionSet, v *models.GameUserEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._GameUserEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2string(ctx context.Context, v interface{}) (string, error) {

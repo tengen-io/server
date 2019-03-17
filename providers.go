@@ -178,16 +178,27 @@ func (p *GameProvider) GetGameById(id string) (*models.Game, error) {
 	return &game, nil
 }
 
-func (p *GameProvider) GetUsersForGame(id string) ([]*models.GameUserEdge, error) {
+func (p *GameProvider) GetUsersForGame(id string) ([]models.GameUserEdge, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var rv = make([]*models.GameUserEdge, 1)
-	err = p.db.Select(&rv, "SELECT * FROM game_user WHERE game_id = $1", idInt)
+	rows, err := p.db.Query("SELECT type, user_id, name FROM game_user gu, users u WHERE game_id = $1 AND gu.user_id = u.id", idInt)
 	if err != nil {
 		return nil, err
+	}
+	defer rows.Close()
+
+	var rv = make([]models.GameUserEdge, 0)
+	for rows.Next() {
+		var i models.GameUserEdge
+		err := rows.Scan(&i.Type, &i.User.Id, &i.User.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		rv = append(rv, i)
 	}
 
 	return rv, nil
