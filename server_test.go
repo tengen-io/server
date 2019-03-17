@@ -42,14 +42,14 @@ func TestServer_RegistrationHandler(t *testing.T) {
 	server := makeTestServer()
 
 	testCases := []struct {
-		testname string
-		email string
-		password string
-		username string
+		testname         string
+		email            string
+		password         string
+		username         string
 		expectedResponse int
 	}{
-		{ "add user", "test2@tengen.io", "test2", "test 2 user", 200},
-		{ "add empty user", "", "", "", 400},
+		{"add user", "test2@tengen.io", "test2", "test 2 user", 200},
+		{"add empty user", "", "", "", 400},
 	}
 
 	for _, testCase := range testCases {

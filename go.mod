@@ -8,6 +8,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
+	github.com/cskr/pubsub v1.0.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/gliderlabs/ssh v0.1.3 // indirect

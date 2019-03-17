@@ -5,6 +5,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/jmoiron/sqlx"
 	"github.com/tengen-io/server/db"
+	"github.com/tengen-io/server/pubsub"
 	"log"
 	"os"
 	"strconv"
@@ -98,15 +99,20 @@ func makeIdentity(db *sqlx.DB) *IdentityProvider {
 	return NewIdentityProvider(db, bcryptCost)
 }
 
-func makeSchema(identity *IdentityProvider, user *UserProvider, game *GameProvider) graphql.ExecutableSchema {
+func makeSchema(identity *IdentityProvider, user *UserProvider, game *GameProvider, pubsub pubsub.Bus) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			identity: identity,
 			user:     user,
 			game:     game,
+			pubsub:   pubsub,
 		},
 		Directives: Directives(),
 	})
+}
+
+func makePubsub() pubsub.Bus {
+	return pubsub.NewInMemoryBus()
 }
 
 func main() {
@@ -118,12 +124,14 @@ func main() {
 	godotenv.Load(".env." + env)
 	godotenv.Load()
 
+	bus := makePubsub()
 	db := makeDb()
 	auth := makeAuth(db)
 	identity := makeIdentity(db)
 	user := NewUserProvider(db)
-	game := NewGameProvider(db)
-	schema := makeSchema(identity, user, game)
+	game := NewGameProvider(db, bus)
+
+	schema := makeSchema(identity, user, game, bus)
 
 	s := makeServer(schema, auth, identity)
 	s.Start()

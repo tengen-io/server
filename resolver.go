@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
-	"github.com/pkg/errors"
+	"errors"
 	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/pubsub"
+	"log"
 )
 
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
@@ -12,6 +14,7 @@ type Resolver struct {
 	game     *GameProvider
 	identity *IdentityProvider
 	user     *UserProvider
+	pubsub   pubsub.Bus
 }
 
 func (r *Resolver) Mutation() MutationResolver {
@@ -22,6 +25,10 @@ func (r *Resolver) Query() QueryResolver {
 }
 func (r *Resolver) Game() GameResolver {
 	return &gameResolver{r}
+}
+
+func (r *Resolver) Subscription() SubscriptionResolver {
+	return &subscriptionResolver{r}
 }
 
 type gameResolver struct{ *Resolver }
@@ -112,4 +119,28 @@ func (r *queryResolver) Games(ctx context.Context, ids []string, states []models
 	}
 
 	panic("not implemented")
+}
+
+type subscriptionResolver struct{ *Resolver }
+
+func (r *subscriptionResolver) Games(ctx context.Context, gameType *models.GameType) (<-chan *models.GameSubscriptionPayload, error) {
+	topic := "games_" + gameType.String()
+	channel := r.pubsub.Subscribe(topic)
+	rv := make(chan *models.GameSubscriptionPayload)
+
+	go func() {
+		for event := range channel {
+			if eventPayload, ok := event.Payload.(*models.Game); ok {
+				payload := &models.GameSubscriptionPayload{
+					Game:  *eventPayload,
+					Event: event.Event,
+				}
+				rv <- payload
+			} else {
+				log.Printf("recieved message %+v with unknown payload, expected models.Game", event)
+			}
+		}
+	}()
+
+	return rv, nil
 }

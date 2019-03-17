@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/pubsub"
 	"golang.org/x/crypto/bcrypt"
 	"strconv"
 	"time"
@@ -82,12 +83,13 @@ func (p *AuthProvider) CheckPasswordByEmail(email, password string) (*models.Ide
 }
 
 type GameProvider struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	pubsub pubsub.Bus
 }
 
-func NewGameProvider(db *sqlx.DB) *GameProvider {
+func NewGameProvider(db *sqlx.DB, pubsub pubsub.Bus) *GameProvider {
 	return &GameProvider{
-		db,
+		db, pubsub,
 	}
 }
 
@@ -119,6 +121,13 @@ func (p *GameProvider) CreateGame(identity models.Identity, gameType models.Game
 	if err != nil {
 		return nil, err
 	}
+
+	payload := pubsub.Event{
+		Event: "create",
+		Payload: &rv,
+	}
+
+	p.pubsub.Publish(payload, "game", "game_"+rv.State.String())
 
 	return &rv, nil
 }

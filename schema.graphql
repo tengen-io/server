@@ -75,6 +75,11 @@ type JoinGamePayload {
     game: Game
 }
 
+type GameSubscriptionPayload {
+    game: Game!
+    event: String!
+}
+
 type Query {
     game(id: ID): Game
     games(ids: [ID!], states: [GameState!]): [Game]
@@ -86,4 +91,8 @@ type Query {
 type Mutation {
     createGameInvitation(input: CreateGameInvitationInput): CreateGameInvitationPayload @hasAuth
     joinGame(gameId: ID!): JoinGamePayload @hasAuth
+}
+
+type Subscription {
+    games(type: GameType): GameSubscriptionPayload!
 }

@@ -27,6 +27,11 @@ type CreateIdentityInput struct {
 	Name     string  `json:"name"`
 }
 
+type GameSubscriptionPayload struct {
+	Game  Game   `json:"game"`
+	Event string `json:"event"`
+}
+
 type GameUserEdge struct {
 	User User             `json:"user"`
 	Type GameUserEdgeType `json:"type"`
