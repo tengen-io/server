@@ -3,6 +3,9 @@
 build:
 	go build -o tengen .
 
+run: build
+	./tengen
+
 gen:
 	go run github.com/99designs/gqlgen generate
 

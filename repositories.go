@@ -12,21 +12,21 @@ import (
 	"time"
 )
 
-type AuthProvider struct {
+type AuthRepository struct {
 	db         *sqlx.DB
 	signingKey []byte
 	lifetime   time.Duration
 }
 
-func NewAuthProvider(db *sqlx.DB, signingKey []byte, lifetime time.Duration) *AuthProvider {
-	return &AuthProvider{
+func NewAuthRepository(db *sqlx.DB, signingKey []byte, lifetime time.Duration) *AuthRepository {
+	return &AuthRepository{
 		db:         db,
 		signingKey: signingKey,
 		lifetime:   lifetime,
 	}
 }
 
-func (p *AuthProvider) ValidateJWT(tokenString string) (*jwt.Token, error) {
+func (p *AuthRepository) ValidateJWT(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("invalid signing method")
@@ -38,7 +38,7 @@ func (p *AuthProvider) ValidateJWT(tokenString string) (*jwt.Token, error) {
 	return token, err
 }
 
-func (p *AuthProvider) SignJWT(identity models.Identity) (string, error) {
+func (p *AuthRepository) SignJWT(identity models.Identity) (string, error) {
 	// TODO(eac): reintroduce custom claims for ID
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		Id:        identity.Id,
@@ -56,7 +56,7 @@ func (p *AuthProvider) SignJWT(identity models.Identity) (string, error) {
 }
 
 // TODO(eac): Figure out how to use dbx structs for nested structures
-func (p *AuthProvider) CheckPasswordByEmail(email, password string) (*models.Identity, error) {
+func (p *AuthRepository) CheckPasswordByEmail(email, password string) (*models.Identity, error) {
 	var passwordHash string
 	err := p.db.Get(&passwordHash, "SELECT password_hash FROM identities WHERE email = $1", email)
 	if err != nil {
@@ -82,20 +82,20 @@ func (p *AuthProvider) CheckPasswordByEmail(email, password string) (*models.Ide
 	return &rv, nil
 }
 
-type GameProvider struct {
+type GameRepository struct {
 	db     *sqlx.DB
 	pubsub pubsub.Bus
 }
 
-func NewGameProvider(db *sqlx.DB, pubsub pubsub.Bus) *GameProvider {
-	return &GameProvider{
+func NewGameRepository(db *sqlx.DB, pubsub pubsub.Bus) *GameRepository {
+	return &GameRepository{
 		db, pubsub,
 	}
 }
 
 // TODO(eac): Add validation
 // TODO(eac): Switch to sqlx binding
-func (p *GameProvider) CreateGame(identity models.Identity, gameType models.GameType, boardSize int, gameState models.GameState) (*models.Game, error) {
+func (p *GameRepository) CreateGame(identity models.Identity, gameType models.GameType, boardSize int, gameState models.GameState) (*models.Game, error) {
 	tx, err := p.db.Beginx()
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (p *GameProvider) CreateGame(identity models.Identity, gameType models.Game
 
 // TODO(eac): Validation? here or in the resolver
 // TODO(eac): maybe make this return a gameUser, and have the resolver get the game?
-func (p *GameProvider) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.Game, error) {
+func (p *GameRepository) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.Game, error) {
 	tx, err := p.db.Beginx()
 	if err != nil {
 		return nil, err
@@ -163,7 +163,7 @@ func (p *GameProvider) CreateGameUser(gameId string, userId string, edgeType mod
 	return &rv, nil
 }
 
-func (p *GameProvider) GetGameById(id string) (*models.Game, error) {
+func (p *GameRepository) GetGameById(id string) (*models.Game, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (p *GameProvider) GetGameById(id string) (*models.Game, error) {
 	return &game, nil
 }
 
-func (p *GameProvider) GetUsersForGame(id string) ([]models.GameUserEdge, error) {
+func (p *GameRepository) GetUsersForGame(id string) ([]models.GameUserEdge, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func (p *GameProvider) GetUsersForGame(id string) ([]models.GameUserEdge, error)
 	return rv, nil
 }
 
-func (p *GameProvider) GetGamesByIds(ids []string) ([]*models.Game, error) {
+func (p *GameRepository) GetGamesByIds(ids []string) ([]*models.Game, error) {
 	idInts := make([]int, len(ids))
 	for i, id := range ids {
 		idInt, err := strconv.Atoi(id)
@@ -242,7 +242,7 @@ func (p *GameProvider) GetGamesByIds(ids []string) ([]*models.Game, error) {
 	return rv, nil
 }
 
-func (p *GameProvider) GetGamesByState(states []models.GameState) ([]*models.Game, error) {
+func (p *GameRepository) GetGamesByState(states []models.GameState) ([]*models.Game, error) {
 	query, fragArgs, err := sqlx.In("SELECT * FROM games WHERE state IN (?)", states)
 	if err != nil {
 		return nil, err
@@ -271,19 +271,19 @@ func (p *GameProvider) GetGamesByState(states []models.GameState) ([]*models.Gam
 	return rv, nil
 }
 
-type IdentityProvider struct {
+type IdentityRepository struct {
 	db         *sqlx.DB
 	BcryptCost int
 }
 
-func NewIdentityProvider(db *sqlx.DB, bcryptCost int) *IdentityProvider {
-	return &IdentityProvider{
+func NewIdentityRepository(db *sqlx.DB, bcryptCost int) *IdentityRepository {
+	return &IdentityRepository{
 		db,
 		bcryptCost,
 	}
 }
 
-func (p *IdentityProvider) CreateIdentity(email string, password string, name string) (*models.Identity, error) {
+func (p *IdentityRepository) CreateIdentity(email string, password string, name string) (*models.Identity, error) {
 	// TODO(eac): re-add validation
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), p.BcryptCost)
 	tx, err := p.db.Beginx()
@@ -318,7 +318,7 @@ func (p *IdentityProvider) CreateIdentity(email string, password string, name st
 }
 
 // TODO(eac): switch to sqlx.get
-func (p *IdentityProvider) GetIdentityById(id int32) (*models.Identity, error) {
+func (p *IdentityRepository) GetIdentityById(id int32) (*models.Identity, error) {
 	var identity models.Identity
 	row := p.db.QueryRowx("SELECT i.id, i.email, u.id, u.name FROM identities i, users u WHERE i.id = u.identity_id AND i.id = $1", id)
 	err := row.Scan(&identity.Id, &identity.Email, &identity.User.Id, &identity.User.Name)
@@ -328,18 +328,18 @@ func (p *IdentityProvider) GetIdentityById(id int32) (*models.Identity, error) {
 	return &identity, nil
 }
 
-type UserProvider struct {
+type UserRepository struct {
 	db *sqlx.DB
 }
 
-func NewUserProvider(db *sqlx.DB) *UserProvider {
-	return &UserProvider{
+func NewUserRepository(db *sqlx.DB) *UserRepository {
+	return &UserRepository{
 		db,
 	}
 }
 
 // TODO(eac): switch to sqlx get
-func (p *UserProvider) GetUserById(id string) (*models.User, error) {
+func (p *UserRepository) GetUserById(id string) (*models.User, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err

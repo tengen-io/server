@@ -4,14 +4,23 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/pubsub"
 	"testing"
 	"time"
 )
 
+type NoopBus struct {}
+
+func (NoopBus) Subscribe(topic string) <-chan pubsub.Event {
+	panic("not implemented")
+}
+
+func (NoopBus) Publish(event pubsub.Event, topics ...string) { }
+
 func TestAuth_SignAndVerifyJWT(t *testing.T) {
 	db := MakeTestDb()
 	duration, _ := time.ParseDuration("1 week")
-	auth := NewAuthProvider(db, []byte("supersecret"), duration)
+	auth := NewAuthRepository(db, []byte("supersecret"), duration)
 
 	user := models.Identity{
 		NodeFields: models.NodeFields{
@@ -35,7 +44,7 @@ func TestAuth_SignAndVerifyJWT(t *testing.T) {
 func TestAuth_ValidateInvalidJWT(t *testing.T) {
 	db := MakeTestDb()
 	duration, _ := time.ParseDuration("1 week")
-	auth := NewAuthProvider(db, []byte("supersecret"), duration)
+	auth := NewAuthRepository(db, []byte("supersecret"), duration)
 
 	_, err := auth.ValidateJWT("lol this wont work")
 	assert.Error(t, err)
@@ -43,7 +52,7 @@ func TestAuth_ValidateInvalidJWT(t *testing.T) {
 
 func TestGameProvider_GetGamesByIds(t *testing.T) {
 	db := MakeTestDb()
-	p := NewGameProvider(db)
+	p := NewGameRepository(db, NoopBus{})
 
 	res, err := p.GetGamesByIds([]string{"1", "2"})
 	assert.NoError(t, err)
@@ -55,7 +64,7 @@ func TestGameProvider_GetGamesByIds(t *testing.T) {
 
 func TestGameProvider_GetGamesByState(t *testing.T) {
 	db := MakeTestDb()
-	p := NewGameProvider(db)
+	p := NewGameRepository(db, NoopBus{})
 
 	res, err := p.GetGamesByState([]models.GameState{models.Invitation})
 	assert.NoError(t, err)
@@ -69,7 +78,7 @@ func TestGameProvider_GetGamesByState(t *testing.T) {
 
 func TestGameProvider_CreateGameUser(t *testing.T) {
 	db := MakeTestDb()
-	p := NewGameProvider(db)
+	p := NewGameRepository(db, NoopBus{})
 
 	res, err := p.CreateGameUser("1", "1", models.GameUserEdgeTypePlayer)
 	assert.NoError(t, err)
@@ -78,7 +87,7 @@ func TestGameProvider_CreateGameUser(t *testing.T) {
 
 func TestGameProvider_CreateInvitation(t *testing.T) {
 	db := MakeTestDb()
-	p := NewGameProvider(db)
+	p := NewGameRepository(db, NoopBus{})
 
 	identity := models.Identity{
 		User: models.User{
@@ -98,7 +107,7 @@ func TestGameProvider_CreateInvitation(t *testing.T) {
 
 func TestIdentityProvider_GetIdentityById(t *testing.T) {
 	db := MakeTestDb()
-	p := NewIdentityProvider(db, 4)
+	p := NewIdentityRepository(db, 4)
 	res, err := p.GetIdentityById(1)
 	assert.NoError(t, err)
 
@@ -108,7 +117,7 @@ func TestIdentityProvider_GetIdentityById(t *testing.T) {
 
 func TestIdentityProvider_CreateIdentity(t *testing.T) {
 	db := MakeTestDb()
-	p := NewIdentityProvider(db, 4)
+	p := NewIdentityRepository(db, 4)
 	res, err := p.CreateIdentity("test-createidentity@tengen.io", "hunter2", "Test User CreateIdentity")
 	assert.NoError(t, err)
 
@@ -118,7 +127,7 @@ func TestIdentityProvider_CreateIdentity(t *testing.T) {
 
 func TestUserProvider_GetUserById(t *testing.T) {
 	db := MakeTestDb()
-	p := NewUserProvider(db)
+	p := NewUserRepository(db)
 
 	res, err := p.GetUserById("1")
 	assert.NoError(t, err)

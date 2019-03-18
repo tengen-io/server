@@ -11,9 +11,9 @@ import (
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 type Resolver struct {
-	game     *GameProvider
-	identity *IdentityProvider
-	user     *UserProvider
+	game     *GameRepository
+	identity *IdentityRepository
+	user     *UserRepository
 	pubsub   pubsub.Bus
 }
 

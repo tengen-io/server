@@ -71,6 +71,6 @@ func makeTestServer() *Server {
 		"", 0, false,
 	}
 	duration, _ := time.ParseDuration("1 week")
-	identityProvider := NewIdentityProvider(db, 1)
-	return NewServer(&config, nil, NewAuthProvider(db, []byte("supersecret"), duration), identityProvider)
+	identityProvider := NewIdentityRepository(db, 1)
+	return NewServer(&config, nil, NewAuthRepository(db, []byte("supersecret"), duration), identityProvider)
 }

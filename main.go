@@ -40,7 +40,7 @@ func getSigningKey() []byte {
 	return decoded
 }
 
-func makeServer(schema graphql.ExecutableSchema, auth *AuthProvider, identity *IdentityProvider) *Server {
+func makeServer(schema graphql.ExecutableSchema, auth *AuthRepository, identity *IdentityRepository) *Server {
 	config := newServerConfig()
 	tengenPort := os.Getenv("TENGEN_PORT")
 	port, err := strconv.Atoi(tengenPort)
@@ -79,7 +79,7 @@ func makeDb() *sqlx.DB {
 	return db
 }
 
-func makeAuth(db *sqlx.DB) *AuthProvider {
+func makeAuth(db *sqlx.DB) *AuthRepository {
 	day, err := time.ParseDuration("24h")
 	if err != nil {
 		log.Fatal("could not parse auth key duration", err)
@@ -87,19 +87,19 @@ func makeAuth(db *sqlx.DB) *AuthProvider {
 
 	keyDuration := day * 7
 
-	return NewAuthProvider(db, getSigningKey(), keyDuration)
+	return NewAuthRepository(db, getSigningKey(), keyDuration)
 }
 
-func makeIdentity(db *sqlx.DB) *IdentityProvider {
+func makeIdentity(db *sqlx.DB) *IdentityRepository {
 	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
 	if err != nil {
 		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
 	}
 
-	return NewIdentityProvider(db, bcryptCost)
+	return NewIdentityRepository(db, bcryptCost)
 }
 
-func makeSchema(identity *IdentityProvider, user *UserProvider, game *GameProvider, pubsub pubsub.Bus) graphql.ExecutableSchema {
+func makeSchema(identity *IdentityRepository, user *UserRepository, game *GameRepository, pubsub pubsub.Bus) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			identity: identity,
@@ -128,8 +128,8 @@ func main() {
 	db := makeDb()
 	auth := makeAuth(db)
 	identity := makeIdentity(db)
-	user := NewUserProvider(db)
-	game := NewGameProvider(db, bus)
+	user := NewUserRepository(db)
+	game := NewGameRepository(db, bus)
 
 	schema := makeSchema(identity, user, game, bus)
 

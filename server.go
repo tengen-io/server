@@ -29,11 +29,11 @@ type ServerConfig struct {
 type Server struct {
 	config           *ServerConfig
 	executableSchema graphql.ExecutableSchema
-	auth             *AuthProvider
-	identity         *IdentityProvider
+	auth             *AuthRepository
+	identity         *IdentityRepository
 }
 
-func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *AuthProvider, identity *IdentityProvider) *Server {
+func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *AuthRepository, identity *IdentityRepository) *Server {
 	return &Server{
 		config,
 		schema,
