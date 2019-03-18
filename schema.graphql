@@ -51,6 +51,7 @@ type Game implements Node {
 
 # Relationships
 type GameUserEdge {
+    index: Int!
     user: User!
     type: GameUserEdgeType!
 }

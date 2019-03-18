@@ -34,12 +34,12 @@ func (User) IsNode() {}
 type GameType int8
 
 const (
-	Standard GameType = iota
+	GameTypeStandard GameType = iota
 )
 
 func (g GameType) String() string {
 	switch g {
-	case Standard:
+	case GameTypeStandard:
 		return "STANDARD"
 	default:
 		return "UNKNOWN"
@@ -49,7 +49,7 @@ func (g GameType) String() string {
 func GameTypeForString(str string) (GameType, error) {
 	switch str {
 	case "STANDARD":
-		return Standard, nil
+		return GameTypeStandard, nil
 	default:
 		return 0, fmt.Errorf("unknown gametype %s", str)
 	}
@@ -91,19 +91,19 @@ func (g GameType) Value() (driver.Value, error) {
 type GameState int8
 
 const (
-	Invitation GameState = iota
-	InProgress
-	Finished
+	GameStateInvitation GameState = iota
+	GameStateInProgress
+	GameStateFinished
 )
 
 func GameStateForString(str string) (GameState, error) {
 	switch str {
 	case "INVITATION":
-		return Invitation, nil
+		return GameStateInvitation, nil
 	case "IN_PROGRESS":
-		return InProgress, nil
+		return GameStateInProgress, nil
 	case "FINISHED":
-		return Finished, nil
+		return GameStateFinished, nil
 	default:
 		return 0, fmt.Errorf("unknown gamestate %s", str)
 	}
@@ -111,11 +111,11 @@ func GameStateForString(str string) (GameState, error) {
 
 func (g GameState) String() string {
 	switch g {
-	case Invitation:
+	case GameStateInvitation:
 		return "INVITATION"
-	case InProgress:
+	case GameStateInProgress:
 		return "IN_PROGRESS"
-	case Finished:
+	case GameStateFinished:
 		return "FINISHED"
 	default:
 		return "UNKNOWN"

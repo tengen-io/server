@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jmoiron/sqlx"
@@ -101,19 +103,19 @@ func (p *GameRepository) CreateGame(identity models.Identity, gameType models.Ga
 		return nil, err
 	}
 
+	defer tx.Rollback()
+
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
 
 	game := tx.QueryRowx("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, type, state, board_size", gameType, gameState, boardSize, ts, ts)
 	err = game.Scan(&rv.Id, &rv.Type, &rv.State, &rv.BoardSize)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
-	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", rv.Id, identity.User.Id, models.GameUserEdgeTypeOwner, ts, ts)
+	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", rv.Id, identity.User.Id, 0, models.GameUserEdgeTypeOwner, ts, ts)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
@@ -133,26 +135,43 @@ func (p *GameRepository) CreateGame(identity models.Identity, gameType models.Ga
 }
 
 // TODO(eac): Validation? here or in the resolver
-// TODO(eac): maybe make this return a gameUser, and have the resolver get the game?
 func (p *GameRepository) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.Game, error) {
-	tx, err := p.db.Beginx()
+	tx, err := p.db.BeginTx(context.TODO(), &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Query("SELECT user_id, user_index, type FROM game_user WHERE game_id = $1 ORDER BY user_index ASC", gameId)
 	if err != nil {
 		return nil, err
 	}
 
+	defer rows.Close()
+	gameUsers := make([]models.GameUserEdge, 0)
+	for rows.Next() {
+		var gameUser models.GameUserEdge
+		rows.Scan(&gameUser.User.Id, &gameUser.Index, &gameUser.Type)
+		gameUsers = append(gameUsers, gameUser)
+	}
+	nextIndex := gameUsers[len(gameUsers)-1].Index
+
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
-	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", gameId, userId, edgeType, ts, ts)
+	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", gameId, userId, nextIndex, edgeType, ts, ts)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
 	game := tx.QueryRow("SELECT id, type, state FROM games WHERE id = $1", gameId)
 	err = game.Scan(&rv.Id, &rv.Type, &rv.State)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
+	}
+
+	newState, err := transitionGameState(rv, gameUsers)
+	if newState != rv.State {
+		_, err = tx.Exec("UPDATE games SET state = $1 WHERE id = $2", newState, gameId)
 	}
 
 	err = tx.Commit()
@@ -290,6 +309,7 @@ func (p *IdentityRepository) CreateIdentity(email string, password string, name 
 	if err != nil {
 		return nil, err
 	}
+	defer tx.Rollback()
 
 	var rv models.Identity
 	ts := pq.FormatTimestamp(time.Now().UTC())
@@ -298,14 +318,12 @@ func (p *IdentityRepository) CreateIdentity(email string, password string, name 
 	identity := tx.QueryRowx("INSERT INTO identities (email, password_hash, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, email", email, passwordHash, ts, ts)
 	err = identity.Scan(&rv.Id, &rv.Email)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
 	user := tx.QueryRowx("INSERT INTO users (identity_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, name", rv.Id, name, ts, ts)
 	err = user.Scan(&rv.User.Id, &rv.User.Name)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 

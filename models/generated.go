@@ -33,8 +33,9 @@ type GameSubscriptionPayload struct {
 }
 
 type GameUserEdge struct {
-	User User             `json:"user"`
-	Type GameUserEdgeType `json:"type"`
+	Index int              `json:"index"`
+	User  User             `json:"user"`
+	Type  GameUserEdgeType `json:"type"`
 }
 
 type JoinGamePayload struct {

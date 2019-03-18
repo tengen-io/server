@@ -16,10 +16,12 @@ CREATE TABLE games (
 CREATE TABLE game_user (
   game_id integer REFERENCES games(id) NOT NULL,
   user_id integer REFERENCES users(id) NOT NULL,
+  user_index integer NOT NULL,
   type game_user_type NOT NULL,
   created_at timestamp without time zone NOT NULL,
   updated_at timestamp without time zone NOT NULL,
   PRIMARY KEY (game_id, user_id)
+  UNIQUE (game_id, user_index)
 );
 
 CREATE INDEX game_user_user_game_idx ON game_user (user_id, game_id);

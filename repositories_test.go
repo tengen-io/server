@@ -58,20 +58,20 @@ func TestGameProvider_GetGamesByIds(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Len(t, res, 2)
-	assert.Equal(t, models.Invitation, res[0].State)
-	assert.Equal(t, models.InProgress, res[1].State)
+	assert.Equal(t, models.GameStateInvitation, res[0].State)
+	assert.Equal(t, models.GameStateInProgress, res[1].State)
 }
 
 func TestGameProvider_GetGamesByState(t *testing.T) {
 	db := MakeTestDb()
 	p := NewGameRepository(db, NoopBus{})
 
-	res, err := p.GetGamesByState([]models.GameState{models.Invitation})
+	res, err := p.GetGamesByState([]models.GameState{models.GameStateInvitation})
 	assert.NoError(t, err)
 	assert.True(t, len(res) > 0)
 	assert.Len(t, res, 1)
 
-	res, err = p.GetGamesByState([]models.GameState{models.Invitation, models.InProgress})
+	res, err = p.GetGamesByState([]models.GameState{models.GameStateInvitation, models.GameStateInProgress})
 	assert.NoError(t, err)
 	assert.True(t, len(res) > 1)
 }
@@ -97,11 +97,11 @@ func TestGameProvider_CreateInvitation(t *testing.T) {
 		},
 	}
 
-	res, err := p.CreateGame(identity, models.Standard, 19, models.Invitation)
+	res, err := p.CreateGame(identity, models.GameTypeStandard, 19, models.GameStateInvitation)
 
 	assert.NoError(t, err)
-	assert.Equal(t, models.Standard, res.Type)
-	assert.Equal(t, models.Invitation, res.State)
+	assert.Equal(t, models.GameTypeStandard, res.Type)
+	assert.Equal(t, models.GameStateInvitation, res.State)
 	assert.Equal(t, 19, res.BoardSize)
 }
 

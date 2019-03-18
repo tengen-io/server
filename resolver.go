@@ -41,7 +41,7 @@ type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.CreateGameInvitationPayload, error) {
 	identity, _ := ctx.Value(IdentityContextKey).(models.Identity)
-	game, err := r.game.CreateGame(identity, input.Type, input.BoardSize, models.Invitation)
+	game, err := r.game.CreateGame(identity, input.Type, input.BoardSize, models.GameStateInvitation)
 	if err != nil {
 		return nil, err
 	}

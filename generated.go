@@ -68,8 +68,9 @@ type ComplexityRoot struct {
 	}
 
 	GameUserEdge struct {
-		User func(childComplexity int) int
-		Type func(childComplexity int) int
+		Index func(childComplexity int) int
+		User  func(childComplexity int) int
+		Type  func(childComplexity int) int
 	}
 
 	Identity struct {
@@ -211,6 +212,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GameSubscriptionPayload.Event(childComplexity), true
+
+	case "GameUserEdge.Index":
+		if e.complexity.GameUserEdge.Index == nil {
+			break
+		}
+
+		return e.complexity.GameUserEdge.Index(childComplexity), true
 
 	case "GameUserEdge.User":
 		if e.complexity.GameUserEdge.User == nil {
@@ -558,6 +566,7 @@ type Game implements Node {
 
 # Relationships
 type GameUserEdge {
+    index: Int!
     user: User!
     type: GameUserEdgeType!
 }
@@ -1027,6 +1036,32 @@ func (ec *executionContext) _GameSubscriptionPayload_event(ctx context.Context, 
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _GameUserEdge_index(ctx context.Context, field graphql.CollectedField, obj *models.GameUserEdge) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "GameUserEdge",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Index, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _GameUserEdge_user(ctx context.Context, field graphql.CollectedField, obj *models.GameUserEdge) graphql.Marshaler {
@@ -2631,6 +2666,11 @@ func (ec *executionContext) _GameUserEdge(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("GameUserEdge")
+		case "index":
+			out.Values[i] = ec._GameUserEdge_index(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "user":
 			out.Values[i] = ec._GameUserEdge_user(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
