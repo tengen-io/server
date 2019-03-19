@@ -87,7 +87,7 @@ func teardownFixtures() {
 	if err != nil {
 		panic(err)
 	}
-	m.Down()
+	m.Drop()
 }
 
 func TestMain(m *testing.M) {

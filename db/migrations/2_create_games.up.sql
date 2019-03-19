@@ -20,7 +20,7 @@ CREATE TABLE game_user (
   type game_user_type NOT NULL,
   created_at timestamp without time zone NOT NULL,
   updated_at timestamp without time zone NOT NULL,
-  PRIMARY KEY (game_id, user_id)
+  PRIMARY KEY (game_id, user_id),
   UNIQUE (game_id, user_index)
 );
 
