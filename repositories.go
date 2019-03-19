@@ -108,13 +108,13 @@ func (p *GameRepository) CreateGame(identity models.Identity, gameType models.Ga
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
 
-	game := tx.QueryRowx("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, type, state, board_size", gameType, gameState, boardSize, ts, ts)
+	game := tx.QueryRow("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, type, state, board_size", gameType, gameState, boardSize, ts, ts)
 	err = game.Scan(&rv.Id, &rv.Type, &rv.State, &rv.BoardSize)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", rv.Id, identity.User.Id, 0, models.GameUserEdgeTypeOwner, ts, ts)
+	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", rv.Id, identity.User.Id, 0, models.GameUserEdgeTypeOwner, ts, ts)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (p *GameRepository) CreateGame(identity models.Identity, gameType models.Ga
 
 // TODO(eac): Validation? here or in the resolver
 func (p *GameRepository) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.Game, error) {
-	tx, err := p.db.BeginTx(context.TODO(), &sql.TxOptions{Isolation: sql.LevelSerializable})
+	tx, err := p.db.BeginTx(context.TODO(), &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 	if err != nil {
 		return nil, err
 	}
@@ -151,17 +151,32 @@ func (p *GameRepository) CreateGameUser(gameId string, userId string, edgeType m
 	gameUsers := make([]models.GameUserEdge, 0)
 	for rows.Next() {
 		var gameUser models.GameUserEdge
-		rows.Scan(&gameUser.User.Id, &gameUser.Index, &gameUser.Type)
+		err := rows.Scan(&gameUser.User.Id, &gameUser.Index, &gameUser.Type)
+		if err != nil {
+			return nil, err
+		}
+
 		gameUsers = append(gameUsers, gameUser)
 	}
-	nextIndex := gameUsers[len(gameUsers)-1].Index
+	nextIndex := gameUsers[len(gameUsers)-1].Index + 1
 
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
-	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", gameId, userId, nextIndex, edgeType, ts, ts)
+	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", gameId, userId, nextIndex, edgeType, ts, ts)
 	if err != nil {
 		return nil, err
 	}
+
+	newEdge := models.GameUserEdge{
+		Index: nextIndex,
+		Type: edgeType,
+		User: models.User{
+			NodeFields: models.NodeFields{
+				Id: userId,
+			},
+		},
+	}
+	gameUsers = append(gameUsers, newEdge)
 
 	game := tx.QueryRow("SELECT id, type, state FROM games WHERE id = $1", gameId)
 	err = game.Scan(&rv.Id, &rv.Type, &rv.State)
@@ -170,8 +185,17 @@ func (p *GameRepository) CreateGameUser(gameId string, userId string, edgeType m
 	}
 
 	newState, err := transitionGameState(rv, gameUsers)
+	if err != nil {
+		return nil, err
+	}
+
 	if newState != rv.State {
+		rv.State = newState
 		_, err = tx.Exec("UPDATE games SET state = $1 WHERE id = $2", newState, gameId)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = tx.Commit()

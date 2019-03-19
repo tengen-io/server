@@ -85,19 +85,26 @@ func TestGameProvider_CreateGameUser(t *testing.T) {
 	assert.Equal(t, "1", res.Id)
 }
 
-// func TestGameProvider_CreateGameUserStateChange(t *testing.T) {
-// 	db := MakeTestDb()
-// 	p := NewGameRepository(db, NoopBus{})
-// 	i := NewIdentityRepository(db, 4)
-// 	u := NewUserRepository(db)
-// 	id, err := i.CreateIdentity("testgameprovider_gameuserstatechange@tengen.io", "hunter2", "test user")
-// 	assert.NoError(t, err)
-// 	user, err := u.GetUserById("1")
-// 	assert.NoError(t, err)
-// 	game, err := p.CreateGame(*id, models.GameTypeStandard, 19, models.GameStateInvitation)
-// 	assert.NoError()
-// 	p.CreateGameUser(user, )
-// }
+func TestGameProvider_CreateGameUserStateChange(t *testing.T) {
+	db := MakeTestDb()
+	p := NewGameRepository(db, NoopBus{})
+	i := NewIdentityRepository(db, 4)
+	u := NewUserRepository(db)
+
+	id, err := i.CreateIdentity("testgameprovider_gameuserstatechange@tengen.io", "hunter2", "test user")
+	assert.NoError(t, err)
+
+	user, err := u.GetUserById("1")
+	assert.NoError(t, err)
+
+	game, err := p.CreateGame(*id, models.GameTypeStandard, 19, models.GameStateInvitation)
+	assert.NoError(t, err)
+	assert.Equal(t, game.State, models.GameStateInvitation)
+
+	game, err = p.CreateGameUser(game.Id, user.Id, models.GameUserEdgeTypePlayer)
+	assert.NoError(t, err)
+	assert.Equal(t, models.GameStateInProgress, game.State)
+}
 
 func TestGameProvider_CreateInvitation(t *testing.T) {
 	db := MakeTestDb()
