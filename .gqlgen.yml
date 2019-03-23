@@ -11,10 +11,6 @@ exec:
 model:
   filename: models/generated.go
   package: models
-resolver:
-  filename: gql/resolver.go
-  package: gql
-  type: Resolver
 
 models:
   User:
