@@ -83,10 +83,11 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		User  func(childComplexity int, id *string, name *string) int
-		Users func(childComplexity int, ids []string, names []string) int
-		Game  func(childComplexity int, id *string) int
-		Games func(childComplexity int, ids []string, states []models.GameState) int
+		Viewer func(childComplexity int) int
+		User   func(childComplexity int, id *string, name *string) int
+		Users  func(childComplexity int, ids []string, names []string) int
+		Game   func(childComplexity int, id *string) int
+		Games  func(childComplexity int, ids []string, states []models.GameState) int
 	}
 
 	User struct {
@@ -105,6 +106,7 @@ type MutationResolver interface {
 	JoinGame(ctx context.Context, gameID string) (*models.JoinGamePayload, error)
 }
 type QueryResolver interface {
+	Viewer(ctx context.Context) (*models.Identity, error)
 	User(ctx context.Context, id *string, name *string) (*models.User, error)
 	Users(ctx context.Context, ids []string, names []string) ([]*models.User, error)
 	Game(ctx context.Context, id *string) (*models.Game, error)
@@ -261,6 +263,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.JoinGame(childComplexity, args["gameId"].(string)), true
+
+	case "Query.Viewer":
+		if e.complexity.Query.Viewer == nil {
+			break
+		}
+
+		return e.complexity.Query.Viewer(childComplexity), true
 
 	case "Query.User":
 		if e.complexity.Query.User == nil {
@@ -505,6 +514,7 @@ type JoinGamePayload {
 }
 
 type Query {
+    viewer: Identity @hasAuth
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
     game(id: ID): Game
@@ -1135,6 +1145,29 @@ func (ec *executionContext) _Mutation_joinGame(ctx context.Context, field graphq
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOJoinGamePayload2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐJoinGamePayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Field:  field,
+		Args:   nil,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Viewer(rctx)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*models.Identity)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOIdentity2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐIdentity(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -2522,6 +2555,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "viewer":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_viewer(ctx, field)
+				return res
+			})
 		case "user":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -3405,6 +3449,17 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 	return ec.marshalOID2string(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOIdentity2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐIdentity(ctx context.Context, sel ast.SelectionSet, v models.Identity) graphql.Marshaler {
+	return ec._Identity(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOIdentity2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐIdentity(ctx context.Context, sel ast.SelectionSet, v *models.Identity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Identity(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOJoinGamePayload2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐJoinGamePayload(ctx context.Context, sel ast.SelectionSet, v models.JoinGamePayload) graphql.Marshaler {

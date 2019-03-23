@@ -14,6 +14,11 @@ import (
 	"strings"
 )
 
+type ContextKey = byte
+
+const (
+	IdentityContextKey ContextKey = iota
+)
 
 type ServerConfig struct {
 	Host            string
@@ -136,7 +141,7 @@ func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			ctx = context.WithValue(ctx, "identity", *identity)
+			ctx = context.WithValue(ctx, IdentityContextKey, *identity)
 			r = r.WithContext(ctx)
 		}
 
