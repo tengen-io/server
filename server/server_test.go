@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -65,12 +65,12 @@ func TestServer_RegistrationHandler(t *testing.T) {
 	}
 }
 
-func makeTestServer() *Server {
+func makeTestServer() *server {
 	db := MakeTestDb()
-	config := ServerConfig{
+	config := serverConfig{
 		"", 0, false,
 	}
 	duration, _ := time.ParseDuration("1 week")
 	identityProvider := NewIdentityRepository(db, 1)
-	return NewServer(&config, nil, NewAuthRepository(db, []byte("supersecret"), duration), identityProvider)
+	return newServer(&config, nil, NewAuthRepository(db, []byte("supersecret"), duration), identityProvider)
 }

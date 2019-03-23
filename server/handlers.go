@@ -1,14 +1,10 @@
-package main
+package server
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/99designs/gqlgen/handler"
 	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,47 +16,7 @@ const (
 	IdentityContextKey ContextKey = iota
 )
 
-type ServerConfig struct {
-	Host            string
-	Port            int
-	GraphiQLEnabled bool
-}
-
-type Server struct {
-	config           *ServerConfig
-	executableSchema graphql.ExecutableSchema
-	auth             *AuthRepository
-	identity         *IdentityRepository
-}
-
-func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *AuthRepository, identity *IdentityRepository) *Server {
-	return &Server{
-		config,
-		schema,
-		auth,
-		identity,
-	}
-}
-
-func (s *Server) Start() {
-	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
-	http.Handle("/register", enableCorsMiddleware(s.RegistrationHandler()))
-	http.Handle("/login", enableCorsMiddleware(s.LoginHandler()))
-	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/graphql"))
-
-	log.Printf("Listening on http://%s:%d", s.config.Host, s.config.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Host, s.config.Port), nil))
-}
-
-func enableCorsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *Server) LoginHandler() http.Handler {
+func (s *server) LoginHandler() http.Handler {
 	type credentials struct {
 		Email    string
 		Password string
@@ -103,7 +59,7 @@ func (s *Server) LoginHandler() http.Handler {
 	})
 }
 
-func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
+func (s *server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		authHeader := r.Header.Get("Authorization")
@@ -149,7 +105,7 @@ func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) RegistrationHandler() http.Handler {
+func (s *server) RegistrationHandler() http.Handler {
 	type input struct {
 		Email    string
 		Password string

@@ -6,12 +6,14 @@
 schema:
 - schema.graphql
 exec:
-  filename: generated.go
+  filename: server/generated.go
+  package: server
 model:
   filename: models/generated.go
   package: models
 resolver:
-  filename: resolver.go
+  filename: server/resolver.go
+  package: server
   type: Resolver
 
 models:
