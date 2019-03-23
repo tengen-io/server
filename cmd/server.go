@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/tengen-io/server/server"
+	"github.com/tengen-io/server/gql"
 )
 
 func init() {
@@ -18,5 +18,5 @@ var serverCmd = &cobra.Command{
 }
 
 func serve() {
-	server.Serve()
+	gql.Serve()
 }
