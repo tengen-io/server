@@ -29,9 +29,10 @@ type serverConfig struct {
 type server struct {
 	config           *serverConfig
 	executableSchema graphql.ExecutableSchema
-	auth             *AuthRepository
 	repo repository.Repository
 	bcryptCost int
+	signingKey []byte
+	jwtLifetime time.Duration
 }
 
 func (s *server) Start() {
@@ -52,18 +53,26 @@ func enableCorsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func newServer(config *serverConfig, schema graphql.ExecutableSchema, auth *AuthRepository, repo repository.Repository) *server {
+func newServer(config *serverConfig, schema graphql.ExecutableSchema, repo repository.Repository) *server {
 	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
 	if err != nil {
 		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
 	}
 
+	day, err := time.ParseDuration("24h")
+	if err != nil {
+		log.Fatal("could not parse auth key duration", err)
+	}
+
+	keyDuration := day * 7
+
 	return &server{
 		config,
 		schema,
-		auth,
 		repo,
 		bcryptCost,
+		getSigningKey(),
+		keyDuration,
 	}
 }
 
@@ -103,17 +112,6 @@ func makeSchema(repo repository.Repository, pubsub pubsub.Bus) graphql.Executabl
 	})
 }
 
-func makeAuth(db *sqlx.DB) *AuthRepository {
-	day, err := time.ParseDuration("24h")
-	if err != nil {
-		log.Fatal("could not parse auth key duration", err)
-	}
-
-	keyDuration := day * 7
-
-	return NewAuthRepository(db, getSigningKey(), keyDuration)
-}
-
 func newServerConfig() envConfig {
 	environment := os.Getenv("GO_ENV")
 
@@ -136,7 +134,7 @@ func getSigningKey() []byte {
 	return decoded
 }
 
-func makeServer(schema graphql.ExecutableSchema, auth *AuthRepository, repo repository.Repository) *server {
+func makeServer(schema graphql.ExecutableSchema, repo repository.Repository) *server {
 	config := newServerConfig()
 	tengenPort := os.Getenv("TENGEN_PORT")
 	port, err := strconv.Atoi(tengenPort)
@@ -150,17 +148,15 @@ func makeServer(schema graphql.ExecutableSchema, auth *AuthRepository, repo repo
 		GraphiQLEnabled: config.Environment == "development",
 	}
 
-	return newServer(serverConfig, schema, auth, repo)
+	return newServer(serverConfig, schema, repo)
 }
 
 func Serve() {
 	bus := makePubsub()
 	db := makeDb()
-	auth := makeAuth(db)
 	repo := repository.NewRepository(db)
 
 	schema := makeSchema(repo, bus)
-	s := makeServer(schema, auth, repo)
+	s := makeServer(schema, repo)
 	s.Start()
-
 }

@@ -22,18 +22,18 @@ func NewRepository(db *sqlx.DB) Repository {
 	}
 }
 
-func (m *Repository) WithTx(f func(r *Repository) error) error {
-	tx, err := m.db.Beginx()
+func (r *Repository) WithTx(f func(r *Repository) error) error {
+	tx, err := r.db.Beginx()
 	if err != nil {
 		return err
 	}
 
-	r := &Repository{
-		db: m.db,
+	rTx := &Repository{
+		db: r.db,
 		h:  tx,
 	}
 
-	err = f(r)
+	err = f(rTx)
 	if err != nil {
 		return err
 	}

@@ -40,13 +40,13 @@ func (s *server) LoginHandler() http.Handler {
 		}
 
 		// TODO(eac): find a way to differentiate between auth and db failure
-		identity, err := s.auth.CheckPasswordByEmail(credentials.Email, credentials.Password)
+		identity, err := s.checkPasswordByEmail(credentials.Email, credentials.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		token, err := s.auth.SignJWT(*identity)
+		token, err := s.signJWT(*identity)
 
 		w.Header().Set("Content-Type", "application/json")
 		out, err := json.Marshal(struct{ Token string }{token})
@@ -73,7 +73,7 @@ func (s *server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 			}
 
 			tokenStr := authParts[1]
-			token, err := s.auth.ValidateJWT(tokenStr)
+			token, err := s.validateJWT(tokenStr)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
@@ -147,7 +147,7 @@ func (s *server) RegistrationHandler() http.Handler {
 			return
 		}
 
-		token, err := s.auth.SignJWT(*identity)
+		token, err := s.signJWT(*identity)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

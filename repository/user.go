@@ -38,6 +38,28 @@ func (r *Repository) GetIdentityById(id int32) (*models.Identity, error) {
 	return &identity, nil
 }
 
+func (r *Repository) GetIdentityByEmail(email string) (*models.Identity, error) {
+	var identity models.Identity
+	row := r.h.QueryRowx("SELECT i.id, i.email, u.id, u.name FROM identities i, users u WHERE i.id = u.identity_id AND i.email = $1", email)
+	err := row.Scan(&identity.Id, &identity.Email, &identity.User.Id, &identity.User.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &identity, nil
+}
+
+func (r *Repository) GetPwHashForEmail(email string) ([]byte, error) {
+	row := r.h.QueryRowx("SELECT password_hash FROM identities WHERE email = $1", email)
+
+	var hash string
+	err := row.Scan(&hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(hash), nil
+}
+
 func (r *Repository) GetUserById(id string) (*models.User, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {

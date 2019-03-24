@@ -44,14 +44,14 @@ func (r *Repository) CreateGame(gameType models.GameType, boardSize int, gameSta
 
 // TODO(eac): Validation? here or in the resolver
 // TODO(eac): Need this anymore?
-func (p *Repository) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.Game, error) {
+func (r *Repository) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.Game, error) {
 	/*	tx, err := p.h.BeginTx(context.TODO(), &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 		if err != nil {
 			return nil, err
 		}
 		defer tx.Rollback() */
 
-	rows, err := p.h.Query("SELECT user_id, user_index, type FROM game_user WHERE game_id = $1 ORDER BY user_index ASC", gameId)
+	rows, err := r.h.Query("SELECT user_id, user_index, type FROM game_user WHERE game_id = $1 ORDER BY user_index ASC", gameId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (p *Repository) CreateGameUser(gameId string, userId string, edgeType model
 
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
-	_, err = p.h.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", gameId, userId, nextIndex, edgeType, ts, ts)
+	_, err = r.h.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", gameId, userId, nextIndex, edgeType, ts, ts)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (p *Repository) CreateGameUser(gameId string, userId string, edgeType model
 	}
 	gameUsers = append(gameUsers, newEdge)
 
-	game := p.h.QueryRowx("SELECT id, type, state FROM games WHERE id = $1", gameId)
+	game := r.h.QueryRowx("SELECT id, type, state FROM games WHERE id = $1", gameId)
 	err = game.Scan(&rv.Id, &rv.Type, &rv.State)
 	if err != nil {
 		return nil, err
@@ -96,14 +96,14 @@ func (p *Repository) CreateGameUser(gameId string, userId string, edgeType model
 	return &rv, nil
 }
 
-func (p *Repository) GetGameById(id string) (*models.Game, error) {
+func (r *Repository) GetGameById(id string) (*models.Game, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
 
 	var game models.Game
-	row := p.h.QueryRowx("SELECT * FROM games WHERE id = $1", idInt)
+	row := r.h.QueryRowx("SELECT * FROM games WHERE id = $1", idInt)
 	err = row.StructScan(&game)
 	if err != nil {
 		return nil, err
@@ -112,13 +112,13 @@ func (p *Repository) GetGameById(id string) (*models.Game, error) {
 	return &game, nil
 }
 
-func (p *Repository) GetUsersForGame(id string) ([]models.GameUserEdge, error) {
+func (r *Repository) GetUsersForGame(id string) ([]models.GameUserEdge, error) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := p.h.Query("SELECT type, user_id, name FROM game_user gu, users u WHERE game_id = $1 AND gu.user_id = u.id", idInt)
+	rows, err := r.h.Query("SELECT type, user_id, name FROM game_user gu, users u WHERE game_id = $1 AND gu.user_id = u.id", idInt)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (p *Repository) GetUsersForGame(id string) ([]models.GameUserEdge, error) {
 	return rv, nil
 }
 
-func (p *Repository) GetGamesByIds(ids []string) ([]*models.Game, error) {
+func (r *Repository) GetGamesByIds(ids []string) ([]*models.Game, error) {
 	idInts := make([]int, len(ids))
 	for i, id := range ids {
 		idInt, err := strconv.Atoi(id)
@@ -156,8 +156,8 @@ func (p *Repository) GetGamesByIds(ids []string) ([]*models.Game, error) {
 	args := make([]interface{}, 0)
 	args = append(args, fragArgs...)
 
-	query = p.h.Rebind(query)
-	rows, err := p.h.Queryx(query, args...)
+	query = r.h.Rebind(query)
+	rows, err := r.h.Queryx(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (p *Repository) GetGamesByIds(ids []string) ([]*models.Game, error) {
 	return rv, nil
 }
 
-func (p *Repository) GetGamesByState(states []models.GameState) ([]*models.Game, error) {
+func (r *Repository) GetGamesByState(states []models.GameState) ([]*models.Game, error) {
 	query, fragArgs, err := sqlx.In("SELECT * FROM games WHERE state IN (?)", states)
 	if err != nil {
 		return nil, err
@@ -185,8 +185,8 @@ func (p *Repository) GetGamesByState(states []models.GameState) ([]*models.Game,
 	args := make([]interface{}, 0)
 	args = append(args, fragArgs...)
 
-	query = p.h.Rebind(query)
-	rows, err := p.h.Queryx(query, args...)
+	query = r.h.Rebind(query)
+	rows, err := r.h.Queryx(query, args...)
 	if err != nil {
 		return nil, err
 	}
