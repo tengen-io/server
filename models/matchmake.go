@@ -3,7 +3,9 @@ package models
 type MatchmakingRequest struct {
 	NodeFields
 	Queue  string
-	UserId int64
+	User User
 	Rank   int
 	Delta  int
 }
+
+func (MatchmakingRequest) IsNode() {}

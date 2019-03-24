@@ -4,28 +4,21 @@ import (
 	"context"
 	"errors"
 	"github.com/tengen-io/server/models"
-	"github.com/tengen-io/server/pubsub"
 	"github.com/tengen-io/server/repository"
-	"log"
 )
 
 type Resolver struct {
 	repo   repository.Repository
-	pubsub pubsub.Bus
 }
 
-/*func (r *Resolver) Mutation() MutationResolver {
+func (r *Resolver) Mutation() MutationResolver {
 	return &mutationResolver{r}
-}*/
+}
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
 }
 func (r *Resolver) Game() GameResolver {
 	return &gameResolver{r}
-}
-
-func (r *Resolver) Subscription() SubscriptionResolver {
-	return &subscriptionResolver{r}
 }
 
 type gameResolver struct{ *Resolver }
@@ -35,6 +28,31 @@ func (r *gameResolver) Users(ctx context.Context, obj *models.Game) ([]models.Ga
 }
 
 type mutationResolver struct{ *Resolver }
+
+func (m mutationResolver) CreateMatchmakingRequest(ctx context.Context, input models.CreateMatchmakingRequestInput) (*models.CreateMatchmakingRequestPayload, error) {
+	identity, ok := ctx.Value(IdentityContextKey).(models.Identity)
+	if !ok {
+		return nil, errors.New("invalid user")
+	}
+
+	var rv *models.CreateMatchmakingRequestPayload
+	err := m.repo.WithTx(func(r *repository.Repository) error {
+		req, err := r.CreateMatchmakingRequest(identity.User, input.Delta)
+		rv.Request = req
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return rv, nil
+}
 
 type queryResolver struct{ *Resolver }
 
@@ -94,26 +112,3 @@ func (r *queryResolver) Games(ctx context.Context, ids []string, states []models
 	panic("not implemented")
 }
 
-type subscriptionResolver struct{ *Resolver }
-
-func (r *subscriptionResolver) Games(ctx context.Context, gameType *models.GameType) (<-chan *models.GameSubscriptionPayload, error) {
-	topic := "games_" + gameType.String()
-	channel := r.pubsub.Subscribe(topic)
-	rv := make(chan *models.GameSubscriptionPayload)
-
-	go func() {
-		for event := range channel {
-			if eventPayload, ok := event.Payload.(*models.Game); ok {
-				payload := &models.GameSubscriptionPayload{
-					Game:  *eventPayload,
-					Event: event.Event,
-				}
-				rv <- payload
-			} else {
-				log.Printf("recieved message %+v with unknown payload, expected models.Game", event)
-			}
-		}
-	}()
-
-	return rv, nil
-}

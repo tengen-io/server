@@ -7,7 +7,6 @@ import (
 	"github.com/99designs/gqlgen/handler"
 	"github.com/jmoiron/sqlx"
 	"github.com/tengen-io/server/db"
-	"github.com/tengen-io/server/pubsub"
 	"github.com/tengen-io/server/repository"
 	"log"
 	"net/http"
@@ -98,15 +97,10 @@ func makeDb() *sqlx.DB {
 	return db
 }
 
-func makePubsub() pubsub.Bus {
-	return pubsub.NewInMemoryBus()
-}
-
-func makeSchema(repo repository.Repository, pubsub pubsub.Bus) graphql.ExecutableSchema {
+func makeSchema(repo repository.Repository) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			repo:   repo,
-			pubsub: pubsub,
 		},
 		Directives: Directives(),
 	})
@@ -152,11 +146,10 @@ func makeServer(schema graphql.ExecutableSchema, repo repository.Repository) *se
 }
 
 func Serve() {
-	bus := makePubsub()
 	db := makeDb()
 	repo := repository.NewRepository(db)
 
-	schema := makeSchema(repo, bus)
+	schema := makeSchema(repo)
 	s := makeServer(schema, repo)
 	s.Start()
 }

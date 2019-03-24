@@ -12,15 +12,12 @@ type Node interface {
 	IsNode()
 }
 
-type CreateIdentityInput struct {
-	Email    *string `json:"email"`
-	Password string  `json:"password"`
-	Name     string  `json:"name"`
+type CreateMatchmakingRequestInput struct {
+	Delta int `json:"delta"`
 }
 
-type GameSubscriptionPayload struct {
-	Game  Game   `json:"game"`
-	Event string `json:"event"`
+type CreateMatchmakingRequestPayload struct {
+	Request *MatchmakingRequest `json:"request"`
 }
 
 type GameUserEdge struct {

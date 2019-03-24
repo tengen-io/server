@@ -25,3 +25,5 @@ models:
     model: github.com/tengen-io/server/models.GameType
   Timestamp:
     model: github.com/tengen-io/server/models.Timestamp
+  MatchmakingRequest:
+    model: github.com/tengen-io/server/models.MatchmakingRequest

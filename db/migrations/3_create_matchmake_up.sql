@@ -1,4 +1,4 @@
-CREATE TABLE matchmake_pool (
+CREATE TABLE matchmake_requests (
     id bigserial PRIMARY KEY,
     queue text NOT NULL,
     user_id integer REFERENCES users(id) NOT NULL,

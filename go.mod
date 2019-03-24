@@ -3,7 +3,6 @@ module github.com/tengen-io/server
 require (
 	github.com/99designs/gqlgen v0.8.2
 	github.com/Microsoft/go-winio v0.4.12 // indirect
-	github.com/cskr/pubsub v1.0.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect

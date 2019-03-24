@@ -49,6 +49,16 @@ type Game implements Node {
     users: [GameUserEdge!]
 }
 
+type MatchmakingRequest implements Node {
+    id: ID!
+    queue: String!
+    user: User
+    rank: Int!
+    delta: Int!
+    createdAt: Timestamp!
+    updatedAt: Timestamp
+}
+
 # Relationships
 type GameUserEdge {
     index: Int!
@@ -56,16 +66,12 @@ type GameUserEdge {
     type: GameUserEdgeType!
 }
 
-# Inputs
-input CreateIdentityInput {
-    email: String
-    password: String!
-    name: String!
+input CreateMatchmakingRequestInput {
+    delta: Int!
 }
 
-type GameSubscriptionPayload {
-    game: Game!
-    event: String!
+type CreateMatchmakingRequestPayload {
+    request: MatchmakingRequest
 }
 
 type Query {
@@ -76,8 +82,7 @@ type Query {
     viewer: Identity @hasAuth
 }
 
-# type Mutation { }
-
-type Subscription {
-    games(type: GameType): GameSubscriptionPayload!
+type Mutation {
+    createMatchmakingRequest(input: CreateMatchmakingRequestInput!): CreateMatchmakingRequestPayload! @hasAuth
 }
+

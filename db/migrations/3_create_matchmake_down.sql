@@ -1,1 +1,1 @@
-DROP TABLE matchmake_pool;
+DROP TABLE matchmake_requests;
