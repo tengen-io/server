@@ -12,15 +12,6 @@ type Node interface {
 	IsNode()
 }
 
-type CreateGameInvitationInput struct {
-	Type      GameType `json:"type"`
-	BoardSize int      `json:"boardSize"`
-}
-
-type CreateGameInvitationPayload struct {
-	Game *Game `json:"game"`
-}
-
 type CreateIdentityInput struct {
 	Email    *string `json:"email"`
 	Password string  `json:"password"`
@@ -36,10 +27,6 @@ type GameUserEdge struct {
 	Index int              `json:"index"`
 	User  User             `json:"user"`
 	Type  GameUserEdgeType `json:"type"`
-}
-
-type JoinGamePayload struct {
-	Game *Game `json:"game"`
 }
 
 type GameUserEdgeType string

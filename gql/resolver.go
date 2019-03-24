@@ -5,21 +5,20 @@ import (
 	"errors"
 	"github.com/tengen-io/server/models"
 	"github.com/tengen-io/server/pubsub"
+	"github.com/tengen-io/server/repository"
 	"log"
 )
 
-// THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
-
 type Resolver struct {
-	game     *GameRepository
+	repo     repository.Repository
 	identity *IdentityRepository
 	user     *UserRepository
 	pubsub   pubsub.Bus
 }
 
-func (r *Resolver) Mutation() MutationResolver {
+/*func (r *Resolver) Mutation() MutationResolver {
 	return &mutationResolver{r}
-}
+}*/
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
 }
@@ -34,34 +33,10 @@ func (r *Resolver) Subscription() SubscriptionResolver {
 type gameResolver struct{ *Resolver }
 
 func (r *gameResolver) Users(ctx context.Context, obj *models.Game) ([]models.GameUserEdge, error) {
-	return r.game.GetUsersForGame(obj.Id)
+	return r.repo.GetUsersForGame(obj.Id)
 }
 
 type mutationResolver struct{ *Resolver }
-
-func (r *mutationResolver) CreateGameInvitation(ctx context.Context, input *models.CreateGameInvitationInput) (*models.CreateGameInvitationPayload, error) {
-	identity, _ := ctx.Value(IdentityContextKey).(models.Identity)
-	game, err := r.game.CreateGame(identity, input.Type, input.BoardSize, models.GameStateInvitation)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.CreateGameInvitationPayload{Game: game}, nil
-}
-
-func (r *mutationResolver) JoinGame(ctx context.Context, gameId string) (*models.JoinGamePayload, error) {
-	identity, ok := ctx.Value(IdentityContextKey).(models.Identity)
-	if !ok {
-		return nil, errors.New("invalid user")
-	}
-
-	game, err := r.game.CreateGameUser(gameId, identity.Id, models.GameUserEdgeTypePlayer)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.JoinGamePayload{Game: game}, nil
-}
 
 type queryResolver struct{ *Resolver }
 
@@ -94,7 +69,7 @@ func (r *queryResolver) Viewer(ctx context.Context) (*models.Identity, error) {
 
 func (r *queryResolver) Game(ctx context.Context, id *string) (*models.Game, error) {
 	if id != nil {
-		game, err := r.game.GetGameById(*id)
+		game, err := r.repo.GetGameById(*id)
 		if err != nil {
 			return nil, err
 		}
@@ -111,11 +86,11 @@ func (r *queryResolver) Games(ctx context.Context, ids []string, states []models
 	}
 
 	if len(ids) > 0 {
-		return r.game.GetGamesByIds(ids)
+		return r.repo.GetGamesByIds(ids)
 	}
 
 	if len(states) > 0 {
-		return r.game.GetGamesByState(states)
+		return r.repo.GetGamesByState(states)
 	}
 
 	panic("not implemented")

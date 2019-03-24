@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/tengen-io/server/db"
 	"github.com/tengen-io/server/pubsub"
+	"github.com/tengen-io/server/repository"
 	"log"
 	"net/http"
 	"os"
@@ -49,7 +50,6 @@ func enableCorsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
 
 func newServer(config *serverConfig, schema graphql.ExecutableSchema, auth *AuthRepository, identity *IdentityRepository) *server {
 	return &server{
@@ -95,12 +95,12 @@ func makeIdentity(db *sqlx.DB) *IdentityRepository {
 	return NewIdentityRepository(db, bcryptCost)
 }
 
-func makeSchema(identity *IdentityRepository, user *UserRepository, game *GameRepository, pubsub pubsub.Bus) graphql.ExecutableSchema {
+func makeSchema(identity *IdentityRepository, user *UserRepository, repo repository.Repository, pubsub pubsub.Bus) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			identity: identity,
 			user:     user,
-			game:     game,
+			repo:     repo,
 			pubsub:   pubsub,
 		},
 		Directives: Directives(),
@@ -140,7 +140,6 @@ func getSigningKey() []byte {
 	return decoded
 }
 
-
 func makeServer(schema graphql.ExecutableSchema, auth *AuthRepository, identity *IdentityRepository) *server {
 	config := newServerConfig()
 	tengenPort := os.Getenv("TENGEN_PORT")
@@ -164,9 +163,9 @@ func Serve() {
 	auth := makeAuth(db)
 	identity := makeIdentity(db)
 	user := NewUserRepository(db)
-	game := NewGameRepository(db, bus)
+	repo := repository.NewRepository(db)
 
-	schema := makeSchema(identity, user, game, bus)
+	schema := makeSchema(identity, user, repo, bus)
 
 	s := makeServer(schema, auth, identity)
 	s.Start()

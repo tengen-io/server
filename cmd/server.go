@@ -10,7 +10,7 @@ func init() {
 }
 
 var serverCmd = &cobra.Command{
-	Use: "server",
+	Use:   "server",
 	Short: "runs the tengen.io server",
 	Run: func(cmd *cobra.Command, args []string) {
 		serve()

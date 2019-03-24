@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-type NoopBus struct {}
+type NoopBus struct{}
 
 func (NoopBus) Subscribe(topic string) <-chan pubsub.Event {
 	panic("not implemented")
 }
 
-func (NoopBus) Publish(event pubsub.Event, topics ...string) { }
+func (NoopBus) Publish(event pubsub.Event, topics ...string) {}
 
 func TestAuth_SignAndVerifyJWT(t *testing.T) {
 	db := MakeTestDb()

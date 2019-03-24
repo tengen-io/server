@@ -9,8 +9,8 @@ import (
 
 func Test_transitionGameState(t *testing.T) {
 	testCases := []struct {
-		name string
-		state models.GameState
+		name     string
+		state    models.GameState
 		gameType models.GameType
 		numUsers int
 		newState models.GameState
@@ -32,8 +32,8 @@ func Test_transitionGameState(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			g := models.Game{
-				State: testCase.state,
-				Type: testCase.gameType,
+				State:     testCase.state,
+				Type:      testCase.gameType,
 				BoardSize: 19,
 				NodeFields: models.NodeFields{
 					Id: "1",
@@ -44,7 +44,7 @@ func Test_transitionGameState(t *testing.T) {
 			for i := 0; i < testCase.numUsers; i++ {
 				user := models.GameUserEdge{
 					Index: i,
-					Type: models.GameUserEdgeTypePlayer,
+					Type:  models.GameUserEdgeTypePlayer,
 					User: models.User{
 						Name: "test user",
 						NodeFields: models.NodeFields{

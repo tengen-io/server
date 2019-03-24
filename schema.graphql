@@ -8,7 +8,7 @@ enum GameType {
 }
 
 enum GameState {
-    INVITATION
+    NEGOTIATION
     IN_PROGRESS
     FINISHED
 }
@@ -63,19 +63,6 @@ input CreateIdentityInput {
     name: String!
 }
 
-input CreateGameInvitationInput {
-    type: GameType!
-    boardSize: Int!
-}
-
-type CreateGameInvitationPayload {
-    game: Game
-}
-
-type JoinGamePayload {
-    game: Game
-}
-
 type GameSubscriptionPayload {
     game: Game!
     event: String!
@@ -89,10 +76,7 @@ type Query {
     viewer: Identity @hasAuth
 }
 
-type Mutation {
-    createGameInvitation(input: CreateGameInvitationInput): CreateGameInvitationPayload @hasAuth
-    joinGame(gameId: ID!): JoinGamePayload @hasAuth
-}
+# type Mutation { }
 
 type Subscription {
     games(type: GameType): GameSubscriptionPayload!
