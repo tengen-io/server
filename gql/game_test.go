@@ -1,6 +1,6 @@
 package gql
 
-import (
+/*import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tengen-io/server/models"
 	"strconv"
@@ -61,4 +61,4 @@ func Test_transitionGameState(t *testing.T) {
 			assert.Equal(t, newState, testCase.newState)
 		})
 	}
-}
+} */

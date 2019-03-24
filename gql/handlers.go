@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -91,7 +92,7 @@ func (s *server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			identity, err := s.identity.GetIdentityById(int32(idInt))
+			identity, err := s.repo.GetIdentityById(int32(idInt))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -139,7 +140,8 @@ func (s *server) RegistrationHandler() http.Handler {
 		}
 
 		// TODO(eac): Distinguish between database errors?
-		identity, err := s.identity.CreateIdentity(in.Email, in.Password, in.Name)
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), s.bcryptCost)
+		identity, err := s.repo.CreateIdentity(in.Email, passwordHash, in.Name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

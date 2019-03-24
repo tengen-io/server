@@ -11,8 +11,6 @@ import (
 
 type Resolver struct {
 	repo     repository.Repository
-	identity *IdentityRepository
-	user     *UserRepository
 	pubsub   pubsub.Bus
 }
 
@@ -42,7 +40,7 @@ type queryResolver struct{ *Resolver }
 
 func (r *queryResolver) User(ctx context.Context, id *string, name *string) (*models.User, error) {
 	if id != nil {
-		user, err := r.user.GetUserById(*id)
+		user, err := r.repo.GetUserById(*id)
 		if err != nil {
 			return nil, err
 		}

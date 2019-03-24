@@ -30,7 +30,8 @@ type server struct {
 	config           *serverConfig
 	executableSchema graphql.ExecutableSchema
 	auth             *AuthRepository
-	identity         *IdentityRepository
+	repo repository.Repository
+	bcryptCost int
 }
 
 func (s *server) Start() {
@@ -51,12 +52,18 @@ func enableCorsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func newServer(config *serverConfig, schema graphql.ExecutableSchema, auth *AuthRepository, identity *IdentityRepository) *server {
+func newServer(config *serverConfig, schema graphql.ExecutableSchema, auth *AuthRepository, repo repository.Repository) *server {
+	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
+	if err != nil {
+		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
+	}
+
 	return &server{
 		config,
 		schema,
 		auth,
-		identity,
+		repo,
+		bcryptCost,
 	}
 }
 
@@ -86,20 +93,9 @@ func makePubsub() pubsub.Bus {
 	return pubsub.NewInMemoryBus()
 }
 
-func makeIdentity(db *sqlx.DB) *IdentityRepository {
-	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
-	if err != nil {
-		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
-	}
-
-	return NewIdentityRepository(db, bcryptCost)
-}
-
-func makeSchema(identity *IdentityRepository, user *UserRepository, repo repository.Repository, pubsub pubsub.Bus) graphql.ExecutableSchema {
+func makeSchema(repo repository.Repository, pubsub pubsub.Bus) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
-			identity: identity,
-			user:     user,
 			repo:     repo,
 			pubsub:   pubsub,
 		},
@@ -140,7 +136,7 @@ func getSigningKey() []byte {
 	return decoded
 }
 
-func makeServer(schema graphql.ExecutableSchema, auth *AuthRepository, identity *IdentityRepository) *server {
+func makeServer(schema graphql.ExecutableSchema, auth *AuthRepository, repo repository.Repository) *server {
 	config := newServerConfig()
 	tengenPort := os.Getenv("TENGEN_PORT")
 	port, err := strconv.Atoi(tengenPort)
@@ -154,20 +150,17 @@ func makeServer(schema graphql.ExecutableSchema, auth *AuthRepository, identity 
 		GraphiQLEnabled: config.Environment == "development",
 	}
 
-	return newServer(serverConfig, schema, auth, identity)
+	return newServer(serverConfig, schema, auth, repo)
 }
 
 func Serve() {
 	bus := makePubsub()
 	db := makeDb()
 	auth := makeAuth(db)
-	identity := makeIdentity(db)
-	user := NewUserRepository(db)
 	repo := repository.NewRepository(db)
 
-	schema := makeSchema(identity, user, repo, bus)
-
-	s := makeServer(schema, auth, identity)
+	schema := makeSchema(repo, bus)
+	s := makeServer(schema, auth, repo)
 	s.Start()
 
 }
