@@ -66,9 +66,9 @@ func Test_tick(t *testing.T) {
 func r(id, user int64, rank, delta int) models.MatchmakingRequest {
 	return models.MatchmakingRequest{
 		NodeFields: models.NodeFields{Id: strconv.FormatInt(id, 10)},
-		Queue: "",
-		UserId: user,
-		Rank: rank,
-		Delta: delta,
+		Queue:      "",
+		UserId:     user,
+		Rank:       rank,
+		Delta:      delta,
 	}
 }

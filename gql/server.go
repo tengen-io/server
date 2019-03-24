@@ -29,10 +29,10 @@ type serverConfig struct {
 type server struct {
 	config           *serverConfig
 	executableSchema graphql.ExecutableSchema
-	repo repository.Repository
-	bcryptCost int
-	signingKey []byte
-	jwtLifetime time.Duration
+	repo             repository.Repository
+	bcryptCost       int
+	signingKey       []byte
+	jwtLifetime      time.Duration
 }
 
 func (s *server) Start() {
@@ -105,8 +105,8 @@ func makePubsub() pubsub.Bus {
 func makeSchema(repo repository.Repository, pubsub pubsub.Bus) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
-			repo:     repo,
-			pubsub:   pubsub,
+			repo:   repo,
+			pubsub: pubsub,
 		},
 		Directives: Directives(),
 	})

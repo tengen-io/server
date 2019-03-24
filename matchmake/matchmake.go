@@ -84,7 +84,7 @@ func (m *matchmaker) run() {
 			log.Printf("matchmaking done. matches: %d", len(matches))
 		}
 		duration := time.Since(start)
-		log.Printf("elapsed: %dms", duration / time.Millisecond)
+		log.Printf("elapsed: %dms", duration/time.Millisecond)
 
 		for _, match := range matches {
 			m.pool.match(match.i, match.j)
@@ -149,7 +149,6 @@ func Start() {
 	db := makeDb()
 	pool := DbPool{
 		repo: repository.NewRepository(db),
-
 	}
 
 	log.Printf("starting matchmaker")
@@ -193,4 +192,3 @@ func makeDb() *sqlx.DB {
 
 	return db
 }
-

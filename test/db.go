@@ -32,7 +32,7 @@ func TestMain(m *testing.M, suite string) {
 	db := initializeTestDB(suite)
 
 	setupFixtures(db)
-//	defer teardownFixtures(db)
+	//	defer teardownFixtures(db)
 	rv := m.Run()
 
 	os.Exit(rv)
@@ -125,4 +125,3 @@ func teardownFixtures(db *sqlx.DB) {
 	}
 	m.Drop()
 }
-

@@ -76,7 +76,7 @@ func (r *Repository) CreateGameUser(gameId string, userId string, edgeType model
 	}
 
 	newEdge := models.GameUserEdge{
-		Type:  edgeType,
+		Type: edgeType,
 		User: models.User{
 			NodeFields: models.NodeFields{
 				Id: userId,

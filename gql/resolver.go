@@ -10,8 +10,8 @@ import (
 )
 
 type Resolver struct {
-	repo     repository.Repository
-	pubsub   pubsub.Bus
+	repo   repository.Repository
+	pubsub pubsub.Bus
 }
 
 /*func (r *Resolver) Mutation() MutationResolver {
