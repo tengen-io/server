@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/tengen-io/server/repository"
+	"github.com/tengen-io/server/test"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestServer_LoginHandler(t *testing.T) {
@@ -66,11 +67,14 @@ func TestServer_RegistrationHandler(t *testing.T) {
 }
 
 func makeTestServer() *server {
-	db := MakeTestDb()
+	db := test.DB()
 	config := serverConfig{
 		"", 0, false,
 	}
-	duration, _ := time.ParseDuration("1 week")
-	identityProvider := NewIdentityRepository(db, 1)
-	return newServer(&config, nil, NewAuthRepository(db, []byte("supersecret"), duration), identityProvider)
+	repo := repository.NewRepository(db)
+	return newServer(&config, nil, repo)
+}
+
+func TestMain(m *testing.M) {
+	test.TestMain(m, "gql")
 }

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestGameRepository_GetGamesByIds(t *testing.T) {
+func TestRepository_GetGamesByIds(t *testing.T) {
 	db := test.DB()
 	r := NewRepository(db)
 
@@ -20,7 +20,7 @@ func TestGameRepository_GetGamesByIds(t *testing.T) {
 	assert.Equal(t, models.GameStateInProgress, res[1].State)
 }
 
-func TestGameRepository_GetGamesByState(t *testing.T) {
+func TestRepository_GetGamesByState(t *testing.T) {
 	db := test.DB()
 	r := NewRepository(db)
 
@@ -34,7 +34,7 @@ func TestGameRepository_GetGamesByState(t *testing.T) {
 	assert.True(t, len(res) > 1)
 }
 
-func TestGameRepository_CreateGameUser(t *testing.T) {
+func TestRepository_CreateGameUser(t *testing.T) {
 	db := test.DB()
 	p := NewRepository(db)
 
@@ -43,7 +43,7 @@ func TestGameRepository_CreateGameUser(t *testing.T) {
 	assert.Equal(t, "1", res.Id)
 }
 
-func TestGameRepository_CreateGameUserStateChange(t *testing.T) {
+func TestRepository_CreateGameUserStateChange(t *testing.T) {
 	db := test.DB()
 	r := NewRepository(db)
 
@@ -64,7 +64,7 @@ func TestGameRepository_CreateGameUserStateChange(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestGameRepository_CreateInvitation(t *testing.T) {
+func TestRepository_CreateInvitation(t *testing.T) {
 	db := test.DB()
 	r := NewRepository(db)
 
@@ -84,7 +84,7 @@ func TestGameRepository_CreateInvitation(t *testing.T) {
 	assert.Equal(t, 19, res.BoardSize)
 }
 
-func TestIdentityRepository_GetIdentityById(t *testing.T) {
+func TestRepository_GetIdentityById(t *testing.T) {
 	db := test.DB()
 	r := NewRepository(db)
 	res, err := r.GetIdentityById(1)
@@ -94,7 +94,7 @@ func TestIdentityRepository_GetIdentityById(t *testing.T) {
 	assert.Equal(t, res.Name, "Test User 1")
 }
 
-func TestIdentityRepository_CreateIdentity(t *testing.T) {
+func TestRepository_CreateIdentity(t *testing.T) {
 	db := test.DB()
 	p := NewRepository(db)
 	hash, err := bcrypt.GenerateFromPassword([]byte("hunter2"), 4)
@@ -106,7 +106,7 @@ func TestIdentityRepository_CreateIdentity(t *testing.T) {
 	assert.Equal(t, "Test User CreateIdentity", res.Name)
 }
 
-func TestUserRepository_GetUserById(t *testing.T) {
+func TestRepository_GetUserById(t *testing.T) {
 	db := test.DB()
 	p := NewRepository(db)
 

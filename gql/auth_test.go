@@ -5,13 +5,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tengen-io/server/models"
 	"testing"
-	"time"
 )
 
-func TestAuth_SignAndVerifyJWT(t *testing.T) {
-	db := MakeTestDb()
-	duration, _ := time.ParseDuration("1 week")
-	auth := NewAuthRepository(db, []byte("supersecret"), duration)
+func TestServer_SignAndVerifyJWT(t *testing.T) {
+	server := makeTestServer()
 
 	user := models.Identity{
 		NodeFields: models.NodeFields{
@@ -20,10 +17,10 @@ func TestAuth_SignAndVerifyJWT(t *testing.T) {
 		Email: "test@test.com",
 	}
 
-	tokenStr, err := auth.SignJWT(user)
+	tokenStr, err := server.signJWT(user)
 	assert.NoError(t, err)
 
-	token, err := auth.ValidateJWT(tokenStr)
+	token, err := server.validateJWT(tokenStr)
 	assert.NoError(t, err)
 
 	claims, ok := token.Claims.(*jwt.StandardClaims)
@@ -32,11 +29,8 @@ func TestAuth_SignAndVerifyJWT(t *testing.T) {
 	assert.Equal(t, claims.Issuer, "tengen.io")
 }
 
-func TestAuth_ValidateInvalidJWT(t *testing.T) {
-	db := MakeTestDb()
-	duration, _ := time.ParseDuration("1 week")
-	auth := NewAuthRepository(db, []byte("supersecret"), duration)
-
-	_, err := auth.ValidateJWT("lol this wont work")
+func TestServer_ValidateInvalidJWT(t *testing.T) {
+	server := makeTestServer()
+	_, err := server.validateJWT("lol this wont work")
 	assert.Error(t, err)
 }
