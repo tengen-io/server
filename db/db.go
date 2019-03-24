@@ -21,7 +21,7 @@ func (c *PostgresDBConfig) Url() string {
 	return fmt.Sprintf(dbUrlFmt, c.User, c.Password, c.Host, c.Port, c.Database)
 }
 
-func NewPostgresDb(config *PostgresDBConfig) (*sqlx.DB, error) {
+func NewPostgresDb(config PostgresDBConfig) (*sqlx.DB, error) {
 	conn, err := sqlx.Open("postgres", config.Url())
 	if err != nil {
 		return nil, err

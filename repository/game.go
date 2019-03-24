@@ -20,7 +20,7 @@ func (r *Repository) CreateGame(gameType models.GameType, boardSize int, gameSta
 		return nil, err
 	}
 
-	insertStmt, err := r.h.Prepare("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)")
+	insertStmt, err := r.h.Prepare("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)")
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (r *Repository) CreateGameUser(gameId string, userId string, edgeType model
 		}
 		defer tx.Rollback() */
 
-	rows, err := r.h.Query("SELECT user_id, user_index, type FROM game_user WHERE game_id = $1 ORDER BY user_index ASC", gameId)
+	rows, err := r.h.Query("SELECT user_id, type FROM game_user WHERE game_id = $1", gameId)
 	if err != nil {
 		return nil, err
 	}
@@ -60,24 +60,22 @@ func (r *Repository) CreateGameUser(gameId string, userId string, edgeType model
 	gameUsers := make([]models.GameUserEdge, 0)
 	for rows.Next() {
 		var gameUser models.GameUserEdge
-		err := rows.Scan(&gameUser.User.Id, &gameUser.Index, &gameUser.Type)
+		err := rows.Scan(&gameUser.User.Id, &gameUser.Type)
 		if err != nil {
 			return nil, err
 		}
 
 		gameUsers = append(gameUsers, gameUser)
 	}
-	nextIndex := gameUsers[len(gameUsers)-1].Index + 1
 
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
-	_, err = r.h.Exec("INSERT INTO game_user (game_id, user_id, user_index, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)", gameId, userId, nextIndex, edgeType, ts, ts)
+	_, err = r.h.Exec("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", gameId, userId, edgeType, ts, ts)
 	if err != nil {
 		return nil, err
 	}
 
 	newEdge := models.GameUserEdge{
-		Index: nextIndex,
 		Type:  edgeType,
 		User: models.User{
 			NodeFields: models.NodeFields{

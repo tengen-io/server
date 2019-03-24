@@ -178,7 +178,7 @@ func makeDb() *sqlx.DB {
 		log.Fatal("Cold not parse TENGEN_DB_PORT")
 	}
 
-	config := &db.PostgresDBConfig{
+	config := db.PostgresDBConfig{
 		Host:     os.Getenv("TENGEN_DB_HOST"),
 		Port:     port,
 		User:     os.Getenv("TENGEN_DB_USER"),
