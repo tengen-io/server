@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/lib/pq"
 	"github.com/tengen-io/server/db"
+	"github.com/tengen-io/server/pubsub"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"os"
@@ -20,10 +21,15 @@ const (
 	Password = "hunter2"
 )
 
+var ps *pubsub.DbPubSub
 var dbHandle *sqlx.DB
 
 func DB() *sqlx.DB {
 	return dbHandle
+}
+
+func PubSub() *pubsub.DbPubSub {
+	return ps
 }
 
 func TestMain(m *testing.M, suite string) {
@@ -77,6 +83,7 @@ func initializeTestDB(name string) *sqlx.DB {
 
 	dbHandle = rv
 
+	ps = pubsub.NewDbPubSub(config.Url())
 	return rv
 }
 

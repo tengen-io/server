@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+type MatchmakingRequestsPayload interface {
+	IsMatchmakingRequestsPayload()
+}
+
 type Node interface {
 	IsNode()
 }
@@ -24,6 +28,61 @@ type GameUserEdge struct {
 	Index int              `json:"index"`
 	User  User             `json:"user"`
 	Type  GameUserEdgeType `json:"type"`
+}
+
+type MatchmakingRequestCompletePayload struct {
+	Game Game `json:"game"`
+}
+
+func (MatchmakingRequestCompletePayload) IsMatchmakingRequestsPayload() {}
+
+type MatchmakingRequestPayload struct {
+	Requests []MatchmakingRequest `json:"requests"`
+}
+
+func (MatchmakingRequestPayload) IsMatchmakingRequestsPayload() {}
+
+type Event string
+
+const (
+	EventCreate Event = "CREATE"
+	EventUpdate Event = "UPDATE"
+	EventDelete Event = "DELETE"
+)
+
+var AllEvent = []Event{
+	EventCreate,
+	EventUpdate,
+	EventDelete,
+}
+
+func (e Event) IsValid() bool {
+	switch e {
+	case EventCreate, EventUpdate, EventDelete:
+		return true
+	}
+	return false
+}
+
+func (e Event) String() string {
+	return string(e)
+}
+
+func (e *Event) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Event(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Event", str)
+	}
+	return nil
+}
+
+func (e Event) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type GameUserEdgeType string

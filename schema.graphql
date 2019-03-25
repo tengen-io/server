@@ -18,6 +18,12 @@ enum GameUserEdgeType {
     PLAYER
 }
 
+enum Event {
+    CREATE
+    UPDATE
+    DELETE
+}
+
 interface Node {
     id: ID!
     createdAt: Timestamp!
@@ -74,6 +80,16 @@ type CreateMatchmakingRequestPayload {
     request: MatchmakingRequest
 }
 
+type MatchmakingRequestPayload {
+    requests: [MatchmakingRequest!]
+}
+
+type MatchmakingRequestCompletePayload {
+    game: Game!
+}
+
+union MatchmakingRequestsPayload = MatchmakingRequestPayload | MatchmakingRequestCompletePayload
+
 type Query {
     game(id: ID): Game
     games(ids: [ID!], states: [GameState!]): [Game]
@@ -86,3 +102,6 @@ type Mutation {
     createMatchmakingRequest(input: CreateMatchmakingRequestInput!): CreateMatchmakingRequestPayload! @hasAuth
 }
 
+type Subscription {
+    matchmakingRequests(user: ID!): MatchmakingRequestsPayload
+}

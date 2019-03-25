@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/pubsub"
 	"github.com/tengen-io/server/repository"
+	"log"
 )
 
 type Resolver struct {
-	repo   repository.Repository
+	repo   *repository.Repository
 }
 
 func (r *Resolver) Mutation() MutationResolver {
@@ -19,6 +21,9 @@ func (r *Resolver) Query() QueryResolver {
 }
 func (r *Resolver) Game() GameResolver {
 	return &gameResolver{r}
+}
+func (r *Resolver) Subscription() SubscriptionResolver {
+	return &subscriptionResolver{r}
 }
 
 type gameResolver struct{ *Resolver }
@@ -35,12 +40,13 @@ func (m mutationResolver) CreateMatchmakingRequest(ctx context.Context, input mo
 		return nil, errors.New("invalid user")
 	}
 
-	var rv *models.CreateMatchmakingRequestPayload
+	var rv models.CreateMatchmakingRequestPayload
 	err := m.repo.WithTx(func(r *repository.Repository) error {
 		req, err := r.CreateMatchmakingRequest(identity.User, input.Delta)
 		rv.Request = req
 
 		if err != nil {
+			log.Println("unable to create mm request", err)
 			return err
 		}
 
@@ -48,10 +54,11 @@ func (m mutationResolver) CreateMatchmakingRequest(ctx context.Context, input mo
 	})
 
 	if err != nil {
+		log.Println("unable to commit mm txn", err)
 		return nil, err
 	}
 
-	return rv, nil
+	return &rv, nil
 }
 
 type queryResolver struct{ *Resolver }
@@ -110,5 +117,36 @@ func (r *queryResolver) Games(ctx context.Context, ids []string, states []models
 	}
 
 	panic("not implemented")
+}
+
+type subscriptionResolver struct{ *Resolver }
+
+func (r *subscriptionResolver) MatchmakingRequests(ctx context.Context, user string) (<-chan models.MatchmakingRequestsPayload, error) {
+	rv := make(chan models.MatchmakingRequestsPayload, 5)
+	c := r.repo.Subscribe(pubsub.MkTopic(pubsub.TopicCategoryMatchmakeRequests, user))
+
+	go func() {
+		for event := range c {
+			gameId, ok := event.Payload["game"].(string)
+			if !ok {
+				// TODO: log
+				return
+			}
+			game, err := r.repo.GetGameById(gameId)
+
+			if err != nil {
+				// TODO: log
+				return
+			}
+
+			payload := &models.MatchmakingRequestCompletePayload{
+				Game: *game,
+			}
+
+			rv <- payload
+		}
+	}()
+
+	return rv, nil
 }
 

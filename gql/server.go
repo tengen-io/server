@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
-	"github.com/jmoiron/sqlx"
 	"github.com/tengen-io/server/db"
+	"github.com/tengen-io/server/pubsub"
 	"github.com/tengen-io/server/repository"
 	"log"
 	"net/http"
@@ -28,7 +28,7 @@ type serverConfig struct {
 type server struct {
 	config           *serverConfig
 	executableSchema graphql.ExecutableSchema
-	repo             repository.Repository
+	repo             *repository.Repository
 	bcryptCost       int
 	signingKey       []byte
 	jwtLifetime      time.Duration
@@ -52,7 +52,7 @@ func enableCorsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func newServer(config *serverConfig, schema graphql.ExecutableSchema, repo repository.Repository) *server {
+func newServer(config *serverConfig, schema graphql.ExecutableSchema, repo *repository.Repository) *server {
 	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
 	if err != nil {
 		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
@@ -75,7 +75,7 @@ func newServer(config *serverConfig, schema graphql.ExecutableSchema, repo repos
 	}
 }
 
-func makeDb() *sqlx.DB {
+func makeRepo() *repository.Repository {
 	port, err := strconv.Atoi(os.Getenv("TENGEN_DB_PORT"))
 	if err != nil {
 		log.Fatal("Cold not parse TENGEN_DB_PORT")
@@ -94,10 +94,13 @@ func makeDb() *sqlx.DB {
 		log.Fatal("Unable to connect to DB.", err)
 	}
 
-	return db
+	ps := pubsub.NewDbPubSub(config.Url())
+	ps.Start()
+
+	return repository.NewRepository(db, ps)
 }
 
-func makeSchema(repo repository.Repository) graphql.ExecutableSchema {
+func makeSchema(repo *repository.Repository) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
 			repo:   repo,
@@ -128,7 +131,7 @@ func getSigningKey() []byte {
 	return decoded
 }
 
-func makeServer(schema graphql.ExecutableSchema, repo repository.Repository) *server {
+func makeServer(schema graphql.ExecutableSchema, repo *repository.Repository) *server {
 	config := newServerConfig()
 	tengenPort := os.Getenv("TENGEN_PORT")
 	port, err := strconv.Atoi(tengenPort)
@@ -146,8 +149,7 @@ func makeServer(schema graphql.ExecutableSchema, repo repository.Repository) *se
 }
 
 func Serve() {
-	db := makeDb()
-	repo := repository.NewRepository(db)
+	repo := makeRepo()
 
 	schema := makeSchema(repo)
 	s := makeServer(schema, repo)

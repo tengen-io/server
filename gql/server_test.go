@@ -67,11 +67,10 @@ func TestServer_RegistrationHandler(t *testing.T) {
 }
 
 func makeTestServer() *server {
-	db := test.DB()
 	config := serverConfig{
 		"", 0, false,
 	}
-	repo := repository.NewRepository(db)
+	repo := repository.NewRepository(test.DB(), test.PubSub())
 	return newServer(&config, nil, repo)
 }
 

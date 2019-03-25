@@ -9,8 +9,7 @@ import (
 )
 
 func TestRepository_GetGamesByIds(t *testing.T) {
-	db := test.DB()
-	r := NewRepository(db)
+	r := NewRepository(test.DB(), test.PubSub())
 
 	res, err := r.GetGamesByIds([]string{"1", "2"})
 	assert.NoError(t, err)
@@ -21,8 +20,7 @@ func TestRepository_GetGamesByIds(t *testing.T) {
 }
 
 func TestRepository_GetGamesByState(t *testing.T) {
-	db := test.DB()
-	r := NewRepository(db)
+	r := NewRepository(test.DB(), test.PubSub())
 
 	res, err := r.GetGamesByState([]models.GameState{models.GameStateNegotiation})
 	assert.NoError(t, err)
@@ -35,17 +33,15 @@ func TestRepository_GetGamesByState(t *testing.T) {
 }
 
 func TestRepository_CreateGameUser(t *testing.T) {
-	db := test.DB()
-	p := NewRepository(db)
+	r := NewRepository(test.DB(), test.PubSub())
 
-	res, err := p.CreateGameUser("1", "1", models.GameUserEdgeTypePlayer)
+	res, err := r.CreateGameUser("1", "1", models.GameUserEdgeTypePlayer)
 	assert.NoError(t, err)
 	assert.Equal(t, "1", res.Id)
 }
 
 func TestRepository_CreateGameUserStateChange(t *testing.T) {
-	db := test.DB()
-	r := NewRepository(db)
+	r := NewRepository(test.DB(), test.PubSub())
 
 	hash, err := bcrypt.GenerateFromPassword([]byte("hunter2"), 4)
 	assert.NoError(t, err)
@@ -65,8 +61,7 @@ func TestRepository_CreateGameUserStateChange(t *testing.T) {
 }
 
 func TestRepository_CreateInvitation(t *testing.T) {
-	db := test.DB()
-	r := NewRepository(db)
+	r := NewRepository(test.DB(), test.PubSub())
 
 	identity := models.Identity{
 		User: models.User{
@@ -85,8 +80,8 @@ func TestRepository_CreateInvitation(t *testing.T) {
 }
 
 func TestRepository_GetIdentityById(t *testing.T) {
-	db := test.DB()
-	r := NewRepository(db)
+	r := NewRepository(test.DB(), test.PubSub())
+
 	res, err := r.GetIdentityById(1)
 	assert.NoError(t, err)
 
@@ -95,11 +90,11 @@ func TestRepository_GetIdentityById(t *testing.T) {
 }
 
 func TestRepository_CreateIdentity(t *testing.T) {
-	db := test.DB()
-	p := NewRepository(db)
+	r := NewRepository(test.DB(), test.PubSub())
+
 	hash, err := bcrypt.GenerateFromPassword([]byte("hunter2"), 4)
 	assert.NoError(t, err)
-	res, err := p.CreateIdentity("test-createidentity@tengen.io", hash, "Test User CreateIdentity")
+	res, err := r.CreateIdentity("test-createidentity@tengen.io", hash, "Test User CreateIdentity")
 	assert.NoError(t, err)
 
 	assert.Equal(t, "test-createidentity@tengen.io", res.Email)
@@ -107,10 +102,9 @@ func TestRepository_CreateIdentity(t *testing.T) {
 }
 
 func TestRepository_GetUserById(t *testing.T) {
-	db := test.DB()
-	p := NewRepository(db)
+	r := NewRepository(test.DB(), test.PubSub())
 
-	res, err := p.GetUserById("1")
+	res, err := r.GetUserById("1")
 	assert.NoError(t, err)
 
 	assert.Equal(t, "1", res.Id)

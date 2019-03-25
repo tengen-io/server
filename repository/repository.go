@@ -1,24 +1,23 @@
 package repository
 
-import "github.com/jmoiron/sqlx"
-
-type dbHandle interface {
-	sqlx.Queryer
-	sqlx.Execer
-	sqlx.Preparer
-
-	Rebind(string) string
-}
+import (
+	"encoding/json"
+	"github.com/jmoiron/sqlx"
+	"github.com/tengen-io/server/db"
+	"github.com/tengen-io/server/pubsub"
+)
 
 type Repository struct {
 	db *sqlx.DB
-	h  dbHandle
+	h  db.Handle
+	pubsub *pubsub.DbPubSub
 }
 
-func NewRepository(db *sqlx.DB) Repository {
-	return Repository{
+func NewRepository(db *sqlx.DB, pubsub *pubsub.DbPubSub) *Repository {
+	return &Repository{
 		db: db,
 		h:  db,
+		pubsub: pubsub,
 	}
 }
 
@@ -43,4 +42,22 @@ func (r *Repository) WithTx(f func(r *Repository) error) error {
 		return err
 	}
 	return nil
+}
+
+func (d *Repository) Publish(topic pubsub.TopicCategory, payload pubsub.Event) error {
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.h.Exec("NOTIFY $1, $2", topic, payloadBytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *Repository) Subscribe(topic pubsub.Topic) <-chan pubsub.Event {
+	return d.pubsub.Subscribe(topic)
 }

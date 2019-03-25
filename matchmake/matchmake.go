@@ -1,9 +1,9 @@
 package matchmake
 
 import (
-	"github.com/jmoiron/sqlx"
 	"github.com/tengen-io/server/db"
 	"github.com/tengen-io/server/models"
+	"github.com/tengen-io/server/pubsub"
 	"github.com/tengen-io/server/repository"
 	"log"
 	"os"
@@ -18,7 +18,7 @@ type pool interface {
 }
 
 type DbPool struct {
-	repo repository.Repository
+	repo *repository.Repository
 }
 
 func (p DbPool) requests() ([]models.MatchmakingRequest, error) {
@@ -26,12 +26,13 @@ func (p DbPool) requests() ([]models.MatchmakingRequest, error) {
 }
 
 func (p DbPool) match(i models.MatchmakingRequest, j models.MatchmakingRequest) error {
+	log.Printf("matched: %+v, %+v", i, j)
 	users := []models.User{
 		{NodeFields: models.NodeFields{Id: i.Id}}, {NodeFields: models.NodeFields{Id: j.Id}},
 	}
 
 	err := p.repo.WithTx(func(r *repository.Repository) error {
-		_, err := r.CreateGame(models.GameTypeStandard, 19, models.GameStateNegotiation, users)
+		game, err := r.CreateGame(models.GameTypeStandard, 19, models.GameStateNegotiation, users)
 		if err != nil {
 			return err
 		}
@@ -42,6 +43,22 @@ func (p DbPool) match(i models.MatchmakingRequest, j models.MatchmakingRequest) 
 		}
 
 		err = r.DeleteMatchmakingRequest(j)
+		if err != nil {
+			return err
+		}
+
+		payload := map[string]interface{}{
+			"game": game.Id,
+		}
+		err = r.Publish(pubsub.TopicCategoryMatchmakeRequests, pubsub.Event{i.Id, "matched", payload})
+		if err != nil {
+			return err
+		}
+
+		payload = map[string]interface{}{
+			"game": game.Id,
+		}
+		err = r.Publish(pubsub.TopicCategoryMatchmakeRequests, pubsub.Event{j.Id, "matched", payload})
 		if err != nil {
 			return err
 		}
@@ -146,9 +163,9 @@ func (m *matchmaker) tick() ([]match, error) {
 }
 
 func Start() {
-	db := makeDb()
+	repo := makeRepo()
 	pool := DbPool{
-		repo: repository.NewRepository(db),
+		repo,
 	}
 
 	log.Printf("starting matchmaker")
@@ -171,7 +188,7 @@ func abs(n int) int {
 	return n
 }
 
-func makeDb() *sqlx.DB {
+func makeRepo() *repository.Repository {
 	port, err := strconv.Atoi(os.Getenv("TENGEN_DB_PORT"))
 	if err != nil {
 		log.Fatal("Cold not parse TENGEN_DB_PORT")
@@ -186,9 +203,11 @@ func makeDb() *sqlx.DB {
 	}
 
 	db, err := db.NewPostgresDb(config)
+	ps := pubsub.NewDbPubSub(config.Url())
+
 	if err != nil {
 		log.Fatal("Unable to connect to DB.", err)
 	}
 
-	return db
+	return repository.NewRepository(db, ps)
 }

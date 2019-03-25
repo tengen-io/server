@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/lib/pq"
 	"github.com/tengen-io/server/models"
+	"strconv"
 	"time"
 )
 
@@ -29,18 +30,22 @@ func (r *Repository) GetMatchmakingRequests() ([]models.MatchmakingRequest, erro
 }
 
 func (r *Repository) CreateMatchmakingRequest(user models.User, delta int) (*models.MatchmakingRequest, error) {
-	ts := pq.FormatTimestamp(time.Now().UTC())
+	now := time.Now().UTC()
+	ts := pq.FormatTimestamp(now)
 
 	// TODO(eac): add real ranks and queues
-	row := r.h.QueryRowx("INSERT INTO matchmake_requests (queue, user_id, rank, rank_delta, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", "FIXME", user.Id, 10, ts, ts)
-	var id int
+	row := r.h.QueryRowx("INSERT INTO matchmake_requests (queue, user_id, rank, rank_delta, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", "FIXME", user.Id, 10, delta, ts, ts)
+	var id int64
 	err := row.Scan(&id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &models.MatchmakingRequest{
-		NodeFields: models.NodeFields{},
+		NodeFields: models.NodeFields{
+			Id: strconv.FormatInt(id, 10),
+			CreatedAt: now,
+		},
 		User: user,
 		Delta: delta,
 		Rank: 10,

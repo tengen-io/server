@@ -9,6 +9,14 @@ const (
 	dbUrlFmt string = "postgres://%s:%s@%s:%d/%s?sslmode=disable"
 )
 
+type Handle interface {
+	sqlx.Queryer
+	sqlx.Execer
+	sqlx.Preparer
+
+	Rebind(string) string
+}
+
 type PostgresDBConfig struct {
 	Host     string
 	Port     int
