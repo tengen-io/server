@@ -125,6 +125,15 @@ func (r *subscriptionResolver) MatchmakingRequests(ctx context.Context, user str
 	rv := make(chan models.MatchmakingRequestsPayload, 5)
 	c := r.repo.Subscribe(pubsub.MkTopic(pubsub.TopicCategoryMatchmakeRequests, user))
 
+	requests, err := r.repo.GetMatchmakingRequests()
+	if err != nil {
+		return nil, err
+	}
+
+	rv <- &models.MatchmakingRequestPayload{
+		Requests: requests,
+	}
+
 	go func() {
 		for event := range c {
 			gameId, ok := event.Payload["game"].(string)

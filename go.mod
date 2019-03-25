@@ -9,7 +9,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.2.5
 	github.com/golang/protobuf v1.3.0 // indirect
 	github.com/gorilla/mux v1.7.0 // indirect
-	github.com/gorilla/websocket v1.4.0 // indirect
+	github.com/gorilla/websocket v1.4.0
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmoiron/sqlx v1.2.0

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/handler"
+	"github.com/gorilla/websocket"
 	"github.com/tengen-io/server/db"
 	"github.com/tengen-io/server/pubsub"
 	"github.com/tengen-io/server/repository"
@@ -35,13 +36,26 @@ type server struct {
 }
 
 func (s *server) Start() {
-	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
-	http.Handle("/register", enableCorsMiddleware(s.RegistrationHandler()))
-	http.Handle("/login", enableCorsMiddleware(s.LoginHandler()))
-	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/graphql"))
+	mux := http.NewServeMux()
 
+	mux.Handle("/graphql",
+		s.VerifyTokenMiddleware(
+			handler.GraphQL(s.executableSchema,
+				handler.WebsocketUpgrader(websocket.Upgrader{
+					CheckOrigin: func(r *http.Request) bool {
+						log.Println("wtf")
+						return true
+					},
+				}),
+			)))
+
+	mux.Handle("/", handler.Playground("tengen.io | GraphQL", "/graphql"))
+	mux.Handle("/register", s.RegistrationHandler())
+	mux.Handle("/login", s.LoginHandler())
+
+	h := enableCorsMiddleware(mux)
 	log.Printf("Listening on http://%s:%d", s.config.Host, s.config.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Host, s.config.Port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Host, s.config.Port), h))
 }
 
 func enableCorsMiddleware(next http.Handler) http.Handler {
