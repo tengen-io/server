@@ -11,6 +11,7 @@ import (
 
 type Resolver struct {
 	repo   *repository.Repository
+	auth auth
 }
 
 func (r *Resolver) Mutation() MutationResolver {
@@ -121,9 +122,14 @@ func (r *queryResolver) Games(ctx context.Context, ids []string, states []models
 
 type subscriptionResolver struct{ *Resolver }
 
-func (r *subscriptionResolver) MatchmakingRequests(ctx context.Context, user string) (<-chan models.MatchmakingRequestsPayload, error) {
+func (r *subscriptionResolver) MatchmakingRequests(ctx context.Context) (<-chan models.MatchmakingRequestsPayload, error) {
+	id, err := r.auth.authForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	rv := make(chan models.MatchmakingRequestsPayload, 5)
-	c := r.repo.Subscribe(pubsub.MkTopic(pubsub.TopicCategoryMatchmakeRequests, user))
+	c := r.repo.Subscribe(pubsub.MkTopic(pubsub.TopicCategoryMatchmakeRequests, id.User.Id))
 
 	requests, err := r.repo.GetMatchmakingRequests()
 	if err != nil {

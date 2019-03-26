@@ -103,5 +103,5 @@ type Mutation {
 }
 
 type Subscription {
-    matchmakingRequests(user: ID!): MatchmakingRequestsPayload
+    matchmakingRequests: MatchmakingRequestsPayload
 }

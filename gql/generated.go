@@ -107,7 +107,7 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		MatchmakingRequests func(childComplexity int, user string) int
+		MatchmakingRequests func(childComplexity int) int
 	}
 
 	User struct {
@@ -132,7 +132,7 @@ type QueryResolver interface {
 	Viewer(ctx context.Context) (*models.Identity, error)
 }
 type SubscriptionResolver interface {
-	MatchmakingRequests(ctx context.Context, user string) (<-chan models.MatchmakingRequestsPayload, error)
+	MatchmakingRequests(ctx context.Context) (<-chan models.MatchmakingRequestsPayload, error)
 }
 
 type executableSchema struct {
@@ -397,12 +397,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Subscription_matchmakingRequests_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Subscription.MatchmakingRequests(childComplexity, args["user"].(string)), true
+		return e.complexity.Subscription.MatchmakingRequests(childComplexity), true
 
 	case "User.CreatedAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -655,7 +650,7 @@ type Mutation {
 }
 
 type Subscription {
-    matchmakingRequests(user: ID!): MatchmakingRequestsPayload
+    matchmakingRequests: MatchmakingRequestsPayload
 }
 `},
 )
@@ -769,20 +764,6 @@ func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["names"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Subscription_matchmakingRequests_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["user"]; ok {
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["user"] = arg0
 	return args, nil
 }
 
@@ -1714,16 +1695,10 @@ func (ec *executionContext) _Subscription_matchmakingRequests(ctx context.Contex
 		Field: field,
 		Args:  nil,
 	})
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Subscription_matchmakingRequests_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
 	// FIXME: subscriptions are missing request middleware stack https://github.com/99designs/gqlgen/issues/259
 	//          and Tracer stack
 	rctx := ctx
-	results, err := ec.resolvers.Subscription().MatchmakingRequests(rctx, args["user"].(string))
+	results, err := ec.resolvers.Subscription().MatchmakingRequests(rctx)
 	if err != nil {
 		ec.Error(ctx, err)
 		return nil

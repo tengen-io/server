@@ -27,12 +27,10 @@ type serverConfig struct {
 }
 
 type server struct {
+	auth auth
 	config           *serverConfig
 	executableSchema graphql.ExecutableSchema
 	repo             *repository.Repository
-	bcryptCost       int
-	signingKey       []byte
-	jwtLifetime      time.Duration
 }
 
 func (s *server) Start() {
@@ -66,12 +64,7 @@ func enableCorsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func newServer(config *serverConfig, schema graphql.ExecutableSchema, repo *repository.Repository) *server {
-	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
-	if err != nil {
-		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
-	}
-
+func makeAuth(repo repository.Repository) auth {
 	day, err := time.ParseDuration("24h")
 	if err != nil {
 		log.Fatal("could not parse auth key duration", err)
@@ -79,13 +72,25 @@ func newServer(config *serverConfig, schema graphql.ExecutableSchema, repo *repo
 
 	keyDuration := day * 7
 
+	bcryptCost, err := strconv.Atoi(os.Getenv("TENGEN_BCRYPT_COST"))
+	if err != nil {
+		log.Fatal("Could not parse TENGEN_BCRYPT_COST")
+	}
+
+	return auth{
+		repo: repo,
+		jwtLifetime: keyDuration,
+		signingKey: getSigningKey(),
+		bcryptCost: bcryptCost,
+	}
+}
+
+func newServer(config *serverConfig, schema graphql.ExecutableSchema, auth auth, repo *repository.Repository) *server {
 	return &server{
-		config,
-		schema,
-		repo,
-		bcryptCost,
-		getSigningKey(),
-		keyDuration,
+		config: config,
+		executableSchema: schema,
+		repo: repo,
+		auth: auth,
 	}
 }
 
@@ -114,10 +119,12 @@ func makeRepo() *repository.Repository {
 	return repository.NewRepository(db, ps)
 }
 
-func makeSchema(repo *repository.Repository) graphql.ExecutableSchema {
+
+func makeSchema(repo *repository.Repository, auth auth) graphql.ExecutableSchema {
 	return NewExecutableSchema(Config{
 		Resolvers: &Resolver{
-			repo:   repo,
+			repo: repo,
+			auth: auth,
 		},
 		Directives: Directives(),
 	})
@@ -145,7 +152,7 @@ func getSigningKey() []byte {
 	return decoded
 }
 
-func makeServer(schema graphql.ExecutableSchema, repo *repository.Repository) *server {
+func makeServer(schema graphql.ExecutableSchema, auth auth, repo *repository.Repository) *server {
 	config := newServerConfig()
 	tengenPort := os.Getenv("TENGEN_PORT")
 	port, err := strconv.Atoi(tengenPort)
@@ -159,13 +166,14 @@ func makeServer(schema graphql.ExecutableSchema, repo *repository.Repository) *s
 		GraphiQLEnabled: config.Environment == "development",
 	}
 
-	return newServer(serverConfig, schema, repo)
+	return newServer(serverConfig, schema, auth, repo)
 }
 
 func Serve() {
 	repo := makeRepo()
+	auth := makeAuth(*repo)
 
-	schema := makeSchema(repo)
-	s := makeServer(schema, repo)
+	schema := makeSchema(repo, auth)
+	s := makeServer(schema, auth, repo)
 	s.Start()
 }

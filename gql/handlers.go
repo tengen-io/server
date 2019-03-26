@@ -40,13 +40,13 @@ func (s *server) LoginHandler() http.Handler {
 		}
 
 		// TODO(eac): find a way to differentiate between auth and db failure
-		identity, err := s.checkPasswordByEmail(credentials.Email, credentials.Password)
+		identity, err := s.auth.checkPasswordByEmail(credentials.Email, credentials.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		token, err := s.signJWT(*identity)
+		token, err := s.auth.signJWT(*identity)
 
 		w.Header().Set("Content-Type", "application/json")
 		out, err := json.Marshal(struct{ Token string }{token})
@@ -73,7 +73,7 @@ func (s *server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 			}
 
 			tokenStr := authParts[1]
-			token, err := s.validateJWT(tokenStr)
+			token, err := s.auth.validateJWT(tokenStr)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
@@ -140,14 +140,14 @@ func (s *server) RegistrationHandler() http.Handler {
 		}
 
 		// TODO(eac): Distinguish between database errors?
-		passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), s.bcryptCost)
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), s.auth.bcryptCost)
 		identity, err := s.repo.CreateIdentity(in.Email, passwordHash, in.Name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		token, err := s.signJWT(*identity)
+		token, err := s.auth.signJWT(*identity)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
