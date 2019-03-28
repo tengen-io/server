@@ -50,10 +50,12 @@ func (d *DbPubSub) Start() {
 
 func (d *DbPubSub) Subscribe(topic Topic) <-chan Event {
 	raw := d.e.On(string(topic))
+	log.Printf("listening on %s", string(topic))
 	rv := make(chan Event, 10)
 
 	go func() {
 		for rawEvent := range raw {
+			log.Printf("pubsub: got event %+v", rawEvent)
 			if len(rawEvent.Args) > 0 {
 				if event, ok := rawEvent.Args[0].(Event); ok {
 					rv <- event
@@ -84,10 +86,14 @@ func (d *DbPubSub) listen() {
 	}
 	log.Println("pubsub: listening for notifications")
 
-	select {
-	case msg := <- listener.Notify:
-		d.dispatch(msg.Channel, msg.Extra)
+	for {
+		select {
+		case msg := <-listener.Notify:
+			d.dispatch(msg.Channel, msg.Extra)
+		}
 	}
+
+	log.Printf("pubsub: terminating pg listener")
 }
 
 func (d *DbPubSub) dispatch(topic string, payload string) {
@@ -98,6 +104,7 @@ func (d *DbPubSub) dispatch(topic string, payload string) {
 	}
 
 	scoped := topic + ":" + event.Subject
+	log.Printf("emitting: %s, %+v", scoped, event)
 	d.e.Emit(scoped, event)
 }
 

@@ -86,12 +86,8 @@ type ComplexityRoot struct {
 		User      func(childComplexity int) int
 	}
 
-	MatchmakingRequestCompletePayload struct {
+	MatchmakingRequestCompletionPayload struct {
 		Game func(childComplexity int) int
-	}
-
-	MatchmakingRequestPayload struct {
-		Requests func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -99,15 +95,16 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Game   func(childComplexity int, id *string) int
-		Games  func(childComplexity int, ids []string, states []models.GameState) int
-		User   func(childComplexity int, id *string, name *string) int
-		Users  func(childComplexity int, ids []string, names []string) int
-		Viewer func(childComplexity int) int
+		Game                func(childComplexity int, id *string) int
+		Games               func(childComplexity int, ids []string, states []models.GameState) int
+		MatchmakingRequests func(childComplexity int) int
+		User                func(childComplexity int, id *string, name *string) int
+		Users               func(childComplexity int, ids []string, names []string) int
+		Viewer              func(childComplexity int) int
 	}
 
 	Subscription struct {
-		MatchmakingRequests func(childComplexity int) int
+		MatchmakingRequestCompletions func(childComplexity int) int
 	}
 
 	User struct {
@@ -130,9 +127,10 @@ type QueryResolver interface {
 	User(ctx context.Context, id *string, name *string) (*models.User, error)
 	Users(ctx context.Context, ids []string, names []string) ([]*models.User, error)
 	Viewer(ctx context.Context) (*models.Identity, error)
+	MatchmakingRequests(ctx context.Context) ([]models.MatchmakingRequest, error)
 }
 type SubscriptionResolver interface {
-	MatchmakingRequests(ctx context.Context) (<-chan models.MatchmakingRequestsPayload, error)
+	MatchmakingRequestCompletions(ctx context.Context) (<-chan *models.MatchmakingRequestCompletionPayload, error)
 }
 
 type executableSchema struct {
@@ -311,19 +309,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MatchmakingRequest.User(childComplexity), true
 
-	case "MatchmakingRequestCompletePayload.Game":
-		if e.complexity.MatchmakingRequestCompletePayload.Game == nil {
+	case "MatchmakingRequestCompletionPayload.Game":
+		if e.complexity.MatchmakingRequestCompletionPayload.Game == nil {
 			break
 		}
 
-		return e.complexity.MatchmakingRequestCompletePayload.Game(childComplexity), true
-
-	case "MatchmakingRequestPayload.Requests":
-		if e.complexity.MatchmakingRequestPayload.Requests == nil {
-			break
-		}
-
-		return e.complexity.MatchmakingRequestPayload.Requests(childComplexity), true
+		return e.complexity.MatchmakingRequestCompletionPayload.Game(childComplexity), true
 
 	case "Mutation.CreateMatchmakingRequest":
 		if e.complexity.Mutation.CreateMatchmakingRequest == nil {
@@ -361,6 +352,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Games(childComplexity, args["ids"].([]string), args["states"].([]models.GameState)), true
 
+	case "Query.MatchmakingRequests":
+		if e.complexity.Query.MatchmakingRequests == nil {
+			break
+		}
+
+		return e.complexity.Query.MatchmakingRequests(childComplexity), true
+
 	case "Query.User":
 		if e.complexity.Query.User == nil {
 			break
@@ -392,12 +390,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Viewer(childComplexity), true
 
-	case "Subscription.MatchmakingRequests":
-		if e.complexity.Subscription.MatchmakingRequests == nil {
+	case "Subscription.MatchmakingRequestCompletions":
+		if e.complexity.Subscription.MatchmakingRequestCompletions == nil {
 			break
 		}
 
-		return e.complexity.Subscription.MatchmakingRequests(childComplexity), true
+		return e.complexity.Subscription.MatchmakingRequestCompletions(childComplexity), true
 
 	case "User.CreatedAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -627,15 +625,9 @@ type CreateMatchmakingRequestPayload {
     request: MatchmakingRequest
 }
 
-type MatchmakingRequestPayload {
-    requests: [MatchmakingRequest!]
-}
-
-type MatchmakingRequestCompletePayload {
+type MatchmakingRequestCompletionPayload {
     game: Game!
 }
-
-union MatchmakingRequestsPayload = MatchmakingRequestPayload | MatchmakingRequestCompletePayload
 
 type Query {
     game(id: ID): Game
@@ -643,6 +635,7 @@ type Query {
     user(id: ID, name: String): User
     users(ids: [ID!], names: [String!]): [User]
     viewer: Identity @hasAuth
+    matchmakingRequests: [MatchmakingRequest!]
 }
 
 type Mutation {
@@ -650,7 +643,7 @@ type Mutation {
 }
 
 type Subscription {
-    matchmakingRequests: MatchmakingRequestsPayload
+    matchmakingRequestCompletions: MatchmakingRequestCompletionPayload
 }
 `},
 )
@@ -1402,11 +1395,11 @@ func (ec *executionContext) _MatchmakingRequest_updatedAt(ctx context.Context, f
 	return ec.marshalOTimestamp2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MatchmakingRequestCompletePayload_game(ctx context.Context, field graphql.CollectedField, obj *models.MatchmakingRequestCompletePayload) graphql.Marshaler {
+func (ec *executionContext) _MatchmakingRequestCompletionPayload_game(ctx context.Context, field graphql.CollectedField, obj *models.MatchmakingRequestCompletionPayload) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
 	rctx := &graphql.ResolverContext{
-		Object:   "MatchmakingRequestCompletePayload",
+		Object:   "MatchmakingRequestCompletionPayload",
 		Field:    field,
 		Args:     nil,
 		IsMethod: false,
@@ -1427,30 +1420,6 @@ func (ec *executionContext) _MatchmakingRequestCompletePayload_game(ctx context.
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNGame2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐGame(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _MatchmakingRequestPayload_requests(ctx context.Context, field graphql.CollectedField, obj *models.MatchmakingRequestPayload) graphql.Marshaler {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
-	rctx := &graphql.ResolverContext{
-		Object:   "MatchmakingRequestPayload",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Requests, nil
-	})
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]models.MatchmakingRequest)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOMatchmakingRequest2ᚕgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐMatchmakingRequest(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createMatchmakingRequest(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -1635,6 +1604,30 @@ func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.Col
 	return ec.marshalOIdentity2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐIdentity(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_matchmakingRequests(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MatchmakingRequests(rctx)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]models.MatchmakingRequest)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOMatchmakingRequest2ᚕgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐMatchmakingRequest(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -1690,7 +1683,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Subscription_matchmakingRequests(ctx context.Context, field graphql.CollectedField) func() graphql.Marshaler {
+func (ec *executionContext) _Subscription_matchmakingRequestCompletions(ctx context.Context, field graphql.CollectedField) func() graphql.Marshaler {
 	ctx = graphql.WithResolverContext(ctx, &graphql.ResolverContext{
 		Field: field,
 		Args:  nil,
@@ -1698,7 +1691,7 @@ func (ec *executionContext) _Subscription_matchmakingRequests(ctx context.Contex
 	// FIXME: subscriptions are missing request middleware stack https://github.com/99designs/gqlgen/issues/259
 	//          and Tracer stack
 	rctx := ctx
-	results, err := ec.resolvers.Subscription().MatchmakingRequests(rctx)
+	results, err := ec.resolvers.Subscription().MatchmakingRequestCompletions(rctx)
 	if err != nil {
 		ec.Error(ctx, err)
 		return nil
@@ -1712,7 +1705,7 @@ func (ec *executionContext) _Subscription_matchmakingRequests(ctx context.Contex
 			w.Write([]byte{'{'})
 			graphql.MarshalString(field.Alias).MarshalGQL(w)
 			w.Write([]byte{':'})
-			ec.marshalOMatchmakingRequestsPayload2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐMatchmakingRequestsPayload(ctx, field.Selections, res).MarshalGQL(w)
+			ec.marshalOMatchmakingRequestCompletionPayload2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐMatchmakingRequestCompletionPayload(ctx, field.Selections, res).MarshalGQL(w)
 			w.Write([]byte{'}'})
 		})
 	}
@@ -2676,23 +2669,6 @@ func (ec *executionContext) unmarshalInputCreateMatchmakingRequestInput(ctx cont
 
 // region    ************************** interface.gotpl ***************************
 
-func (ec *executionContext) _MatchmakingRequestsPayload(ctx context.Context, sel ast.SelectionSet, obj *models.MatchmakingRequestsPayload) graphql.Marshaler {
-	switch obj := (*obj).(type) {
-	case nil:
-		return graphql.Null
-	case models.MatchmakingRequestPayload:
-		return ec._MatchmakingRequestPayload(ctx, sel, &obj)
-	case *models.MatchmakingRequestPayload:
-		return ec._MatchmakingRequestPayload(ctx, sel, obj)
-	case models.MatchmakingRequestCompletePayload:
-		return ec._MatchmakingRequestCompletePayload(ctx, sel, &obj)
-	case *models.MatchmakingRequestCompletePayload:
-		return ec._MatchmakingRequestCompletePayload(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj *models.Node) graphql.Marshaler {
 	switch obj := (*obj).(type) {
 	case nil:
@@ -2938,46 +2914,22 @@ func (ec *executionContext) _MatchmakingRequest(ctx context.Context, sel ast.Sel
 	return out
 }
 
-var matchmakingRequestCompletePayloadImplementors = []string{"MatchmakingRequestCompletePayload", "MatchmakingRequestsPayload"}
+var matchmakingRequestCompletionPayloadImplementors = []string{"MatchmakingRequestCompletionPayload"}
 
-func (ec *executionContext) _MatchmakingRequestCompletePayload(ctx context.Context, sel ast.SelectionSet, obj *models.MatchmakingRequestCompletePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, matchmakingRequestCompletePayloadImplementors)
+func (ec *executionContext) _MatchmakingRequestCompletionPayload(ctx context.Context, sel ast.SelectionSet, obj *models.MatchmakingRequestCompletionPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, matchmakingRequestCompletionPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	invalid := false
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("MatchmakingRequestCompletePayload")
+			out.Values[i] = graphql.MarshalString("MatchmakingRequestCompletionPayload")
 		case "game":
-			out.Values[i] = ec._MatchmakingRequestCompletePayload_game(ctx, field, obj)
+			out.Values[i] = ec._MatchmakingRequestCompletionPayload_game(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalid {
-		return graphql.Null
-	}
-	return out
-}
-
-var matchmakingRequestPayloadImplementors = []string{"MatchmakingRequestPayload", "MatchmakingRequestsPayload"}
-
-func (ec *executionContext) _MatchmakingRequestPayload(ctx context.Context, sel ast.SelectionSet, obj *models.MatchmakingRequestPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ctx, sel, matchmakingRequestPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	invalid := false
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("MatchmakingRequestPayload")
-		case "requests":
-			out.Values[i] = ec._MatchmakingRequestPayload_requests(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3090,6 +3042,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_viewer(ctx, field)
 				return res
 			})
+		case "matchmakingRequests":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_matchmakingRequests(ctx, field)
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -3118,8 +3081,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	}
 
 	switch fields[0].Name {
-	case "matchmakingRequests":
-		return ec._Subscription_matchmakingRequests(ctx, fields[0])
+	case "matchmakingRequestCompletions":
+		return ec._Subscription_matchmakingRequestCompletions(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -4021,8 +3984,15 @@ func (ec *executionContext) marshalOMatchmakingRequest2ᚖgithubᚗcomᚋtengen�
 	return ec._MatchmakingRequest(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOMatchmakingRequestsPayload2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐMatchmakingRequestsPayload(ctx context.Context, sel ast.SelectionSet, v models.MatchmakingRequestsPayload) graphql.Marshaler {
-	return ec._MatchmakingRequestsPayload(ctx, sel, &v)
+func (ec *executionContext) marshalOMatchmakingRequestCompletionPayload2githubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐMatchmakingRequestCompletionPayload(ctx context.Context, sel ast.SelectionSet, v models.MatchmakingRequestCompletionPayload) graphql.Marshaler {
+	return ec._MatchmakingRequestCompletionPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOMatchmakingRequestCompletionPayload2ᚖgithubᚗcomᚋtengenᚑioᚋserverᚋmodelsᚐMatchmakingRequestCompletionPayload(ctx context.Context, sel ast.SelectionSet, v *models.MatchmakingRequestCompletionPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._MatchmakingRequestCompletionPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

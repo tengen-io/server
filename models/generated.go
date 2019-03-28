@@ -8,10 +8,6 @@ import (
 	"strconv"
 )
 
-type MatchmakingRequestsPayload interface {
-	IsMatchmakingRequestsPayload()
-}
-
 type Node interface {
 	IsNode()
 }
@@ -30,17 +26,9 @@ type GameUserEdge struct {
 	Type  GameUserEdgeType `json:"type"`
 }
 
-type MatchmakingRequestCompletePayload struct {
+type MatchmakingRequestCompletionPayload struct {
 	Game Game `json:"game"`
 }
-
-func (MatchmakingRequestCompletePayload) IsMatchmakingRequestsPayload() {}
-
-type MatchmakingRequestPayload struct {
-	Requests []MatchmakingRequest `json:"requests"`
-}
-
-func (MatchmakingRequestPayload) IsMatchmakingRequestsPayload() {}
 
 type Event string
 

@@ -120,25 +120,30 @@ func (r *queryResolver) Games(ctx context.Context, ids []string, states []models
 	panic("not implemented")
 }
 
-type subscriptionResolver struct{ *Resolver }
-
-func (r *subscriptionResolver) MatchmakingRequests(ctx context.Context) (<-chan models.MatchmakingRequestsPayload, error) {
+func (r *queryResolver) MatchmakingRequests(ctx context.Context) ([]models.MatchmakingRequest, error) {
 	id, err := r.auth.authForContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rv := make(chan models.MatchmakingRequestsPayload, 5)
-	c := r.repo.Subscribe(pubsub.MkTopic(pubsub.TopicCategoryMatchmakeRequests, id.User.Id))
-
-	requests, err := r.repo.GetMatchmakingRequests()
+	requests, err := r.repo.GetMatchmakingRequestsForUser(id.User)
 	if err != nil {
 		return nil, err
 	}
 
-	rv <- &models.MatchmakingRequestPayload{
-		Requests: requests,
+	return requests, nil
+}
+
+type subscriptionResolver struct{ *Resolver }
+
+func (r *subscriptionResolver) MatchmakingRequestCompletions(ctx context.Context) (<-chan *models.MatchmakingRequestCompletionPayload, error) {
+	id, err := r.auth.authForContext(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	rv := make(chan *models.MatchmakingRequestCompletionPayload, 5)
+	c := r.repo.Subscribe(pubsub.MkTopic(pubsub.TopicCategoryMatchmakeRequests, id.User.Id))
 
 	go func() {
 		for event := range c {
@@ -154,7 +159,7 @@ func (r *subscriptionResolver) MatchmakingRequests(ctx context.Context) (<-chan 
 				return
 			}
 
-			payload := &models.MatchmakingRequestCompletePayload{
+			payload := &models.MatchmakingRequestCompletionPayload{
 				Game: *game,
 			}
 
@@ -164,4 +169,3 @@ func (r *subscriptionResolver) MatchmakingRequests(ctx context.Context) (<-chan 
 
 	return rv, nil
 }
-

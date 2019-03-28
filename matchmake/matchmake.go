@@ -28,7 +28,7 @@ func (p DbPool) requests() ([]models.MatchmakingRequest, error) {
 func (p DbPool) match(i models.MatchmakingRequest, j models.MatchmakingRequest) error {
 	log.Printf("matched: %+v, %+v", i, j)
 	users := []models.User{
-		{NodeFields: models.NodeFields{Id: i.Id}}, {NodeFields: models.NodeFields{Id: j.Id}},
+		{NodeFields: models.NodeFields{Id: i.User.Id}}, {NodeFields: models.NodeFields{Id: j.User.Id}},
 	}
 
 	err := p.repo.WithTx(func(r *repository.Repository) error {
@@ -50,7 +50,7 @@ func (p DbPool) match(i models.MatchmakingRequest, j models.MatchmakingRequest) 
 		payload := map[string]interface{}{
 			"game": game.Id,
 		}
-		err = r.Publish(pubsub.TopicCategoryMatchmakeRequests, pubsub.Event{i.Id, "matched", payload})
+		err = r.Publish(pubsub.TopicCategoryMatchmakeRequests, pubsub.Event{i.User.Id, "matched", payload})
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func (p DbPool) match(i models.MatchmakingRequest, j models.MatchmakingRequest) 
 		payload = map[string]interface{}{
 			"game": game.Id,
 		}
-		err = r.Publish(pubsub.TopicCategoryMatchmakeRequests, pubsub.Event{j.Id, "matched", payload})
+		err = r.Publish(pubsub.TopicCategoryMatchmakeRequests, pubsub.Event{j.User.Id, "matched", payload})
 		if err != nil {
 			return err
 		}

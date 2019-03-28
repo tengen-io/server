@@ -29,6 +29,28 @@ func (r *Repository) GetMatchmakingRequests() ([]models.MatchmakingRequest, erro
 	return requests, nil
 }
 
+func (r *Repository) GetMatchmakingRequestsForUser(user models.User) ([]models.MatchmakingRequest, error) {
+	rows, err := r.h.Query("SELECT id, user_id, rank, rank_delta, created_at, updated_at FROM matchmake_requests WHERE user_id = $1", user.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	requests := make([]models.MatchmakingRequest, 0)
+	for rows.Next() {
+		var request models.MatchmakingRequest
+		err := rows.Scan(&request.Id, &request.User.Id, &request.Rank, &request.Delta, &request.CreatedAt, &request.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		requests = append(requests, request)
+	}
+
+	return requests, nil
+}
+
 func (r *Repository) CreateMatchmakingRequest(user models.User, delta int) (*models.MatchmakingRequest, error) {
 	now := time.Now().UTC()
 	ts := pq.FormatTimestamp(now)

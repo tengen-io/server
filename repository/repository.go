@@ -50,7 +50,7 @@ func (d *Repository) Publish(topic pubsub.TopicCategory, payload pubsub.Event) e
 		return err
 	}
 
-	_, err = d.h.Exec("NOTIFY $1, $2", topic, payloadBytes)
+	_, err = d.h.Exec("SELECT pg_notify($1, $2)", string(topic), string(payloadBytes))
 	if err != nil {
 		return err
 	}
