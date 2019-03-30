@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/tengen-io/server/models"
 	"strconv"
@@ -8,21 +9,40 @@ import (
 )
 
 func (r *Repository) CreateIdentity(email string, passwordHash []byte, name string) (*models.Identity, error) {
+	var tx *sqlx.Tx
+	if r.tx == nil {
+		t, err := r.db.Beginx()
+		if err != nil {
+			return nil, err
+		}
+
+		tx = t
+		defer tx.Rollback()
+	} else {
+		tx = r.tx
+	}
 	// TODO(eac): re-add validation
 	var rv models.Identity
 	ts := pq.FormatTimestamp(time.Now().UTC())
 
 	// TODO(eac): do a precondition check for duplicate users to save autoincrement IDs
-	identity := r.h.QueryRowx("INSERT INTO identities (email, password_hash, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, email", email, passwordHash, ts, ts)
+	identity := tx.QueryRowx("INSERT INTO identities (email, password_hash, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, email", email, passwordHash, ts, ts)
 	err := identity.Scan(&rv.Id, &rv.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	user := r.h.QueryRowx("INSERT INTO users (identity_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, name", rv.Id, name, ts, ts)
+	user := tx.QueryRowx("INSERT INTO users (identity_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id, name", rv.Id, name, ts, ts)
 	err = user.Scan(&rv.User.Id, &rv.User.Name)
 	if err != nil {
 		return nil, err
+	}
+
+	if r.tx == nil {
+		err = tx.Commit()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &rv, nil
@@ -30,7 +50,7 @@ func (r *Repository) CreateIdentity(email string, passwordHash []byte, name stri
 
 func (r *Repository) GetIdentityById(id int32) (*models.Identity, error) {
 	var identity models.Identity
-	row := r.h.QueryRowx("SELECT i.id, i.email, u.id, u.name FROM identities i, users u WHERE i.id = u.identity_id AND i.id = $1", id)
+	row := r.db.QueryRowx("SELECT i.id, i.email, u.id, u.name FROM identities i, users u WHERE i.id = u.identity_id AND i.id = $1", id)
 	err := row.Scan(&identity.Id, &identity.Email, &identity.User.Id, &identity.User.Name)
 	if err != nil {
 		return nil, err
@@ -40,7 +60,7 @@ func (r *Repository) GetIdentityById(id int32) (*models.Identity, error) {
 
 func (r *Repository) GetIdentityByEmail(email string) (*models.Identity, error) {
 	var identity models.Identity
-	row := r.h.QueryRowx("SELECT i.id, i.email, u.id, u.name FROM identities i, users u WHERE i.id = u.identity_id AND i.email = $1", email)
+	row := r.db.QueryRowx("SELECT i.id, i.email, u.id, u.name FROM identities i, users u WHERE i.id = u.identity_id AND i.email = $1", email)
 	err := row.Scan(&identity.Id, &identity.Email, &identity.User.Id, &identity.User.Name)
 	if err != nil {
 		return nil, err
@@ -49,7 +69,7 @@ func (r *Repository) GetIdentityByEmail(email string) (*models.Identity, error) 
 }
 
 func (r *Repository) GetPwHashForEmail(email string) ([]byte, error) {
-	row := r.h.QueryRowx("SELECT password_hash FROM identities WHERE email = $1", email)
+	row := r.db.QueryRowx("SELECT password_hash FROM identities WHERE email = $1", email)
 
 	var hash string
 	err := row.Scan(&hash)
@@ -68,7 +88,7 @@ func (r *Repository) GetUserById(id string) (*models.User, error) {
 
 	var rvId int
 	var user models.User
-	row := r.h.QueryRowx("SELECT id, name FROM users WHERE id = $1", idInt)
+	row := r.db.QueryRowx("SELECT id, name FROM users WHERE id = $1", idInt)
 	err = row.Scan(&rvId, &user.Name)
 	user.Id = strconv.Itoa(rvId)
 	if err != nil {

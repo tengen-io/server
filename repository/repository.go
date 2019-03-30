@@ -3,20 +3,18 @@ package repository
 import (
 	"encoding/json"
 	"github.com/jmoiron/sqlx"
-	"github.com/tengen-io/server/db"
 	"github.com/tengen-io/server/pubsub"
 )
 
 type Repository struct {
 	db *sqlx.DB
-	h  db.Handle
+	tx *sqlx.Tx
 	pubsub *pubsub.DbPubSub
 }
 
 func NewRepository(db *sqlx.DB, pubsub *pubsub.DbPubSub) *Repository {
 	return &Repository{
 		db: db,
-		h:  db,
 		pubsub: pubsub,
 	}
 }
@@ -29,7 +27,7 @@ func (r *Repository) WithTx(f func(r *Repository) error) error {
 
 	rTx := &Repository{
 		db: r.db,
-		h:  tx,
+		tx: tx,
 	}
 
 	err = f(rTx)
@@ -44,20 +42,40 @@ func (r *Repository) WithTx(f func(r *Repository) error) error {
 	return nil
 }
 
-func (d *Repository) Publish(topic pubsub.TopicCategory, payload pubsub.Event) error {
+func (r *Repository) Publish(topic pubsub.TopicCategory, payload pubsub.Event) error {
+	var tx *sqlx.Tx
+	if r.tx == nil {
+		itx, err := r.db.Beginx()
+		if err != nil {
+			return err
+		}
+
+		tx = itx
+		defer tx.Rollback()
+	} else {
+		tx = r.tx
+	}
+
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	_, err = d.h.Exec("SELECT pg_notify($1, $2)", string(topic), string(payloadBytes))
+	_, err = tx.Exec("SELECT pg_notify($1, $2)", string(topic), string(payloadBytes))
 	if err != nil {
 		return err
+	}
+
+	if r.tx == nil {
+		err = tx.Commit()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (d *Repository) Subscribe(topic pubsub.Topic) <-chan pubsub.Event {
-	return d.pubsub.Subscribe(topic)
+func (r *Repository) Subscribe(topic pubsub.Topic) <-chan pubsub.Event {
+	return r.pubsub.Subscribe(topic)
 }

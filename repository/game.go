@@ -11,16 +11,29 @@ import (
 // TODO(eac): Add validation
 // TODO(eac): Switch to sqlx binding
 func (r *Repository) CreateGame(gameType models.GameType, boardSize int, gameState models.GameState, users []models.User) (*models.Game, error) {
+	var tx *sqlx.Tx
+	if r.tx == nil {
+		t, err := r.db.Beginx()
+		if err != nil {
+			return nil, err
+		}
+
+		tx = t
+		defer tx.Rollback()
+	} else {
+		tx = r.tx
+	}
+
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
 
-	game := r.h.QueryRowx("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, type, state, board_size", gameType, gameState, boardSize, ts, ts)
+	game := tx.QueryRow("INSERT INTO games (type, state, board_size, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, type, state, board_size", gameType, gameState, boardSize, ts, ts)
 	err := game.Scan(&rv.Id, &rv.Type, &rv.State, &rv.BoardSize)
 	if err != nil {
 		return nil, err
 	}
 
-	insertStmt, err := r.h.Prepare("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)")
+	insertStmt, err := tx.Prepare("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)")
 	if err != nil {
 		return nil, err
 	}
@@ -39,19 +52,33 @@ func (r *Repository) CreateGame(gameType models.GameType, boardSize int, gameSta
 
 		r.pubsub.Publish(payload, "game", "game_"+rv.State.String()) */
 
+	if r.tx == nil {
+		err = tx.Commit()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &rv, nil
 }
 
 // TODO(eac): Validation? here or in the resolver
 // TODO(eac): Need this anymore?
 func (r *Repository) CreateGameUser(gameId string, userId string, edgeType models.GameUserEdgeType) (*models.Game, error) {
-	/*	tx, err := p.h.BeginTx(context.TODO(), &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+	var tx *sqlx.Tx
+	if r.tx == nil {
+		t, err := r.db.Beginx()
 		if err != nil {
 			return nil, err
 		}
-		defer tx.Rollback() */
 
-	rows, err := r.h.Query("SELECT user_id, type FROM game_user WHERE game_id = $1", gameId)
+		tx = t
+		defer tx.Rollback()
+	} else {
+		tx = r.tx
+	}
+
+	rows, err := tx.Query("SELECT user_id, type FROM game_user WHERE game_id = $1", gameId)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +97,7 @@ func (r *Repository) CreateGameUser(gameId string, userId string, edgeType model
 
 	var rv models.Game
 	ts := pq.FormatTimestamp(time.Now().UTC())
-	_, err = r.h.Exec("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", gameId, userId, edgeType, ts, ts)
+	_, err = tx.Exec("INSERT INTO game_user (game_id, user_id, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)", gameId, userId, edgeType, ts, ts)
 	if err != nil {
 		return nil, err
 	}
@@ -85,10 +112,17 @@ func (r *Repository) CreateGameUser(gameId string, userId string, edgeType model
 	}
 	gameUsers = append(gameUsers, newEdge)
 
-	game := r.h.QueryRowx("SELECT id, type, state FROM games WHERE id = $1", gameId)
+	game := tx.QueryRowx("SELECT id, type, state FROM games WHERE id = $1", gameId)
 	err = game.Scan(&rv.Id, &rv.Type, &rv.State)
 	if err != nil {
 		return nil, err
+	}
+
+	if r.tx == nil {
+		err = tx.Commit()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &rv, nil
@@ -101,7 +135,7 @@ func (r *Repository) GetGameById(id string) (*models.Game, error) {
 	}
 
 	var game models.Game
-	row := r.h.QueryRowx("SELECT * FROM games WHERE id = $1", idInt)
+	row := r.db.QueryRowx("SELECT * FROM games WHERE id = $1", idInt)
 	err = row.StructScan(&game)
 	if err != nil {
 		return nil, err
@@ -116,7 +150,7 @@ func (r *Repository) GetUsersForGame(id string) ([]models.GameUserEdge, error) {
 		return nil, err
 	}
 
-	rows, err := r.h.Query("SELECT type, user_id, name FROM game_user gu, users u WHERE game_id = $1 AND gu.user_id = u.id", idInt)
+	rows, err := r.db.Query("SELECT type, user_id, name FROM game_user gu, users u WHERE game_id = $1 AND gu.user_id = u.id", idInt)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +188,8 @@ func (r *Repository) GetGamesByIds(ids []string) ([]*models.Game, error) {
 	args := make([]interface{}, 0)
 	args = append(args, fragArgs...)
 
-	query = r.h.Rebind(query)
-	rows, err := r.h.Queryx(query, args...)
+	query = r.db.Rebind(query)
+	rows, err := r.db.Queryx(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -183,8 +217,8 @@ func (r *Repository) GetGamesByState(states []models.GameState) ([]*models.Game,
 	args := make([]interface{}, 0)
 	args = append(args, fragArgs...)
 
-	query = r.h.Rebind(query)
-	rows, err := r.h.Queryx(query, args...)
+	query = r.db.Rebind(query)
+	rows, err := r.db.Queryx(query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 func (r *Repository) GetMatchmakingRequests() ([]models.MatchmakingRequest, error) {
-	rows, err := r.h.Query("SELECT id, user_id, rank, rank_delta, created_at, updated_at FROM matchmake_requests")
+	rows, err := r.db.Query("SELECT id, user_id, rank, rank_delta, created_at, updated_at FROM matchmake_requests")
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (r *Repository) GetMatchmakingRequests() ([]models.MatchmakingRequest, erro
 }
 
 func (r *Repository) GetMatchmakingRequestsForUser(user models.User) ([]models.MatchmakingRequest, error) {
-	rows, err := r.h.Query("SELECT id, user_id, rank, rank_delta, created_at, updated_at FROM matchmake_requests WHERE user_id = $1", user.Id)
+	rows, err := r.db.Query("SELECT id, user_id, rank, rank_delta, created_at, updated_at FROM matchmake_requests WHERE user_id = $1", user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (r *Repository) CreateMatchmakingRequest(user models.User, delta int) (*mod
 	ts := pq.FormatTimestamp(now)
 
 	// TODO(eac): add real ranks and queues
-	row := r.h.QueryRowx("INSERT INTO matchmake_requests (queue, user_id, rank, rank_delta, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", "FIXME", user.Id, 10, delta, ts, ts)
+	row := r.db.QueryRowx("INSERT INTO matchmake_requests (queue, user_id, rank, rank_delta, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", "FIXME", user.Id, 10, delta, ts, ts)
 	var id int64
 	err := row.Scan(&id)
 	if err != nil {
@@ -77,6 +77,6 @@ func (r *Repository) CreateMatchmakingRequest(user models.User, delta int) (*mod
 }
 
 func (r *Repository) DeleteMatchmakingRequest(request models.MatchmakingRequest) error {
-	_, err := r.h.Exec("DELETE FROM matchmake_requests WHERE id = $1", request.Id)
+	_, err := r.db.Exec("DELETE FROM matchmake_requests WHERE id = $1", request.Id)
 	return err
 }
