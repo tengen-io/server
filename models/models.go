@@ -34,12 +34,12 @@ func (User) IsNode() {}
 type GameType int8
 
 const (
-	Standard GameType = iota
+	GameTypeStandard GameType = iota
 )
 
 func (g GameType) String() string {
 	switch g {
-	case Standard:
+	case GameTypeStandard:
 		return "STANDARD"
 	default:
 		return "UNKNOWN"
@@ -49,7 +49,7 @@ func (g GameType) String() string {
 func GameTypeForString(str string) (GameType, error) {
 	switch str {
 	case "STANDARD":
-		return Standard, nil
+		return GameTypeStandard, nil
 	default:
 		return 0, fmt.Errorf("unknown gametype %s", str)
 	}
@@ -85,73 +85,6 @@ func (g *GameType) Scan(value interface{}) error {
 }
 
 func (g GameType) Value() (driver.Value, error) {
-	return g.String(), nil
-}
-
-type GameState int8
-
-const (
-	Invitation GameState = iota
-	InProgress
-	Finished
-)
-
-func GameStateForString(str string) (GameState, error) {
-	switch str {
-	case "INVITATION":
-		return Invitation, nil
-	case "IN_PROGRESS":
-		return InProgress, nil
-	case "FINISHED":
-		return Finished, nil
-	default:
-		return 0, fmt.Errorf("unknown gamestate %s", str)
-	}
-}
-
-func (g GameState) String() string {
-	switch g {
-	case Invitation:
-		return "INVITATION"
-	case InProgress:
-		return "IN_PROGRESS"
-	case Finished:
-		return "FINISHED"
-	default:
-		return "UNKNOWN"
-	}
-}
-
-func (g *GameState) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return errors.New("cannot unmarshal non-string as GameState")
-	}
-
-	var err error
-	*g, err = GameStateForString(str)
-	return err
-}
-
-func (g GameState) MarshalGQL(w io.Writer) {
-	fmt.Fprintf(w, strconv.Quote(g.String()))
-}
-
-func (g *GameState) Scan(value interface{}) error {
-	val, ok := value.([]byte)
-	if !ok {
-		return errors.New("cannot scan non-[]byte as gamestate")
-	}
-
-	var err error
-	*g, err = GameStateForString(string(val))
-	if err != nil {
-		return nil
-	}
-	return nil
-}
-
-func (g GameState) Value() (driver.Value, error) {
 	return g.String(), nil
 }
 

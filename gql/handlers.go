@@ -1,14 +1,11 @@
-package main
+package gql
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/99designs/gqlgen/handler"
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,47 +17,7 @@ const (
 	IdentityContextKey ContextKey = iota
 )
 
-type ServerConfig struct {
-	Host            string
-	Port            int
-	GraphiQLEnabled bool
-}
-
-type Server struct {
-	config           *ServerConfig
-	executableSchema graphql.ExecutableSchema
-	auth             *AuthProvider
-	identity         *IdentityProvider
-}
-
-func NewServer(config *ServerConfig, schema graphql.ExecutableSchema, auth *AuthProvider, identity *IdentityProvider) *Server {
-	return &Server{
-		config,
-		schema,
-		auth,
-		identity,
-	}
-}
-
-func (s *Server) Start() {
-	http.Handle("/graphql", enableCorsMiddleware(s.VerifyTokenMiddleware(handler.GraphQL(s.executableSchema))))
-	http.Handle("/register", enableCorsMiddleware(s.RegistrationHandler()))
-	http.Handle("/login", enableCorsMiddleware(s.LoginHandler()))
-	http.HandleFunc("/", handler.Playground("tengen.io | GraphQL", "/graphql"))
-
-	log.Printf("Listening on http://%s:%d", s.config.Host, s.config.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", s.config.Host, s.config.Port), nil))
-}
-
-func enableCorsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *Server) LoginHandler() http.Handler {
+func (s *server) LoginHandler() http.Handler {
 	type credentials struct {
 		Email    string
 		Password string
@@ -83,13 +40,13 @@ func (s *Server) LoginHandler() http.Handler {
 		}
 
 		// TODO(eac): find a way to differentiate between auth and db failure
-		identity, err := s.auth.CheckPasswordByEmail(credentials.Email, credentials.Password)
+		identity, err := s.auth.checkPasswordByEmail(credentials.Email, credentials.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		token, err := s.auth.SignJWT(*identity)
+		token, err := s.auth.signJWT(*identity)
 
 		w.Header().Set("Content-Type", "application/json")
 		out, err := json.Marshal(struct{ Token string }{token})
@@ -103,7 +60,7 @@ func (s *Server) LoginHandler() http.Handler {
 	})
 }
 
-func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
+func (s *server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		authHeader := r.Header.Get("Authorization")
@@ -116,7 +73,7 @@ func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 			}
 
 			tokenStr := authParts[1]
-			token, err := s.auth.ValidateJWT(tokenStr)
+			token, err := s.auth.validateJWT(tokenStr)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
@@ -135,7 +92,7 @@ func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			identity, err := s.identity.GetIdentityById(int32(idInt))
+			identity, err := s.repo.GetIdentityById(int32(idInt))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -149,7 +106,7 @@ func (s *Server) VerifyTokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) RegistrationHandler() http.Handler {
+func (s *server) RegistrationHandler() http.Handler {
 	type input struct {
 		Email    string
 		Password string
@@ -183,13 +140,14 @@ func (s *Server) RegistrationHandler() http.Handler {
 		}
 
 		// TODO(eac): Distinguish between database errors?
-		identity, err := s.identity.CreateIdentity(in.Email, in.Password, in.Name)
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), s.auth.bcryptCost)
+		identity, err := s.repo.CreateIdentity(in.Email, passwordHash, in.Name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		token, err := s.auth.SignJWT(*identity)
+		token, err := s.auth.signJWT(*identity)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

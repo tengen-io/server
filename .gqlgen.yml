@@ -6,13 +6,11 @@
 schema:
 - schema.graphql
 exec:
-  filename: generated.go
+  filename: gql/generated.go
+  package: gql
 model:
   filename: models/generated.go
   package: models
-resolver:
-  filename: resolver.go
-  type: Resolver
 
 models:
   User:
@@ -27,3 +25,5 @@ models:
     model: github.com/tengen-io/server/models.GameType
   Timestamp:
     model: github.com/tengen-io/server/models.Timestamp
+  MatchmakingRequest:
+    model: github.com/tengen-io/server/models.MatchmakingRequest

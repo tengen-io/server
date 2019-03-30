@@ -12,28 +12,65 @@ type Node interface {
 	IsNode()
 }
 
-type CreateGameInvitationInput struct {
-	Type      GameType `json:"type"`
-	BoardSize int      `json:"boardSize"`
+type CreateMatchmakingRequestInput struct {
+	Delta int `json:"delta"`
 }
 
-type CreateGameInvitationPayload struct {
-	Game *Game `json:"game"`
-}
-
-type CreateIdentityInput struct {
-	Email    *string `json:"email"`
-	Password string  `json:"password"`
-	Name     string  `json:"name"`
+type CreateMatchmakingRequestPayload struct {
+	Request *MatchmakingRequest `json:"request"`
 }
 
 type GameUserEdge struct {
-	User User             `json:"user"`
-	Type GameUserEdgeType `json:"type"`
+	Index int              `json:"index"`
+	User  User             `json:"user"`
+	Type  GameUserEdgeType `json:"type"`
 }
 
-type JoinGamePayload struct {
-	Game *Game `json:"game"`
+type MatchmakingRequestCompletionPayload struct {
+	Game Game `json:"game"`
+}
+
+type Event string
+
+const (
+	EventCreate Event = "CREATE"
+	EventUpdate Event = "UPDATE"
+	EventDelete Event = "DELETE"
+)
+
+var AllEvent = []Event{
+	EventCreate,
+	EventUpdate,
+	EventDelete,
+}
+
+func (e Event) IsValid() bool {
+	switch e {
+	case EventCreate, EventUpdate, EventDelete:
+		return true
+	}
+	return false
+}
+
+func (e Event) String() string {
+	return string(e)
+}
+
+func (e *Event) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Event(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Event", str)
+	}
+	return nil
+}
+
+func (e Event) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type GameUserEdgeType string
